@@ -18,6 +18,10 @@
 (defun chars<-str (x)
   (loop :for c :across x :collect c))
 
+(defun timestamp ()
+  "Return current timestamp as a string."
+  (format nil "~{~a~^-~}" (reverse (multiple-value-list (get-decoded-time)))))
+
 (defun elapsed-time (sec)
   (let* ((min (floor (/ (floor sec) 60)))
          (hr  (floor (/ min 60)))
@@ -31,13 +35,41 @@
             (if (zerop hr) "" (format nil "~2,'0d:" hr))
             min sec)))
 
-(defun write-out (str)
+(defun write-out (fmt-string)
+  "Append string to *FILE-OUT*."
+  (check-type fmt-string string)
   (if *file-out*
       (with-open-file (stream *file-out* :direction :output
                                          :if-exists :append
                                          :if-does-not-exist :create)
-        (format stream str))
+        (format stream fmt-string))
       (error "*FILE-OUT* unbound.")))
+
+(defun file-string (filename)
+  "Return the file content as a string."
+  (format nil "~{~a~^~%~}"
+          (with-open-file (stream filename :direction :input :if-does-not-exist nil)
+            (when stream
+              (loop :for line := (read-line stream nil 'done)
+                    :until (eq line 'done)
+                    :collect line)))))
+
+(defun count-lines-in-file (filename)
+  (let ((n 0))
+    (with-open-file (stream filename :direction :input :if-does-not-exist nil)
+      (if stream
+          (loop for line = (read-line stream nil 'done)
+                until (eq line 'done)
+                do (incr n))))
+    n))
+
+(defun temp-filename (&optional extension)
+  (labels ((genfilename ()
+             (str<-lst `(temp ,(random 1.0) ,extension))))
+    (let ((filename (genfilename)))
+      (loop while (probe-file filename) do
+        (setf filename (genfilename)))
+      filename)))
 
 (defun fold/list (x)
   "The same as (fold/list/n x 1)."
@@ -98,3 +130,4 @@
   (if (zerop n)
       x
       (macroexpand-n (macroexpand-1 x) (1- n))))
+

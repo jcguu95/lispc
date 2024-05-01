@@ -82,6 +82,9 @@
         (t
          (replace-char #\- #\_ (string-downcase x)))))
 
+(defun file-ext (nym ext)
+  (format nil "~a.~a" (c-strify nym) (c-strify ext)))
+
 (defmacro def (a b)
   `(setf ,a (if ,a ,a ,b)))
 
@@ -984,51 +987,42 @@
               (format nil " ~a" (cof const))
               "")
           (repeatnrepeatnrepeatn #\& n)))
-(defun/c ptr&
-    (&optional nym (n 1))
+
+(defun/c ptr& (&optional nym (n 1))
   (cofy nym)
   (format nil "~a~a" (repeatnrepeatnrepeatn #\& n) nym))
-(defun/c typ[&]
-    (&optional nym (n 1))
+
+(defun/c typ[&] (&optional nym (n 1))
   (cofy nym)
   (format nil "~a(~a)" nym (repeatnrepeatnrepeatn #\& n)))
-(defun/c ptr[&]
-    (&optional nym (n 1))
+
+(defun/c ptr[&] (&optional nym (n 1))
   (cofy nym)
   (format nil "(~a)~a" (repeatnrepeatnrepeatn #\& n) nym))
-(defun/c class
-    (&optional nym &rest terms)
+
+(defun/c class (&optional nym &rest terms)
   (cofy nym)
   (csyn '***curr-class*** nym)
-  (if (listp (car terms))
-      (if (member (caar terms) '(inherits inh))
-          (progn
-            (setf nym
-                  (format nil "~a : ~{~a~^ ~}" nym
-                          (mapcar #'cof (cdar terms))))
-            (setf terms (cdr terms)))))
-  (format nil "class~a~a~a"
-          (if nym
-              " "
-              "")
-          nym
-          (if terms
-              (block-c terms)
-              "")))
-(defun/c protected
-    (&rest terms)
+  (when (and (listp (car terms))
+             (member (caar terms) '(inherits inh)))
+    (setf nym (format nil "~a : ~{~a~^ ~}" nym
+                      (mapcar #'cof (cdar terms))))
+    (setf terms (cdr terms)))
+  (format nil "class~a~a~a" (if nym " " "") nym (if terms (block-c terms) "")))
+
+(defun/c protected (&rest terms)
   (cofsy terms)
   (format nil "protected:~%~a" (block-c terms nil)))
-(defun/c private
-    (&rest terms)
+
+(defun/c private (&rest terms)
   (cofsy terms)
   (format nil "private:~%~a" (block-c terms nil)))
-(defun/c public
-    (&rest terms)
+
+(defun/c public (&rest terms)
   (cofsy terms)
   (format nil "public:~%~a" (block-c terms nil)))
-(defun/c construct
-    (&optional args init-pairs &rest code)
+
+(defun/c construct (&optional args init-pairs &rest code)
   (format nil "~a(~a)~a~a" (cof '***curr-class***) (vars-c args)
           (if init-pairs
               (format nil " : ~{~a~^~(, ~)~}"
@@ -1040,105 +1034,94 @@
                                        (cof (car xs)))))
                        init-pairs))
               "")
-          (if code
-              (block-c code)
-              "")))
-(defun/c destroy
-    (&optional args &rest code)
+          (if code (block-c code) "")))
+
+(defun/c destroy (&optional args &rest code)
   (format nil "~~~a(~a)~a" (cof '***curr-class***) (vars-c args)
-          (if code
-              (block-c code)
-              "")))
-(defun/c constructor
-    nil
+          (if code (block-c code) "")))
+
+(defun/c constructor ()
   (format nil "~a" (cof '***curr-class***)))
-(defun/c destructor
-    nil
+
+(defun/c destructor ()
   (format nil "~~~a" (cof '***curr-class***)))
-(defun/c suffix
-    (x y)
+
+(defun/c suffix (x y)
   (format nil "~a~a" (cof x) (c-strify y)))
-(defun/c operator
-    (oper &optional typ args &rest code)
-  (let ((opr "operator") (constif ""))
-    (if (listp oper)
-        (if (member (car oper) '(s su suf suffix))
-            (setf oper (format nil "\"\"_~a" (c-strify (cadr oper))))))
+
+(defun/c operator (oper &optional typ args &rest code)
+  (let ((opr "operator")
+        (constif ""))
+    (when (and (listp oper)
+               (member (car oper) '(s su suf suffix)))
+      (setf oper (format nil "\"\"_~a" (c-strify (cadr oper)))))
     (cofy typ)
-    (if (listp oper)
-        (if (member (car oper) '(@ ns namespace n/c))
-            (progn
-              (setf opr
-                    (apply #'namespace-c
-                           (append (butlast (cdr oper)) (list opr))))
-              (setf oper (car (last oper))))))
-    (if (null oper)
-        (setf oper "()"))
+    (when (and (listp oper)
+               (member (car oper) '(@ ns namespace n/c)))
+      (setf opr (apply #'namespace-c
+                       (append (butlast (cdr oper)) (list opr))))
+      (setf oper (car (last oper))))
+    (when (null oper)
+      (setf oper "()"))
     (setf oper (c-strify oper t))
-    (if (eq (car code) 'const)
-        (progn (setf constif " const ") (setf code (cdr code))))
+    (when (eq (car code) 'const)
+      (setf constif " const ")
+      (setf code (cdr code)))
     (format nil "~a ~a~a~a(~a)~a~a" typ opr
-            (if (a-Z? (char (str<- oper) 0))
-                " "
-                "")
+            (if (a-Z? (char (str<- oper) 0)) " " "")
             oper (vars-c args) constif
-            (if code
-                (block-c code)
-                ""))))
-(defun/c friend
-    (code)
+            (if code (block-c code) ""))))
+
+(defun/c friend (code)
   (cofy code)
   (format nil "friend ~a" code))
-(defun/c decltemp
-    (&optional var typ &rest code)
+
+(defun/c decltemp (&optional var typ &rest code)
   (if (listp var)
-      (progn (setf var (mapcar #'fold/list var)) (setf code (cons typ code)))
+      (progn (setf var (mapcar #'fold/list var))
+             (setf code (cons typ code)))
       (setf var (fold/list/n (list (list var typ)))))
   (cofy typ)
-  (setf var
-        (format nil "~{~a~^,~}"
-                (mapcar
-                 #'(lambda (pair)
-                     (format nil "~{~a~^ ~}" (reverse (mapcar #'cof pair))))
-                 var)))
+  (setf var (format nil "~{~a~^,~}"
+                    (mapcar
+                     #'(lambda (pair)
+                         (format nil "~{~a~^ ~}"
+                                 (reverse (mapcar #'cof pair))))
+                     var)))
   (format nil "template ~a~{~^ ~a~}"
-          (if (or typ var)
-              (format nil "<~a>" var)
-              "<>")
-          (if code
-              (mapcar #'cof code)
-              '(""))))
-(defun/c temp
-    (&optional var &rest typs)
+          (if (or typ var) (format nil "<~a>" var) "<>")
+          (if code (mapcar #'cof code) '(""))))
+
+(defun/c temp (&optional var &rest typs)
   (cofy var)
   (cofsy typs)
   (format nil "~a<~{~a~^,~}>" var typs))
-(defun/c using
-    (namespace)
+
+(defun/c using (namespace)
   (format nil "using namespace ~a" (cof namespace)))
-(defun/c usevar
-    (&rest args)
+
+(defun/c usevar (&rest args)
   (format nil "~a" (apply #'var-c (car args) 'using (cdr args))))
-(defun/c comment++
-    (&rest comments)
+
+(defun/c comment++ (&rest comments)
   (cofsy comments)
   (format nil "//~{~a~^ ~}" comments))
-(defun/c new
-    (&rest xs)
+
+(defun/c new (&rest xs)
   (cofsy xs)
   (format nil "new ~{~a~}" xs))
-(defun/c try/catch
-    (catch &optional trybody catchbody)
+
+(defun/c try/catch (catch &optional trybody catchbody)
   (setf catch (apply #'var-c (fold/list catch)))
   (format nil "try~acatch(~a)~a" (block-c (fold/list trybody)) catch
           (if catchbody
               (block-c (fold/list catchbody))
               "")))
-(defun/c strlit
-    (&rest xs)
+
+(defun/c strlit (&rest xs)
   (format nil "~a" (apply #'str-c xs)))
-(defun/c explicit
-    (&rest xs)
+
+(defun/c explicit (&rest xs)
   (cofsy xs)
   (format nil "explicit ~{~a~}"))
 
@@ -1532,28 +1515,6 @@
             (float++                     "long double")
             (template-params             "template-params"))))
 
-(defun count-lines-in-file (filename)
-  (let ((n 0))
-    (with-open-file (stream filename :direction :input :if-does-not-exist nil)
-      (if stream
-          (loop for line = (read-line stream nil 'done)
-                until (eq line 'done)
-                do (incr n))))
-    n))
-
-(defun file-string (filename)
-  "Return the file content as a string."
-  (format nil "~{~a~^~%~}"
-          (with-open-file (stream filename :direction :input :if-does-not-exist nil)
-            (when stream
-              (loop :for line := (read-line stream nil 'done)
-                    :until (eq line 'done)
-                    :collect line)))))
-
-(defun timestamp ()
-  (format nil "~{~a~^-~}"
-          (reverse (multiple-value-list (get-decoded-time)))))
-
 (defun c-code<-file (filename)
   "Return the compiled C code from the lispc code in FILENAME as a string."
   (let* ((s (file-string filename))
@@ -1568,17 +1529,6 @@
     (format nil "/* Compile Time: ~a */~%~a"
             (timestamp)
             (apply #'c cl-codes))))
-
-(defun temp-filename (&optional extension)
-  (labels ((genfilename ()
-             (str<-lst `(temp ,(random 1.0) ,extension))))
-    (let ((filename (genfilename)))
-      (loop while (probe-file filename) do
-        (setf filename (genfilename)))
-      filename)))
-
-(defun file-ext (nym ext)
-  (format nil "~a.~a" (c-strify nym) (c-strify ext)))
 
 (defun c-file<-cl-file (filein &optional fileout)
   "Entry point to compiling a .cl file to a .c file."
@@ -1627,24 +1577,3 @@
                    :cc cc)
   (format t "Running: ./~a~{~^ ~a~}~%" fileout args)
   (uiop:run-program (format nil "./~a~{~^ ~a~}" fileout args)))
-
-(compile 'write-out)
-(compile 'change-file)
-(compile 'change-exec)
-(compile 'compile-c)
-(compile 'fold/list)
-(compile 'fold/list/n)
-(compile 'str<-)
-(compile 'str<-lst)
-(compile 'chars<-str)
-(compile 'replace-char)
-(compile 'c-strify)
-(compile 'concat-symbols)
-(compile 'macroexpand-n)
-(compile 'cnym)
-(compile 'c)
-(compile 'cof)
-(compile 'file-string)
-(compile 'c-code<-file)
-(compile 'temp-filename)
-(compile 'compile-cl-file)
