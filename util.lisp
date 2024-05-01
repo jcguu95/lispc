@@ -71,6 +71,19 @@
         (setf filename (genfilename)))
       filename)))
 
+(defun flatten (xs)
+  (if (atom xs) (list xs) (mapcan #'flatten xs)))
+(assert
+ (and
+  (equal (flatten nil) (()))
+  (equal (flatten 'x) '(x))
+  (equal (flatten '(x)) '(x))
+  (equal (flatten '(x y)) '(x y))
+  (equal (flatten '((x y))) '(x y))
+  (equal (flatten '((x) (y))) '(x y))
+  (equal (flatten '((x))) '(x))
+  (equal (flatten '((x) (((y))) ((z w)))) '(x y z w))))
+
 (defun fold/list (x)
   "The same as (fold/list/n x 1)."
   (if (listp x) x (list x)))
@@ -104,6 +117,25 @@
 ;;     (t
 ;;      (list (fold/list//n x (1- n))))))
 
+(defun split-list-at (xs elem)
+  (check-type xs list)
+  (labels ((helper (xs elem curr res)
+             (if (null xs) (cons (reverse curr) res)
+                 (if (eq (car xs) elem)
+                     (helper
+                      (cdr xs) elem nil (cons (reverse curr) res))
+                     (helper
+                      (cdr xs) elem (cons (car xs) curr) res)))))
+    (reverse (helper xs elem nil nil))))
+(assert (equal (split-list-at '(1 1 1 0 1 1 0 1 1) 0) '((1 1 1) (1 1) (1 1))))
+
+(defun split-str-at (str char)
+  (check-type str string)
+  (check-type char character)
+  (remove-if #'(lambda (x) (eq (length x) 0))
+             (mapcar #'str<-lst (split-list-at (chars<-str str) char))))
+(assert (equal (split-str-at "aa_aa__a_" #\_) '("aa" "aa" "a")))
+
 (defun replace-char (before after str)
   "Replace every BEFORE char with AFTER char in the string STR."
   (check-type str    string)
@@ -121,6 +153,10 @@
 (defun numeric-string? (x)
   (check-type x string)
   (ignore-errors (numberp (read-from-string x))))
+
+;; (defun gensym-n (&optional (n 1))
+;;   (loop :for i :from 1 :to n
+;;         :collect (gensym)))
 
 (defun concat-symbols (&rest syms)
   (read-from-string (str<-lst syms)))

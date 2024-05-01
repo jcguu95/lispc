@@ -230,23 +230,6 @@
           (string-downcase (char (str<- str) 0))
           (subseq (str<- str) 1)))
 
-(defun flatten (xs)
-  (if (atom xs) (list xs) (mapcan #'flatten xs)))
-
-(defun divide-at (seq elem)
-  (labels ((helper (seq elem curr res)
-             (if (null seq) (cons (reverse curr) res)
-                 (if (eq (car seq) elem)
-                     (helper
-                      (cdr seq) elem nil (cons (reverse curr) res))
-                     (helper
-                      (cdr seq) elem (cons (car seq) curr) res)))))
-    (reverse (helper seq elem nil nil))))
-
-(defun split-str (str ch)
-  (remove-if #'(lambda (x) (eq (length x) 0))
-             (mapcar #'str<-lst (divide-at (chars<-str str) ch))))
-
 (defun lowercase-c (&rest strs)
   (format nil "~{~a~}" (mapcar #'string-downcase (mapcar #'str<- strs))))
 
@@ -255,9 +238,9 @@
 
 (defun camelcase-c (&rest strs)
   (setf strs
-        (flatten (mapcan #'(lambda (x) (split-str x #\-)) (mapcar #'str<- strs))))
+        (flatten (mapcan #'(lambda (x) (split-str-at x #\-)) (mapcar #'str<- strs))))
   (setf strs
-        (flatten (mapcan #'(lambda (x) (split-str x #\_)) (mapcar #'str<- strs))))
+        (flatten (mapcan #'(lambda (x) (split-str-at x #\_)) (mapcar #'str<- strs))))
   (format nil "~{~a~}" (mapcar #'capitalize-c strs)))
 
 (defun dashify-c (&rest strs)
@@ -265,7 +248,7 @@
 
 (defun lcamelcase-c (&rest strs)
   (setf strs
-        (flatten (mapcan #'(lambda (x) (split-str x #\-)) (mapcar #'str<- strs))))
+        (flatten (mapcan #'(lambda (x) (split-str-at x #\-)) (mapcar #'str<- strs))))
   (format nil "~a~{~a~}" (string-downcase (car strs)) (mapcar #'capitalize-c (cdr strs))))
 
 (defmacro with-optional-first-arg (args nym default-value possible-values &body body)
@@ -277,9 +260,6 @@
            (setf ,nym ,default-value)
            (setf ,args (cdr ,args)))
        ,@body)))
-
-(defun gensym-n (&optional (n 1))
-  (loop for i from 1 to n collect (gensym)))
 
 (defun bar (&rest xs)
   (with-optional-first-arg xs atmos 'cloudy (cloudy sunny rainy)
