@@ -1,8 +1,8 @@
 ;;;; Copyright Jonathan Baca, 2016
 
 ;; (defvar *lbrac* #\[)
-(defvar *file-out*      nil)
-(defvar *exec-out*      nil)
+;; (defvar *file-out*      nil)
+;; (defvar *exec-out*      nil)
 (defvar *last-compiled* nil)
 (defvar *c-synonyms*    (make-hash-table))
 (defvar *macro-list*    (make-hash-table))
@@ -37,8 +37,8 @@
 ;; (defun change-exec (nym)
 ;;   (setf *exec-out* (c-strify nym)))
 
-(defun compile-c ()
-  (uiop:run-program (format nil "gcc ~a -o ~a" *file-out* *exec-out*)))
+;; (defun compile-c (file-out exec-out)
+;;   (uiop:run-program (format nil "gcc ~a -o ~a" file-out exec-out)))
 
 (defmacro decr (x)
   `(setf ,x (1- ,x)))
@@ -185,8 +185,8 @@
 ;; (defun pc (&rest xs)
 ;;   (format t "~a" (apply #'c xs)))
 
-(defmacro cwrite (&rest xs)
-  `(write-out (format nil "~a;~%" (c ,@xs))))
+;; (defmacro cwrite (&rest xs)
+;;   `(write-out (format nil "~a;~%" (c ,@xs))))
 
 (defun capitalize-c (str)
   (format nil "~a~a"

@@ -43,15 +43,15 @@
             (if (zerop hr) "" (format nil "~2,'0d:" hr))
             min sec)))
 
-(defun write-out (fmt-string)
-  "Append string to *FILE-OUT*."
-  (check-type fmt-string string)
-  (if *file-out*
-      (with-open-file (stream *file-out* :direction :output
-                                         :if-exists :append
-                                         :if-does-not-exist :create)
-        (format stream fmt-string))
-      (error "*FILE-OUT* unbound.")))
+;; (defun write-out (fmt-string)
+;;   "Append string to *FILE-OUT*."
+;;   (check-type fmt-string string)
+;;   (if *file-out*
+;;       (with-open-file (stream *file-out* :direction :output
+;;                                          :if-exists :append
+;;                                          :if-does-not-exist :create)
+;;         (format stream fmt-string))
+;;       (error "*FILE-OUT* unbound.")))
 
 (defun file-string (filename)
   "Return the file content as a string."
