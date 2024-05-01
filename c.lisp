@@ -186,10 +186,6 @@
 ;; (defun pc (&rest xs)
 ;;   (format t "~a" (apply #'c xs)))
 
-(defun repeatnrepeatnrepeatn (x &optional (n 1))
-  (format nil "~{~a~}"
-          (loop for i from 1 to n collect x)))
-
 (defmacro cwrite (&rest xs)
   `(write-out (format nil "~a;~%" (c ,@xs))))
 
@@ -433,7 +429,7 @@
 
 (defun/c addr (x &optional (n 1))
   (cofy x)
-  (format nil "~a(~a)" (repeatnrepeatnrepeatn #\& n) x))
+  (format nil "~a(~a)" (str<repeat-n< #\& n) x))
 
 (defun/c ptr (x &optional (n 1))
   (format nil "~{~a~}(~a)"
@@ -655,7 +651,7 @@
            (if small
                ""
                (format nil "/**~a**/~%"
-                       (repeatnrepeatnrepeatn #\* (- (length s) 7))))))
+                       (str<repeat-n< #\* (- (length s) 7))))))
     (format nil "~%~a~a~a~%" v s v)))
 
 (defun/c header (nym &key local)
@@ -871,19 +867,19 @@
     (setf const 'const))
   (format nil "~a~a~a" nym
           (if const (format nil " ~a" (cof const)) "")
-          (repeatnrepeatnrepeatn #\& n)))
+          (str<repeat-n< #\& n)))
 
 (defun/c ptr& (&optional nym (n 1))
   (cofy nym)
-  (format nil "~a~a" (repeatnrepeatnrepeatn #\& n) nym))
+  (format nil "~a~a" (str<repeat-n< #\& n) nym))
 
 (defun/c typ[&] (&optional nym (n 1))
   (cofy nym)
-  (format nil "~a(~a)" nym (repeatnrepeatnrepeatn #\& n)))
+  (format nil "~a(~a)" nym (str<repeat-n< #\& n)))
 
 (defun/c ptr[&] (&optional nym (n 1))
   (cofy nym)
-  (format nil "(~a)~a" (repeatnrepeatnrepeatn #\& n) nym))
+  (format nil "(~a)~a" (str<repeat-n< #\& n) nym))
 
 (defun/c class (&optional nym &rest terms)
   (cofy nym)
