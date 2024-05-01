@@ -285,8 +285,6 @@
   (with-optional-first-arg xs atmos 'cloudy (cloudy sunny rainy)
     (with-optional-first-arg xs deg 0 (0 1 2 3 4 5)
       (list atmos deg xs))))
-(defmacro fib (n)
-  (if (< n 2) 1 `(+ (fib ,(1- n)) (fib ,(- n 2)))))
 
 (defun macnx (macro-form &optional (n 1))
   (if (zerop n)
@@ -394,20 +392,20 @@
           (*  :post t   :nyms (ptrtyp arg*) :nparen t))
 
 ;;; C Stuff
-(defun/c arr-decl
-    (&rest xs)
+
+(defun/c arr-decl (&rest xs)
   (format nil "{~{~a~^~(, ~)~}}" (mapcar #'cof xs)))
-(defun/c struct-decl
-    (&optional nym &rest xs)
+
+(defun/c struct-decl (&optional nym &rest xs)
   (cofy nym)
   (format nil "(~a){~{~a~^~(, ~)~}}" nym (mapcar #'cof xs)))
 
-(defun/c sym/add (&rest xs)
-  (cofsy xs)
+
+(defun/c sym/add (&rest xs) (cofsy xs)
   (str<-lst xs))
 
-(defun/c slot
-    (a &rest bs)
+
+(defun/c slot (a &rest bs)
   (cofy a)
   (cofsy bs)
   (format nil "(~a)~a~{~a~^~(->~)~}" a
@@ -415,8 +413,8 @@
               "->"
               "")
           bs))
-(defun/c mem
-    (a &rest bs)
+
+(defun/c mem (a &rest bs)
   (cofy a)
   (cofsy bs)
   (format nil "(~a)~a~{~a~^.~}" a
@@ -424,44 +422,43 @@
               "."
               "")
           bs))
-(defun/c typ*
-    (x &optional (n 1))
+
+(defun/c typ* (x &optional (n 1))
   (cofy x)
   (format nil "~a~{~a~}" x
           (loop for i from 1 to n
                 collect #\*)))
-(defun/c const
-    (&rest xs)
+
+(defun/c const (&rest xs)
   (format nil "const ~a"
           (apply #'var-c
                  (if (= 1 (length xs))
                      (list (car xs) nil)
                      xs))))
-(defun/c syn (a b)
-  (progn (csyn a b) ""))
+
+(defun/c syn (a b) (progn (csyn a b) ""))
 
 (defun/c unsyn (a)
   (progn (cunsyn a) ""))
 
-(defun/c progn
-    (&rest xs)
+(defun/c progn (&rest xs)
   (format nil "~{  ~a;~^~%~}" (mapcar #'cof xs)))
-(defun/c ?
-    (test ifyes ifno)
+
+(defun/c ? (test ifyes ifno)
   (cofy test)
   (cofy ifyes)
   (cofy ifno)
   (format nil "(~a)?~a:(~a)" test ifyes ifno))
-(defun/c if
-    (test &optional ifyes ifno)
+
+(defun/c if (test &optional ifyes ifno)
   (cofy test)
   (cofy ifyes)
   (format nil "if(~a) {~%   ~a;~%}~a" test ifyes
           (if ifno
               (format nil "else{~%   ~a;~%}" (cof ifno))
               "")))
-(defun/c cond
-    (&rest pairs)
+
+(defun/c cond (&rest pairs)
   (format nil "if(~a) {~{~%  ~a;~}~%}~{~a~}" (cof (caar pairs))
           (mapcar #'cof (cdar pairs))
           (mapcar
@@ -469,8 +466,8 @@
                (format nil "else if(~a){~{~%   ~a;~}~%}" (cof (car pair))
                        (mapcar #'cof (cdr pair))))
            (cdr pairs))))
-(defun/c ifs
-    (&rest pairs)
+
+(defun/c ifs (&rest pairs)
   (format nil "if(~a) {~{~%  ~a;~}~%}~{~a~}" (cof (caar pairs))
           (mapcar #'cof (cdar pairs))
           (mapcar
@@ -478,25 +475,25 @@
                (format nil "if(~a){~{~%   ~a;~}~%}" (cof (car pair))
                        (mapcar #'cof (cdr pair))))
            (cdr pairs))))
-(defun/c main
-    (&rest body)
+
+(defun/c main (&rest body)
   (format nil "int main(int argc,char **argv)~a" (block-c body)))
-(defun/c for
-    (a b c &rest lines)
+
+(defun/c for (a b c &rest lines)
   (cofy a)
   (cofy b)
   (cofy c)
   (format nil "for(~a;~a;~a)~a" a b c (block-c lines)))
-(defun/c while
-    (test &rest lines)
+
+(defun/c while (test &rest lines)
   (cofy test)
   (format nil "while(~a) ~a" test (block-c lines)))
-(defun/c do-while
-    (test &rest lines)
+
+(defun/c do-while (test &rest lines)
   (cofy test)
   (format nil "do~awhile(~a)" (block-c lines) test))
-(defun/c switch
-    (var &rest pairs)
+
+(defun/c switch (var &rest pairs)
   (cofy var)
   (labels ((helper (pairs)
              (format nil "~a:~%   ~a~%~a" (cof (caar pairs))
@@ -505,57 +502,57 @@
                          (helper (cdr pairs))
                          ""))))
     (format nil "switch(~a){~a}" var (helper pairs))))
-(defun/c addr
-    (x &optional (n 1))
+
+(defun/c addr (x &optional (n 1))
   (cofy x)
   (format nil "~a(~a)" (repeatnrepeatnrepeatn #\& n) x))
-(defun/c ptr
-    (x &optional (n 1))
+
+(defun/c ptr (x &optional (n 1))
   (format nil "~{~a~}(~a)"
           (loop for i from 1 to n
                 collect #\*)
           (cof x)))
-(defun/c pt
-    (x &optional (n 1))
+
+(defun/c pt (x &optional (n 1))
   (format nil "~{~a~}~a"
           (loop for i from 1 to n
                 collect #\*)
           (cof x)))
-(defun/c nth
-    (x &optional (n 0) &rest ns)
+
+(defun/c nth (x &optional (n 0) &rest ns)
   (format nil "(~a)[~a]~a" (cof x) (cof n)
           (if ns
               (format nil "~{[~a]~}" (mapcar #'cof ns))
               "")))
-(defun/c arr
-    (x &optional n &rest ns)
+
+(defun/c arr (x &optional n &rest ns)
   (format nil "~a[~a]~a" (cof x) (cof n)
           (if ns
               (format nil "~{[~a]~}" (mapcar #'cof ns))
               "")))
-(defun/c call
-    (nym &rest args)
+
+(defun/c call (nym &rest args)
   (format nil "~a(~{~a~^,~})" (cof nym) (mapcar #'cof args)))
-(defun/c cuda/call
-    (nym ijk &rest args)
+
+(defun/c cuda/call (nym ijk &rest args)
   (cofy nym)
   (cofsy ijk)
   (format nil "~a<<<~{~a~^,~}>>>(~{~a~^,~})" nym ijk (mapcar #'cof args)))
-(defun/c str
-    (&rest x)
+
+(defun/c str (&rest x)
   (cofsy x)
   (format nil "\"~{~a~^ ~}\"" x))
-(defun/c char
-    (x)
+
+(defun/c char (x)
   (cofy x)
   (format nil "'~a'" x))
-(defun/c cast
-    (nym &optional (typ 'int) &rest typs)
+
+(defun/c cast (nym &optional (typ 'int) &rest typs)
   (if typs
       (apply #'cast-c (cast-c nym typ) typs)
       (format nil "((~a)(~a))" (cof typ) (cof nym))))
-(defun/c var
-    (x &optional type init &rest modifiers)
+
+(defun/c var (x &optional type init &rest modifiers)
   (cofy x)
   (cofy type)
   (format nil "~a~a~{~a~^,~}~a"
@@ -569,8 +566,8 @@
           (if init
               (format nil "=~a" (cof init))
               "")))
-(defun/c vars
-    (x &optional (inter #\,) (newline t))
+
+(defun/c vars (x &optional (inter #\,) (newline t))
   (setf x (mapcar #'(lambda (y) (apply #'var-c (fold/list y))) (fold/list/n x 1)))
   (format nil
           (format nil "~~{~~a~~^~(~a~a~)~~}" inter
@@ -579,23 +576,22 @@
                       ""))
           x))
 
-(defun/c varlist (args)
-  (vars-c args #\;))
 
-(defun/c struct (nym &optional vars)
-  (cofy nym)
+(defun/c varlist (args) (vars-c args #\;))
+
+(defun/c struct (nym &optional vars) (cofy nym)
   (csyn '***curr-class*** nym)
   (if vars
       (format nil "struct ~a{~%  ~a;~%}" nym (vars-c vars #\;))
       (format nil "struct ~a" nym)))
-(defun/c union
-    (nym &optional vars)
+
+(defun/c union (nym &optional vars)
   (cofy nym)
   (if vars
       (format nil "union ~a{~%  ~a;~%}" nym (vars-c vars #\;))
       (format nil "union ~a" nym)))
-(defun/c block
-    (&optional lines (bracket t))
+
+(defun/c block (&optional lines (bracket t))
   (let ((preq "") (unempty (and lines (not (equal '(nil) lines)))))
     (if (eq 'const (car lines))
         (progn (setf preq " const ") (setf lines (cdr lines))))
@@ -617,31 +613,31 @@
             (if bracket
                 #\}
                 ""))))
-(defun/c func
-    (nym &optional typ vars &rest body)
+
+(defun/c func (nym &optional typ vars &rest body)
   (cofy nym)
   (cofy typ)
   (format nil "~a ~a(~a)~a" typ nym (vars-c vars #\, nil)
           (if body
               (block-c body)
               "")))
-(defun/c inline
-    (arg)
+
+(defun/c inline (arg)
   (format nil "inline ~a" (cof arg)))
-(defun/c cuda/global
-    (&rest args)
+
+(defun/c cuda/global (&rest args)
   (format nil "__global__ ~a" (apply #'func-c args)))
-(defun/c cuda/device
-    (&rest args)
+
+(defun/c cuda/device (&rest args)
   (format nil "__device__ ~a" (apply #'func-c args)))
-(defun/c funcarg
-    (nym typ &optional varforms)
+
+(defun/c funcarg (nym typ &optional varforms)
   (cofy nym)
   (cofy typ)
   (cofsy varforms)
   (format nil "~a(*~a)(~{~a~^,~})" typ nym varforms))
-(defun/c return
-    (&optional x &rest ys)
+
+(defun/c return (&optional x &rest ys)
   (cofy x)
   (format nil "return ~a~a~{~^ ~a~}" x
           (if ys
@@ -650,27 +646,27 @@
           (if ys
               (mapcar #'cof ys)
               nil)))
-(defun/c typedef
-    (x &optional y)
+
+(defun/c typedef (x &optional y)
   (cofy x)
   (format nil "typedef ~a ~a;~%" x
           (if y
               (cof y)
               "")))
-(defun/c enum
-    (nym &rest mems)
+
+(defun/c enum (nym &rest mems)
   (cofy nym)
   (cofsy mems)
   (format nil "enum ~a{~{~a~^~(, ~)~}};~%" nym mems))
-(defun/c h-file
-    (nym)
+
+(defun/c h-file (nym)
   (cofy nym)
   (format nil "~a.h" nym))
-(defun/c str/add
-    (&rest xs)
+
+(defun/c str/add (&rest xs)
   (format nil "~{~a~}" (cof xs)))
-(defun/c include
-    (filename &key local)
+
+(defun/c include (filename &key local)
   (cofy filename)
   (format nil "#include ~a~a~a~%"
           (if local
@@ -680,55 +676,55 @@
           (if local
               #\"
               #\>)))
-(defun/c import
-    (filename)
+
+(defun/c import (filename)
   (setf filename
         (if (stringp filename)
             filename
             (format nil "~a.cl" (cof filename))))
   (progn (c-code<-file filename))
   (format nil "/* ~a LOADED */" filename))
-(defun/c macro
-    (nym &rest xs)
+
+(defun/c macro (nym &rest xs)
   (cofy nym)
   (format nil "~a(~{~a~^,~})" nym (mapcar #'cof (fold/list xs))))
-(defun/c unsigned
-    (x)
+
+(defun/c unsigned (x)
   (cofy x)
   (format nil "unsigned ~a" x))
-(defun/c define
-    (a b)
+
+(defun/c define (a b)
   (cofy a)
   (cofy b)
   (format nil "#define ~a ~a~%" a b))
-(defun/c ifdef
-    (expr)
+
+(defun/c ifdef (expr)
   (cofy expr)
   (format nil "#ifdef ~~%" expr))
-(defun/c ifndef
-    (expr)
+
+(defun/c ifndef (expr)
   (cofy expr)
   (format nil "#ifndef ~~%" expr))
-(defun/c |IF#|
-    (expr)
+
+(defun/c |IF#| (expr)
   (cofy expr)
   (format nil "#if ~a~%" expr))
-(defun/c |ELSE#|
-    nil
+
+(defun/c |ELSE#| nil
   "#else~%")
-(defun/c endif
-    nil
+
+(defun/c endif nil
   "#endif~%")
-(defun/c pragma
-    (&rest xs)
+
+(defun/c pragma (&rest xs)
   (cofsy xs)
   (format nil "#pragma ~{~a~^ ~}" xs))
-(defun/c paren
-    (x)
+
+(defun/c paren (x)
   (cofy x)
   (format nil "(~a)" x))
-(defun/c comment
-    (&rest xs)
+
+(defun/c comment (&rest xs)
   (let* ((small (eq (car xs) 's))
          (s
            (format nil "/* ~{~a~^ ~} */~%"
@@ -742,95 +738,88 @@
                (format nil "/**~a**/~%"
                        (repeatnrepeatnrepeatn #\* (- (length s) 7))))))
     (format nil "~%~a~a~a~%" v s v)))
-(defun/c header
-    (nym &key local)
+
+(defun/c header (nym &key local)
   (include-c (h-file-c nym) :local local))
-(defun/c headers
-    (&rest xs)
+
+(defun/c headers (&rest xs)
   (format nil "~{~a~}"
           (mapcar #'(lambda (x) (apply #'header-c (fold/list x))) xs)))
-(defun/c cpp
-    (&rest xs)
+
+(defun/c cpp (&rest xs)
   (cofsy xs)
   (format nil "#~{~a~^ ~}" xs))
-(defun/c lisp
-    (x)
+
+(defun/c lisp (x)
   (let ((s (eval x)))
     (if (stringp s)
         s
         "")))
-(defun/c lispmacro
-    (f llist &rest body)
+
+(defun/c lispmacro (f llist &rest body)
   (if (and (fboundp (cnym f)) (not (inhash f *macrolist*)))
       (format nil "/**ERROR: \"~a\" ALREADY DEFINED.**/" f)
       (progn
-        (eval
-         `(defun/c ,f
-              ,llist
-            ,@body))
+        (eval `(defun/c ,f ,llist ,@body))
         (sethash f t *macrolist*)
         (format nil "/**DEFINED: \"~a\" (lispmacro)**/" f))))
-(defun/c lisp/c-macro
-    (nym llist &rest body)
+
+(defun/c lisp/c-macro (nym llist &rest body)
   (progn
     (eval `(lisp/c-macro ,nym ,llist ,@body))
     (format nil "/**LISP/C MACRO \"~a\"**/" nym)))
-(defun/c lambda
-    (llist template &rest args)
+
+(defun/c lambda (llist template &rest args)
   (cof (eval `(apply (replacify-lambda ,llist ,template) ',args))))
-(defun/c template
-    (f vars template)
+
+(defun/c template (f vars template)
   (progn
-    (eval
-     `(defun/c ,f
-          (&rest args)
-        (cof (apply (replacify-lambda ,vars ,template) (mapcar #'cof args)))))
+    (eval `(defun/c ,f (&rest args)
+             (cof (apply (replacify-lambda ,vars ,template) (mapcar #'cof args)))))
     (sethash f t *templatelist*)
     (format nil "/**DEFINED: \"~a\" (template)**/" f)))
-(defun/c templates
-    (f vars template)
+
+(defun/c templates (f vars template)
   (progn
-    (eval
-     `(defun/c ,f
-          (&rest argss)
-        (apply #'progn-c
-               (mapcar #'cof
-                       (mapcar
-                        #'(lambda (args)
-                            (apply (replacify-lambda ,vars ,template)
-                                   (mapcar #'cof (fold/list args))))
-                        argss)))))
+    (eval `(defun/c ,f (&rest argss)
+             (apply #'progn-c
+                    (mapcar #'cof
+                            (mapcar
+                             #'(lambda (args)
+                                 (apply (replacify-lambda ,vars ,template)
+                                        (mapcar #'cof (fold/list args))))
+                             argss)))))
     ""))
-(defun/c cuda/dim3
-    (typ x y)
+
+(defun/c cuda/dim3 (typ x y)
   (cofy typ)
   (cofy x)
   (cofy y)
   (format nil "dim3 ~a(~a,~a)" typ x y))
-(defun/c cuda/dim/block
-    (x y)
+
+(defun/c cuda/dim/block (x y)
   (cuda/dim3-c 'dim/block x y))
-(defun/c cuda/dim/grid
-    (x y)
+
+(defun/c cuda/dim/grid (x y)
   (cuda/dim3-c 'dim/grid x y))
-(defun/c cuda/shared
-    (&rest xs)
+
+(defun/c cuda/shared (&rest xs)
   (format nil "__shared__ ~a" (apply #'var-c xs)))
-(defun/c repeat
-    (x &optional (n 1))
+
+(defun/c repeat (x &optional (n 1))
   (cofy x)
   (format nil "~{~a~^ ~}"
           (loop for i from 1 to n
                 collect x)))
-(defun/c funcall
-    (func &rest args)
+
+(defun/c funcall (func &rest args)
   (apply (cnym func) args))
-(defun/c apply
-    (func &rest args)
+
+(defun/c apply (func &rest args)
   (setf args (append (butlast args) (car (last args))))
   (apply (cnym func) args))
-(defun/c mapcar
-    (&rest argss)
+
+(defun/c mapcar (&rest argss)
   (with-optional-first-arg argss
       brackets?
       nil
@@ -838,8 +827,8 @@
     (let ((func (car argss)))
       (setf argss (cdr argss))
       (block-c (apply #'mapcar (cnym func) argss) brackets?))))
-(defun/c mapargs
-    (&rest argss)
+
+(defun/c mapargs (&rest argss)
   (with-optional-first-arg argss
       brackets?
       nil
@@ -848,26 +837,26 @@
       (setf argss (cdr argss))
       (block-c (mapcar #'(lambda (args) (apply-c func args)) argss)
                brackets?))))
-(defun/c car
-    (&rest args)
+
+(defun/c car (&rest args)
   (car args))
-(defun/c cdr
-    (&rest args)
+
+(defun/c cdr (&rest args)
   (cdr args))
-(defun/c cadr
-    (&rest args)
+
+(defun/c cadr (&rest args)
   (cadr args))
-(defun/c cdar
-    (&rest args)
+
+(defun/c cdar (&rest args)
   (cdar args))
-(defun/c cddr
-    (&rest args)
+
+(defun/c cddr (&rest args)
   (cddr args))
-(defun/c caar
-    (&rest args)
+
+(defun/c caar (&rest args)
   (caar args))
-(defun/c binop
-    (opr &rest xs)
+
+(defun/c binop (opr &rest xs)
   (cofsy xs)
   (format nil (format nil "(~~{(~~a)~~^~~(~a~~)~~})" opr) xs))
 
@@ -881,90 +870,76 @@
       (apply #'funcall-c func args)
       (str<-lst (mapcar #'cof args))))
 
-(defun/c test-eq
-    (a b)
+(defun/c test-eq (a b)
   (eq a b))
-(defun/c test-not
-    (a)
+
+(defun/c test-not (a)
   (not a))
-(defun/c test-and
-    (&rest xs)
+
+(defun/c test-and (&rest xs)
   (eval `(and ,@xs)))
-(defun/c test-or
-    (&rest xs)
+
+(defun/c test-or (&rest xs)
   (eval `(or ,@xs)))
-(defun/c code-list
-    (&rest xs)
+
+(defun/c code-list (&rest xs)
   (mapcar #'cof xs))
-(defun/c list
-    (&rest xs)
+
+(defun/c list (&rest xs)
   xs)
 
 ;;; C++ Stuff
-(defun/c hh-file
-    (nym)
+(defun/c hh-file (nym)
   (cofy nym)
   (format nil "~a.hh" nym))
-(defun/c header++
-    (nym &key local)
+
+(defun/c header++ (nym &key local)
   (if local
       (include-c (hh-file-c nym) :local local)
       (include-c nym)))
-(defun/c headers++
-    (&rest xs)
+
+(defun/c headers++ (&rest xs)
   (format nil "~{~a~}"
           (mapcar #'(lambda (x) (apply #'header++-c (fold/list x))) xs)))
-(defun/c tridot
-    (x)
+
+(defun/c tridot (x)
   (cofy x)
   (format nil "~a..." x))
-(defun/c struct++
-    (&optional nym &rest xs)
+
+(defun/c struct++ (&optional nym &rest xs)
   (cofy nym)
   (csyn '***curr-class*** nym)
-  (format nil "struct ~a~a" nym
-          (if xs
-              (block-c xs)
-              "")))
-(defun/c virtual
-    (&optional x y)
+  (format nil "struct ~a~a" nym (if xs (block-c xs) "")))
+
+(defun/c virtual (&optional x y)
   (cofy x)
   (format nil "virtual ~a~a" x
-          (if y
-              (format nil " = ~a" (cof y))
-              "")))
-(defun/c deprecated
-    (&optional x &rest msg)
+          (if y (format nil " = ~a" (cof y)) "")))
+
+(defun/c deprecated (&optional x &rest msg)
   (cofy x)
   (format nil "[[deprecated~a]] ~a"
-          (if msg
-              (format nil "(\"~{~a~^ ~}\")" (mapcar #'cof msg))
-              "")
+          (if msg (format nil "(\"~{~a~^ ~}\")" (mapcar #'cof msg)) "")
           x))
-(defun/c delete
-    (&optional x)
+
+(defun/c delete (&optional x)
   (cofy x)
   (format nil "delete ~a" x))
-(defun/c lambda++
-    (&optional capture-list params attribs ret &rest body)
-  (if (eq capture-list '[])
+
+(defun/c lambda++ (&optional capture-list params attribs ret &rest body)
+  (when (eq capture-list '[])
       (setf capture-list nil))
-  (setf capture-list
-        (mapcar
-         #'(lambda (x)
-             (if (atom x)
-                 (c-strify x t)
-                 (cof x)))
-         (fold/list capture-list)))
+  (setf capture-list (mapcar
+                      #'(lambda (x)
+                          (if (atom x)
+                              (c-strify x t)
+                              (cof x)))
+                      (fold/list capture-list)))
   (setf attribs (mapcar #'cof (fold/list attribs)))
   (format nil "[~{~a~^,~}]~a~{~^ ~a~}~a~a" capture-list
-          (if (or params attribs ret)
-              (parenify (str<- (vars-c params #\, nil)))
-              "")
+          (if (or params attribs ret) (parenify (str<- (vars-c params #\, nil))) "")
           attribs
-          (if ret
-              (format nil " -> ~a " (cof ret))
-              "")
+          (if ret (format nil " -> ~a " (cof ret)) "")
           (block-c body)))
 
 (defun/c lambda++* (&optional args &rest body)
