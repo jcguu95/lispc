@@ -84,6 +84,12 @@
   (equal (flatten '((x))) '(x))
   (equal (flatten '((x) (((y))) ((z w)))) '(x y z w))))
 
+(defun pad-right (lst item len)
+  (if (>= (length lst) len)
+      lst
+      (append (pad-right lst item (1- len)) (list item))))
+(assert (equal (pad-right '(1 2) 0 5) '(1 2 0 0 0)))
+
 (defun fold/list (x)
   "The same as (fold/list/n x 1)."
   (if (listp x) x (list x)))
@@ -167,3 +173,20 @@
       x
       (macroexpand-n (macroexpand-1 x) (1- n))))
 
+(defun replacify (vars subs template)
+  (labels ((helper (v s temp)
+             (if (eq temp v) s
+                 (if (atom temp) temp
+                     (mapcar #'(lambda (x) (helper v s x)) temp)))))
+    (if (null vars)
+        template
+        (replacify (cdr vars) (cdr subs)
+                   (helper (car vars)
+                           (car subs)
+                           template)))))
+(assert (equal '(1 2 3 2 1 1)
+               (replacify '(x y z) '(1 2 3) '(x y z y x x)) ))
+
+(defmacro replacify-lambda (vars template)
+  (let ((varlist (loop for i from 1 to (length vars) collect (gensym))))
+    `(lambda ,varlist (replacify ',vars (list ,@varlist) ',template))))

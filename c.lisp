@@ -277,11 +277,6 @@
               (mapcar #'(lambda (x) (macnx x n)) macro-form))
           macro-form)))
 
-(defun padleft (lst item len)
-  (if (>= (length lst) len)
-      lst
-      (append (padleft lst item (1- len)) (list item))))
-
 (defun cof (x)
   (if (null x)
       ""
@@ -311,18 +306,6 @@
 
 (defmacro cofy (x) `(setf ,x (cof ,x)))
 (defmacro cofsy (x) `(setf ,x (mapcar #'cof (fold/list ,x))))
-
-(defun replacify (vars subs template)
-  (labels ((helper (v s temp)
-             (if (eq temp v) s
-                 (if (atom temp) temp
-                     (mapcar #'(lambda (x) (helper v s x)) temp)))))
-    (if (null vars) template
-        (replacify (cdr vars) (cdr subs) (helper (car vars) (car subs) template)))))
-
-(defmacro replacify-lambda (vars template)
-  (let ((varlist (loop for i from 1 to (length vars) collect (gensym))))
-    `(lambda ,varlist (replacify ',vars (list ,@varlist) ',template))))
 
 ;;; DEFINE THE C LANGUAGE
 
@@ -923,7 +906,7 @@
           (block-c body)))
 
 (defun/c lambda++* (&optional args &rest body)
-  (apply #'lambda++-c (append (padleft (fold/list args) nil 4) body)))
+  (apply #'lambda++-c (append (pad-right (fold/list args) nil 4) body)))
 
 (defun/c namespace (&rest terms)
   (cofsy terms)
