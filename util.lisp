@@ -164,14 +164,35 @@
 ;;   (loop :for i :from 1 :to n
 ;;         :collect (gensym)))
 
+(defun symbol-append-c (nym)
+  (nth-value 0 (concat-symbols nym '-c)))
+(assert (eq (symbol-append-c 'xyz) 'xyz-c))
+
 (defun concat-symbols (&rest syms)
   (read-from-string (str<-lst syms)))
 (assert (eq 'abc (concat-symbols 'a 'b 'c)))
+
+(defun trim-symbol (x n)
+  (check-type x symbol)
+  (check-type n (integer 0))
+  (read-from-string (subseq (str<- x) n)))
+(assert (eq (trim-symbol 'abcdefg 4) 'efg))
 
 (defun macroexpand-n (x &optional (n 1))
   (if (zerop n)
       x
       (macroexpand-n (macroexpand-1 x) (1- n))))
+
+;; (defun macnx (macro-form &optional (n 1))
+;;   (if (zerop n)
+;;       macro-form
+;;       (if (listp macro-form)
+;;           (if (atom (car macro-form))
+;;               (if (equal (macroexpand-1 macro-form) macro-form)
+;;                   (mapcar #'(lambda (x) (macnx x n)) macro-form)
+;;                   (macnx (macroexpand-1 macro-form) (1- n)))
+;;               (mapcar #'(lambda (x) (macnx x n)) macro-form))
+;;           macro-form)))
 
 (defun replacify (vars subs template)
   (labels ((helper (v s temp)
@@ -190,3 +211,36 @@
 (defmacro replacify-lambda (vars template)
   (let ((varlist (loop for i from 1 to (length vars) collect (gensym))))
     `(lambda ,varlist (replacify ',vars (list ,@varlist) ',template))))
+
+;; (defmacro swap (a b)
+;;   (let ((c (gensym)))
+;;     `(let ((,c ,a))
+;;        (setf ,a ,b)
+;;        (setf ,b ,c)
+;;        (setf ,c ,a))))
+
+(defun replace-fn (old-fn new-fn form)
+  (labels ((helper (form replace?)
+             (if (atom form)
+                 (if (and replace?
+                          (eq form old-fn))
+                     new-fn
+                     form)
+                 (when form
+                   (if (atom (car form))
+                       (cond
+                         ((eq (car form) 'function)
+                          (cons 'function (helper (cdr form) t)))
+                         ((eq (car form) 'quote)
+                          (print (cadr form))
+                          `(quote ,(cadr form)))
+                         (t
+                          (cons (helper (car form) t)
+                                (mapcar (lambda (x) (helper x nil))
+                                        (cdr form)))))
+                       (cons (helper (car form) t)
+                             (mapcar (lambda (x) (helper x nil))
+                                     (cdr form))))))))
+    (helper form t)))
+(assert (equal '(1 (1) ((1)) (((1))) 0 0 (1 0 0))
+               (replace-fn 0 1 '(0 (0) ((0)) (((0))) 0 0 (0 0 0)))))

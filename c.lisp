@@ -5,31 +5,8 @@
 (defvar *exec-out* nil)
 (defvar *last-compiled* nil)
 (defvar *c-synonyms* (make-hash-table))
-(defvar *macrolist* (make-hash-table))
-(defvar *templatelist* (make-hash-table))
-
-(defun replace-fn (old-fn new-fn form)
-  (labels ((helper (form s)
-             (if (atom form)
-                 (if (and s (eq form old-fn)) new-fn form)
-                 (if (null form)
-                     nil
-                     (if (atom (car form))
-                         (cond
-                           ((eq (car form) 'function)
-                            (cons 'function (helper (cdr form) t)))
-                           ((eq (car form) 'quote)
-                            (print (cadr form))
-                            `(quote ,(cadr form)))
-                           (t
-                            (cons (helper (car form) t)
-                                  (mapcar #'(lambda (x)
-                                              (helper x nil)) (cdr form)))))
-                         (cons (helper (car form) t)
-                               (mapcar #'(lambda (x)
-                                           (helper x nil)) (cdr form))))))))
-    (helper form t)))
-
+(defvar *macro-list* (make-hash-table))
+(defvar *template-list* (make-hash-table))
 
 (defmacro lisp/c-macro (nym llist &rest code)
   (let ((helper (concat-symbols nym '-background))
@@ -98,7 +75,7 @@
      (compile ',syn)))
 
 (defmacro cfunc-syn (func syn)
-  `(func-syn ,(cnym func) ,(cnym syn)))
+  `(func-syn ,(symbol-append-c func) ,(symbol-append-c syn)))
 
 (defmacro func-syns (func syns &rest yns)
   (deff syns fold/list)
@@ -113,15 +90,12 @@
 (defmacro un (x)
   `(setf ,x (not ,x)))
 
-(defun cnym (nym)
-  (nth-value 0 (concat-symbols nym '-c)))
-
 (defmacro incr (x)
   `(setf ,x (1+ ,x)))
 
 (defmacro defun/c (f args &body body)
-  `(progn (defun ,(cnym f) ,args ,@body)
-          (compile ',(cnym f))))
+  `(progn (defun ,(symbol-append-c f) ,args ,@body)
+          (compile ',(symbol-append-c f))))
 
 (defmacro binop2 (oper &key nlp nrp nym)
   (def nym oper)
@@ -147,7 +121,7 @@
                        ,lp
                        ,lp (cof (car xs)) ,rp
                        ',oper
-                       (apply (function ,(cnym nym)) (cdr xs)) ,rp))))))
+                       (apply (function ,(symbol-append-c nym)) (cdr xs)) ,rp))))))
 
 (defmacro rredop (oper &key nym nparen)
   (def nym oper)
@@ -158,7 +132,7 @@
            (if (= 1 (length xs))
                (format nil "~a~a~a" ,lp (cof (car xs)) ,rp)
                (format nil "~a~a~a~a~a~a~a" ,lp
-                       (apply (function ,(cnym nym)) (butlast xs))
+                       (apply (function ,(symbol-append-c nym)) (butlast xs))
                        ',oper ,lp (cof (car (last xs))) ,rp ,rp))))))
 
 (defmacro binop (oper &key nlp nrp nym nyms l r nparen)
@@ -204,19 +178,13 @@
 (defmacro binops (&rest opers)
   `(progn ,@(mapcar #'(lambda (oper) `(binop ,@(fold/list oper))) opers)))
 
-(defmacro swap (a b)
-  (let ((c (gensym)))
-    `(let ((,c ,a))
-       (setf ,a ,b)
-       (setf ,b ,c)
-       (setf ,c ,a))))
-
 (defun c (&rest xs)
-  "Compile lispc codes XS."
+  "Compile lispc codes XS.
+   NOTE An important function."
   (format nil "~{~a~^~(;~%~%~)~}" (mapcar #'cof xs)))
 
-(defun pc (&rest xs)
-  (format t "~a" (apply #'c xs)))
+;; (defun pc (&rest xs)
+;;   (format t "~a" (apply #'c xs)))
 
 (defun repeatnrepeatnrepeatn (x &optional (n 1))
   (format nil "~{~a~}"
@@ -224,9 +192,6 @@
 
 (defmacro cwrite (&rest xs)
   `(write-out (format nil "~a;~%" (c ,@xs))))
-
-(defun symtrim (x n)
-  (read-from-string (subseq (str<- x) n)))
 
 (defun capitalize-c (str)
   (format nil "~a~a"
@@ -274,17 +239,6 @@
     (with-optional-first-arg xs deg 0 (0 1 2 3 4 5)
       (list atmos deg xs))))
 
-(defun macnx (macro-form &optional (n 1))
-  (if (zerop n)
-      macro-form
-      (if (listp macro-form)
-          (if (atom (car macro-form))
-              (if (equal (macroexpand-1 macro-form) macro-form)
-                  (mapcar #'(lambda (x) (macnx x n)) macro-form)
-                  (macnx (macroexpand-1 macro-form) (1- n)))
-              (mapcar #'(lambda (x) (macnx x n)) macro-form))
-          macro-form)))
-
 (defun cof (x)
   (if (null x)
       ""
@@ -295,21 +249,21 @@
           (if (atom (car x))
               (if (and
                    (> (length (str<- (car x))) 1)
-                   (not (fboundp (cnym (car x)))))
+                   (not (fboundp (symbol-append-c (car x)))))
                   (case (char (str<- (car x)) 0)
-                    (#\@ (apply #'call-c (cof (symtrim (car x) 1)) (cdr x)))
-                    (#\[ (apply #'nth-c (cof (symtrim (car x) 2)) (cdr x)))
-                    (#\] (apply #'arr-c (cof (symtrim (car x) 1)) (cdr x)))
-                    (#\& (apply #'addr-c (cof (symtrim (car x) 1)) (cdr x)))
-                    (#\^ (apply #'cast-c (cof (symtrim (car x) 1)) (cdr x)))
-                    (#\* (apply #'ptr-c (cof (symtrim (car x) 1)) (cdr x)))
-                    (#\. (apply #'mem-c (cof (symtrim (car x) 1)) (cdr x)))
-                    (#\> (apply #'slot-c (cof (symtrim (car x) 1)) (cdr x)))
-                    (#\= (apply #'camelcase-c (str<- (symtrim (car x) 1)) (mapcar #'str<- (cdr x))))
-                    (#\% (apply #'lcamelcase-c (str<- (symtrim (car x) 1)) (mapcar #'str<- (cdr x))))
-                    (#\- (apply #'lcamelcase-c (str<- (symtrim (car x) 1)) (mapcar #'str<- (cdr x))))
-                    (otherwise (apply (cnym (car x)) (cdr x))))
-                  (apply (cnym (car x)) (cdr x)))
+                    (#\@ (apply #'call-c (cof (trim-symbol (car x) 1)) (cdr x)))
+                    (#\[ (apply #'nth-c (cof (trim-symbol (car x) 2)) (cdr x)))
+                    (#\] (apply #'arr-c (cof (trim-symbol (car x) 1)) (cdr x)))
+                    (#\& (apply #'addr-c (cof (trim-symbol (car x) 1)) (cdr x)))
+                    (#\^ (apply #'cast-c (cof (trim-symbol (car x) 1)) (cdr x)))
+                    (#\* (apply #'ptr-c (cof (trim-symbol (car x) 1)) (cdr x)))
+                    (#\. (apply #'mem-c (cof (trim-symbol (car x) 1)) (cdr x)))
+                    (#\> (apply #'slot-c (cof (trim-symbol (car x) 1)) (cdr x)))
+                    (#\= (apply #'camelcase-c (str<- (trim-symbol (car x) 1)) (mapcar #'str<- (cdr x))))
+                    (#\% (apply #'lcamelcase-c (str<- (trim-symbol (car x) 1)) (mapcar #'str<- (cdr x))))
+                    (#\- (apply #'lcamelcase-c (str<- (trim-symbol (car x) 1)) (mapcar #'str<- (cdr x))))
+                    (otherwise (apply (symbol-append-c (car x)) (cdr x))))
+                  (apply (symbol-append-c (car x)) (cdr x)))
               (format nil "~{~a~^~(;~%~)~}" (mapcar #'cof x))))))
 
 (defmacro cofy (x) `(setf ,x (cof ,x)))
@@ -722,11 +676,11 @@
         "")))
 
 (defun/c lispmacro (f llist &rest body)
-  (if (and (fboundp (cnym f)) (not (inhash f *macrolist*)))
+  (if (and (fboundp (symbol-append-c f)) (not (inhash f *macro-list*)))
       (format nil "/**ERROR: \"~a\" ALREADY DEFINED.**/" f)
       (progn
         (eval `(defun/c ,f ,llist ,@body))
-        (sethash f t *macrolist*)
+        (sethash f t *macro-list*)
         (format nil "/**DEFINED: \"~a\" (lispmacro)**/" f))))
 
 (defun/c lisp/c-macro (nym llist &rest body)
@@ -739,7 +693,7 @@
 (defun/c template (f vars template)
   (eval `(defun/c ,f (&rest args)
            (cof (apply (replacify-lambda ,vars ,template) (mapcar #'cof args)))))
-  (sethash f t *templatelist*)
+  (sethash f t *template-list*)
   (format nil "/**DEFINED: \"~a\" (template)**/" f))
 
 (defun/c templates (f vars template)
@@ -776,17 +730,17 @@
                 :collect x)))
 
 (defun/c funcall (func &rest args)
-  (apply (cnym func) args))
+  (apply (symbol-append-c func) args))
 
 (defun/c apply (func &rest args)
   (setf args (append (butlast args) (car (last args))))
-  (apply (cnym func) args))
+  (apply (symbol-append-c func) args))
 
 (defun/c mapcar (&rest argss)
   (with-optional-first-arg argss brackets? nil (t nil)
     (let ((func (car argss)))
       (setf argss (cdr argss))
-      (block-c (apply #'mapcar (cnym func) argss) brackets?))))
+      (block-c (apply #'mapcar (symbol-append-c func) argss) brackets?))))
 
 (defun/c mapargs (&rest argss)
   (with-optional-first-arg argss brackets? nil (t nil)
