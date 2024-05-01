@@ -498,12 +498,12 @@
                  (if (= 1 (length xs))
                      (list (car xs) nil)
                      xs))))
-(defun/c syn
-    (a b)
+(defun/c syn (a b)
   (progn (csyn a b) ""))
-(defun/c unsyn
-    (a)
+
+(defun/c unsyn (a)
   (progn (cunsyn a) ""))
+
 (defun/c progn
     (&rest xs)
   (format nil "~{  ~a;~^~%~}" (mapcar #'cof xs)))
@@ -639,11 +639,11 @@
                       #\Newline
                       ""))
           x))
-(defun/c varlist
-    (args)
+
+(defun/c varlist (args)
   (vars-c args #\;))
-(defun/c struct
-    (nym &optional vars)
+
+(defun/c struct (nym &optional vars)
   (cofy nym)
   (csyn '***curr-class*** nym)
   (if vars
@@ -1207,7 +1207,7 @@
 
 (macropairs
  cfunc-syn
- func          f{}
+ func          f{} ; (progn (defun f{}-c (&rest args) (apply #'func-c args)) (compile 'f{}-c))
  funcarg       arg{}
  funcarg       fa{}
  namespace     n/s
@@ -1343,254 +1343,257 @@
  )
 
 ;;; SYNONYMS
-(macropairs
- csyn
+(flet ((set-c-synonym (pair)
+         (let ((key (nth 0 pair))
+               (val (nth 1 pair)))
+           (setf (gethash key *c-synonyms*) val))))
+  (mapcar #'set-c-synonym
+          '(
+            ;; CUDA STUFF
+            (cuda/malloc            "cudaMalloc")
+            (cuda/memcpy            "cudaMemcpy")
+            (cuda/free              "cudaFree")
+            (cuda/host->dev         "cudaMemcpyHostToDevice")
+            (cuda/dev->host         "cudaMemcpyDeviceToHost")
+            (cuda/dev/count         "cudaDeviceCount")
+            (cuda/dev/set           "cudaSetDevice")
+            (cuda/dev/get           "cudaGetDevice")
+            (cuda/dev/props         "cudaDeviceProperties")
+            (cuda/sync              "__syncthreads")
+            (block/idx              "blockIdx")
+            (block/idx/x            "blockIdx.x")
+            (block/idx/y            "blockIdx.y")
+            (block/idx/z            "blockIdx.z")
+            (thread/idx             "threadIdx")
+            (thread/idx/x           "threadIdx.x")
+            (thread/idx/y           "threadIdx.y")
+            (thread/idx/z           "threadIdx.z")
+            (block/dim              "blockDim")
+            (block/dim/x            "blockDim.x")
+            (block/dim/y            "blockDim.y")
+            (block/dim/z            "blockDim.z")
+            (grid/dim               "gridDim")
+            (grid/dim/x             "gridDim.x")
+            (grid/dim/y             "gridDim.y")
+            (grid/dim/z             "gridDim.z")
+            (dim/block              "dimBlock")
+            (dim/grid               "dimGrid")
 
- ;; CUDA STUFF
- 'cuda/malloc            "cudaMalloc"
- 'cuda/memcpy            "cudaMemcpy"
- 'cuda/free              "cudaFree"
- 'cuda/host->dev         "cudaMemcpyHostToDevice"
- 'cuda/dev->host         "cudaMemcpyDeviceToHost"
- 'cuda/dev/count         "cudaDeviceCount"
- 'cuda/dev/set           "cudaSetDevice"
- 'cuda/dev/get           "cudaGetDevice"
- 'cuda/dev/props         "cudaDeviceProperties"
- 'cuda/sync              "__syncthreads"
- 'block/idx              "blockIdx"
- 'block/idx/x            "blockIdx.x"
- 'block/idx/y            "blockIdx.y"
- 'block/idx/z            "blockIdx.z"
- 'thread/idx             "threadIdx"
- 'thread/idx/x           "threadIdx.x"
- 'thread/idx/y           "threadIdx.y"
- 'thread/idx/z           "threadIdx.z"
- 'block/dim              "blockDim"
- 'block/dim/x            "blockDim.x"
- 'block/dim/y            "blockDim.y"
- 'block/dim/z            "blockDim.z"
- 'grid/dim               "gridDim"
- 'grid/dim/x             "gridDim.x"
- 'grid/dim/y             "gridDim.y"
- 'grid/dim/z             "gridDim.z"
- 'dim/block              "dimBlock"
- 'dim/grid               "dimGrid"
+            ;; MPI STUFF
+            (mpi/success            "MPI_SUCCESS")
+            (mpi/err/buffer         "MPI_ERR_BUFFER")
+            (mpi/err/count          "MPI_ERR_COUNT")
+            (mpi/err/type           "MPI_ERR_TYPE")
+            (mpi/err/tag            "MPI_ERR_TAG")
+            (mpi/err/comm           "MPI_ERR_COMM")
+            (mpi/err/rank           "MPI_ERR_RANK")
+            (mpi/err/request        "MPI_ERR_REQUEST")
+            (mpi/err/root           "MPI_ERR_ROOT")
+            (mpi/err/group          "MPI_ERR_GROUP")
+            (mpi/err/op             "MPI_ERR_OP")
+            (mpi/err/topology       "MPI_ERR_TOPOLOGY")
+            (mpi/err/dims           "MPI_ERR_DIMS")
+            (mpi/err/arg            "MPI_ERR_ARG")
+            (mpi/err/unknown        "MPI_ERR_UNKNOWN")
+            (mpi/err/truncate       "MPI_ERR_TRUNCATE")
+            (mpi/err/other          "MPI_ERR_OTHER")
+            (mpi/err/intern         "MPI_ERR_INTERN")
+            (mpi/pending            "MPI_PENDING")
+            (mpi/err/in/status      "MPI_ERR_IN_STATUS")
+            (mpi/err/lastcode       "MPI_ERR_LASTCODE")
+            (mpi/bottom             "MPI_BOTTOM")
+            (mpi/proc/null          "MPI_PROC_NULL")
+            (mpi/any/source         "MPI_ANY_SOURCE")
+            (mpi/any/tag            "MPI_ANY_TAG")
+            (mpi/undefined          "MPI_UNDEFINED")
+            (mpi/bsend/overhead     "MPI_BSEND_OVERHEAD")
+            (mpi/keyval/invalid     "MPI_KEYVAL_INVALID")
+            (mpi/errors/are/fatal   "MPI_ERRORS_ARE_FATAL")
+            (mpi/errors/return      "MPI_ERRORS_RETURN")
+            (mpi/max/processor/name "MPI_MAX_PROCESSOR_NAME")
+            (mpi/max/error/string   "MPI_MAX_ERROR_STRING")
+            (mpi/char               "MPI_CHAR")
+            (mpi/short              "MPI_SHORT")
+            (mpi/int                "MPI_INT")
+            (mpi/long               "MPI_LONG")
+            (mpi/unsigned/char      "MPI_UNSIGNED_CHAR")
+            (mpi/unsigned/short     "MPI_UNSIGNED_SHORT")
+            (mpi/unsigned           "MPI_UNSIGNED")
+            (mpi/unsigned/long      "MPI_UNSIGNED_LONG")
+            (mpi/float              "MPI_FLOAT")
+            (mpi/double             "MPI_DOUBLE")
+            (mpi/long/double        "MPI_LONG_DOUBLE")
+            (mpi/byte               "MPI_BYTE")
+            (mpi/packed             "MPI_PACKED")
+            (mpi/float/int          "MPI_FLOAT_INT")
+            (mpi/double/int         "MPI_DOUBLE_INT")
+            (mpi/long/int           "MPI_LONG_INT")
+            (mpi/2int               "MPI_2INT")
+            (mpi/short/int          "MPI_SHORT_INT")
+            (mpi/long/double/int    "MPI_LONG_DOUBLE_INT")
+            (mpi/long/long/int      "MPI_LONG_LONG_INT")
+            (mpi/ub                 "MPI_UB")
+            (mpi/lb                 "MPI_LB")
+            (mpi/comm/world         "MPI_COMM_WORLD")
+            (mpi/comm/self          "MPI_COMM_SELF")
+            (mpi/ident              "MPI_IDENT")
+            (mpi/congruent          "MPI_CONGRUENT")
+            (mpi/similar            "MPI_SIMILAR")
+            (mpi/unequal            "MPI_UNEQUAL")
+            (mpi/tag/ub             "MPI_TAG_UB")
+            (mpi/io                 "MPI_IO")
+            (mpi/host               "MPI_HOST")
+            (mpi/wtime/is/global    "MPI_WTIME_IS_GLOBAL")
+            (mpi/max                "MPI_MAX")
+            (mpi/min                "MPI_MIN")
+            (mpi/sum                "MPI_SUM")
+            (mpi/prod               "MPI_PROD")
+            (mpi/maxloc             "MPI_MAXLOC")
+            (mpi/minloc             "MPI_MINLOC")
+            (mpi/band               "MPI_BAND")
+            (mpi/bor                "MPI_BOR")
+            (mpi/bxor               "MPI_BXOR")
+            (mpi/land               "MPI_LAND")
+            (mpi/lor                "MPI_LOR")
+            (mpi/lxor               "MPI_LXOR")
+            (mpi/group/null         "MPI_GROUP_NULL")
+            (mpi/comm/null          "MPI_COMM_NULL")
+            (mpi/datatype/null      "MPI_DATATYPE_NULL")
+            (mpi/request/null       "MPI_REQUEST_NULL")
+            (mpi/op/null            "MPI_OP_NULL")
+            (mpi/errhandler/null    "MPI_ERRHANDLER_NULL")
+            (mpi/group/empty        "MPI_GROUP_EMPTY")
+            (mpi/graph              "MPI_GRAPH")
+            (mpi/cart               "MPI_CART")
+            (mpi/aint               "MPI_Aint")
+            (mpi/status             "MPI_Status")
+            (mpi/group              "MPI_Group")
+            (mpi/comm               "MPI_Comm")
+            (mpi/datatype           "MPI_Datatype")
+            (mpi/request            "MPI_Request")
+            (mpi/op                 "MPI_Op")
+            (mpi/status/ignore      "MPI_STATUS_IGNORE")
+            (mpi/statuses/ignore    "MPI_STATUSES_IGNORE")
+            (mpi/copy/function      "MPI_Copy_function")
+            (mpi/delete/function    "MPI_Delete_function")
+            (mpi/handler/function   "MPI_Handler_function")
+            (mpi/user/function      "MPI_User_function")
+            (mpi/init               "MPI_Init")
+            (mpi/send               "MPI_Send")
+            (mpi/recv               "MPI_Recv")
+            (mpi/bcast              "MPI_Bcast")
+            (mpi/comm/size          "MPI_Comm_size")
+            (mpi/comm/rank          "MPI_Comm_rank")
+            (mpi/abort              "MPI_Abort")
+            (mpi/get/processor/name "MPI_Get_processor_name")
+            (mpi/get/version        "MPI_Get_version")
+            (mpi/initialized        "MPI_Initialized")
+            (mpi/wtime              "MPI_Wtime")
+            (mpi/wtick              "MPI_Wtick")
+            (mpi/finalize           "MPI_Finalize")
+            (mpi/open/port          "MPI_Open_port")
+            (mpi/comm/accept        "MPI_Comm_accept")
+            (mpi/comm/connect       "MPI_Comm_connect")
+            (mpi/scan               "MPI_Scan")
+            (mpi/allreduce          "MPI_Allreduce")
+            (mpi/comm/split         "MPI_Comm_split")
+            (mpi/isend              "MPI_Isend")
+            (mpi/irecv              "MPI_Irecv")
+            (mpi/wait               "MPI_Wait")
+            (mpi/test               "MPI_Test")
+            (mpi/init               "MPI_Init")
+            (mpi/finalize           "MPI_Finalize")
+            (mpi/comm/rank          "MPI_Comm_rank")
+            (mpi/comm/size          "MPI_Comm_size")
+            (mpi/get/count          "MPI_Get_count")
+            (mpi/type/extent        "MPI_Type_extent")
+            (mpi/type/struct        "MPI_Type_struct")
+            (mpi/scatter            "MPI_Scatter")
+            (mpi/gather             "MPI_Gather")
+            (mpi/sendrecv           "MPI_Sendrecv")
+            (mpi/sendrecv/replace   "MPI_Sendrecv_replace")
+            (mpi/group/rank         "MPI_Group_rank")
+            (mpi/group/size         "MPI_Group_size")
+            (mpi/comm/group         "MPI_Comm_group")
+            (mpi/group/free         "MPI_Group_free")
+            (mpi/group/incl         "MPI_Group_incl")
+            (mpi/comm/create        "MPI_Comm_create")
+            (mpi/wtime              "MPI_Wtime")
+            (mpi/get/processor/name "MPI_Get_processor_name")
 
- ;; MPI STUFF
- 'mpi/success            "MPI_SUCCESS"
- 'mpi/err/buffer         "MPI_ERR_BUFFER"
- 'mpi/err/count          "MPI_ERR_COUNT"
- 'mpi/err/type           "MPI_ERR_TYPE"
- 'mpi/err/tag            "MPI_ERR_TAG"
- 'mpi/err/comm           "MPI_ERR_COMM"
- 'mpi/err/rank           "MPI_ERR_RANK"
- 'mpi/err/request        "MPI_ERR_REQUEST"
- 'mpi/err/root           "MPI_ERR_ROOT"
- 'mpi/err/group          "MPI_ERR_GROUP"
- 'mpi/err/op             "MPI_ERR_OP"
- 'mpi/err/topology       "MPI_ERR_TOPOLOGY"
- 'mpi/err/dims           "MPI_ERR_DIMS"
- 'mpi/err/arg            "MPI_ERR_ARG"
- 'mpi/err/unknown        "MPI_ERR_UNKNOWN"
- 'mpi/err/truncate       "MPI_ERR_TRUNCATE"
- 'mpi/err/other          "MPI_ERR_OTHER"
- 'mpi/err/intern         "MPI_ERR_INTERN"
- 'mpi/pending            "MPI_PENDING"
- 'mpi/err/in/status      "MPI_ERR_IN_STATUS"
- 'mpi/err/lastcode       "MPI_ERR_LASTCODE"
- 'mpi/bottom             "MPI_BOTTOM"
- 'mpi/proc/null          "MPI_PROC_NULL"
- 'mpi/any/source         "MPI_ANY_SOURCE"
- 'mpi/any/tag            "MPI_ANY_TAG"
- 'mpi/undefined          "MPI_UNDEFINED"
- 'mpi/bsend/overhead     "MPI_BSEND_OVERHEAD"
- 'mpi/keyval/invalid     "MPI_KEYVAL_INVALID"
- 'mpi/errors/are/fatal   "MPI_ERRORS_ARE_FATAL"
- 'mpi/errors/return      "MPI_ERRORS_RETURN"
- 'mpi/max/processor/name "MPI_MAX_PROCESSOR_NAME"
- 'mpi/max/error/string   "MPI_MAX_ERROR_STRING"
- 'mpi/char               "MPI_CHAR"
- 'mpi/short              "MPI_SHORT"
- 'mpi/int                "MPI_INT"
- 'mpi/long               "MPI_LONG"
- 'mpi/unsigned/char      "MPI_UNSIGNED_CHAR"
- 'mpi/unsigned/short     "MPI_UNSIGNED_SHORT"
- 'mpi/unsigned           "MPI_UNSIGNED"
- 'mpi/unsigned/long      "MPI_UNSIGNED_LONG"
- 'mpi/float              "MPI_FLOAT"
- 'mpi/double             "MPI_DOUBLE"
- 'mpi/long/double        "MPI_LONG_DOUBLE"
- 'mpi/byte               "MPI_BYTE"
- 'mpi/packed             "MPI_PACKED"
- 'mpi/float/int          "MPI_FLOAT_INT"
- 'mpi/double/int         "MPI_DOUBLE_INT"
- 'mpi/long/int           "MPI_LONG_INT"
- 'mpi/2int               "MPI_2INT"
- 'mpi/short/int          "MPI_SHORT_INT"
- 'mpi/long/double/int    "MPI_LONG_DOUBLE_INT"
- 'mpi/long/long/int      "MPI_LONG_LONG_INT"
- 'mpi/ub                 "MPI_UB"
- 'mpi/lb                 "MPI_LB"
- 'mpi/comm/world         "MPI_COMM_WORLD"
- 'mpi/comm/self          "MPI_COMM_SELF"
- 'mpi/ident              "MPI_IDENT"
- 'mpi/congruent          "MPI_CONGRUENT"
- 'mpi/similar            "MPI_SIMILAR"
- 'mpi/unequal            "MPI_UNEQUAL"
- 'mpi/tag/ub             "MPI_TAG_UB"
- 'mpi/io                 "MPI_IO"
- 'mpi/host               "MPI_HOST"
- 'mpi/wtime/is/global    "MPI_WTIME_IS_GLOBAL"
- 'mpi/max                "MPI_MAX"
- 'mpi/min                "MPI_MIN"
- 'mpi/sum                "MPI_SUM"
- 'mpi/prod               "MPI_PROD"
- 'mpi/maxloc             "MPI_MAXLOC"
- 'mpi/minloc             "MPI_MINLOC"
- 'mpi/band               "MPI_BAND"
- 'mpi/bor                "MPI_BOR"
- 'mpi/bxor               "MPI_BXOR"
- 'mpi/land               "MPI_LAND"
- 'mpi/lor                "MPI_LOR"
- 'mpi/lxor               "MPI_LXOR"
- 'mpi/group/null         "MPI_GROUP_NULL"
- 'mpi/comm/null          "MPI_COMM_NULL"
- 'mpi/datatype/null      "MPI_DATATYPE_NULL"
- 'mpi/request/null       "MPI_REQUEST_NULL"
- 'mpi/op/null            "MPI_OP_NULL"
- 'mpi/errhandler/null    "MPI_ERRHANDLER_NULL"
- 'mpi/group/empty        "MPI_GROUP_EMPTY"
- 'mpi/graph              "MPI_GRAPH"
- 'mpi/cart               "MPI_CART"
- 'mpi/aint               "MPI_Aint"
- 'mpi/status             "MPI_Status"
- 'mpi/group              "MPI_Group"
- 'mpi/comm               "MPI_Comm"
- 'mpi/datatype           "MPI_Datatype"
- 'mpi/request            "MPI_Request"
- 'mpi/op                 "MPI_Op"
- 'mpi/status/ignore      "MPI_STATUS_IGNORE"
- 'mpi/statuses/ignore    "MPI_STATUSES_IGNORE"
- 'mpi/copy/function      "MPI_Copy_function"
- 'mpi/delete/function    "MPI_Delete_function"
- 'mpi/handler/function   "MPI_Handler_function"
- 'mpi/user/function      "MPI_User_function"
- 'mpi/init               "MPI_Init"
- 'mpi/send               "MPI_Send"
- 'mpi/recv               "MPI_Recv"
- 'mpi/bcast              "MPI_Bcast"
- 'mpi/comm/size          "MPI_Comm_size"
- 'mpi/comm/rank          "MPI_Comm_rank"
- 'mpi/abort              "MPI_Abort"
- 'mpi/get/processor/name "MPI_Get_processor_name"
- 'mpi/get/version        "MPI_Get_version"
- 'mpi/initialized        "MPI_Initialized"
- 'mpi/wtime              "MPI_Wtime"
- 'mpi/wtick              "MPI_Wtick"
- 'mpi/finalize           "MPI_Finalize"
- 'mpi/open/port          "MPI_Open_port"
- 'mpi/comm/accept        "MPI_Comm_accept"
- 'mpi/comm/connect       "MPI_Comm_connect"
- 'mpi/scan               "MPI_Scan"
- 'mpi/allreduce          "MPI_Allreduce"
- 'mpi/comm/split         "MPI_Comm_split"
- 'mpi/isend              "MPI_Isend"
- 'mpi/irecv              "MPI_Irecv"
- 'mpi/wait               "MPI_Wait"
- 'mpi/test               "MPI_Test"
- 'mpi/init               "MPI_Init"
- 'mpi/finalize           "MPI_Finalize"
- 'mpi/comm/rank          "MPI_Comm_rank"
- 'mpi/comm/size          "MPI_Comm_size"
- 'mpi/get/count          "MPI_Get_count"
- 'mpi/type/extent        "MPI_Type_extent"
- 'mpi/type/struct        "MPI_Type_struct"
- 'mpi/scatter            "MPI_Scatter"
- 'mpi/gather             "MPI_Gather"
- 'mpi/sendrecv           "MPI_Sendrecv"
- 'mpi/sendrecv/replace   "MPI_Sendrecv_replace"
- 'mpi/group/rank         "MPI_Group_rank"
- 'mpi/group/size         "MPI_Group_size"
- 'mpi/comm/group         "MPI_Comm_group"
- 'mpi/group/free         "MPI_Group_free"
- 'mpi/group/incl         "MPI_Group_incl"
- 'mpi/comm/create        "MPI_Comm_create"
- 'mpi/wtime              "MPI_Wtime"
- 'mpi/get/processor/name "MPI_Get_processor_name"
+            ;; PTHREADS API STUFF
+            (pthread/create              "pthread_create")
+            (pthread/equal               "pthread_equal")
+            (pthread/exit                "pthread_exit")
+            (pthread/join                "pthread_join")
+            (pthread/self                "pthread_self")
+            (pthread/mutex/init          "pthread_mutex_init")
+            (pthread/mutex/destroy       "pthread_mutex_destroy")
+            (pthread/mutex/lock          "pthread_mutex_lock")
+            (pthread/mutex/trylock       "pthread_mutex_trylock")
+            (pthread/mutex/unlock        "pthread_mutex_unlock")
+            (pthread/cond/init           "pthread_cond_init")
+            (pthread/cond/destroy        "pthread_cond_destroy")
+            (pthread/cond/wait           "pthread_cond_wait")
+            (pthread/cond/timedwait      "pthread_cond_timedwait")
+            (pthread/cond/signal         "pthread_cond_signal")
+            (pthread/cond/broadcast      "pthread_cond_broadcast")
+            (pthread/once                "pthread_once")
+            (pthread/key/create          "pthread_key_create")
+            (pthread/key/delete          "pthread_key_delete")
+            (pthread/setspecific         "pthread_setspecific")
+            (pthread/getspecific         "pthread_getspecific")
+            (pthread/cleanup/push        "pthread_cleanup_push")
+            (pthread/cleanup/pop         "pthread_cleanup_pop")
+            (pthread/attr/init           "pthread_attr_init")
+            (pthread/attr/destroy        "pthread_attr_destroy")
+            (pthread/attr/getstacksize   "pthread_attr_getstacksize")
+            (pthread/attr/setstacksize   "pthread_attr_setstacksize")
+            (pthread/attr/getdetachstate "pthread_attr_getdetachstate")
+            (pthread/attr/setdetachstate "pthread_attr_setdetachstate")
+            (flockfile                   "flockfile")
+            (ftrylockfile                "ftrylockfile")
+            (funlockfile                 "funlockfile")
+            (getc/unlocked               "getc_unlocked")
+            (getchar/unlocked            "getchar_unlocked")
+            (putc/unlocked               "putc_unlocked")
+            (putc/unlocked               "putc_unlocked")
+            (pthread/detach              "pthread_detach")
+            (pthread/threads/max         "PTHREAD_THREADS_MAX")
+            (pthread/keys/max            "PTHREAD_KEYS_MAX")
+            (pthread/stack/min           "PTHREAD_STACK_MIN")
+            (pthread/create/detached     "PTHREAD_CREATE_DETACHED")
+            (pthread/create/joinable     "PTHREAD_CREATE_JOINABLE")
 
- ;; PTHREADS API STUFF
- `pthread/create              "pthread_create"
- `pthread/equal               "pthread_equal"
- `pthread/exit                "pthread_exit"
- `pthread/join                "pthread_join"
- `pthread/self                "pthread_self"
- `pthread/mutex/init          "pthread_mutex_init"
- `pthread/mutex/destroy       "pthread_mutex_destroy"
- `pthread/mutex/lock          "pthread_mutex_lock"
- `pthread/mutex/trylock       "pthread_mutex_trylock"
- `pthread/mutex/unlock        "pthread_mutex_unlock"
- `pthread/cond/init           "pthread_cond_init"
- `pthread/cond/destroy        "pthread_cond_destroy"
- `pthread/cond/wait           "pthread_cond_wait"
- `pthread/cond/timedwait      "pthread_cond_timedwait"
- `pthread/cond/signal         "pthread_cond_signal"
- `pthread/cond/broadcast      "pthread_cond_broadcast"
- `pthread/once                "pthread_once"
- `pthread/key/create          "pthread_key_create"
- `pthread/key/delete          "pthread_key_delete"
- `pthread/setspecific         "pthread_setspecific"
- `pthread/getspecific         "pthread_getspecific"
- `pthread/cleanup/push        "pthread_cleanup_push"
- `pthread/cleanup/pop         "pthread_cleanup_pop"
- `pthread/attr/init           "pthread_attr_init"
- `pthread/attr/destroy        "pthread_attr_destroy"
- `pthread/attr/getstacksize   "pthread_attr_getstacksize"
- `pthread/attr/setstacksize   "pthread_attr_setstacksize"
- `pthread/attr/getdetachstate "pthread_attr_getdetachstate"
- `pthread/attr/setdetachstate "pthread_attr_setdetachstate"
- `flockfile                   "flockfile"
- `ftrylockfile                "ftrylockfile"
- `funlockfile                 "funlockfile"
- `getc/unlocked               "getc_unlocked"
- `getchar/unlocked            "getchar_unlocked"
- `putc/unlocked               "putc_unlocked"
- `putc/unlocked               "putc_unlocked"
- `pthread/detach              "pthread_detach"
- 'pthread/threads/max         "PTHREAD_THREADS_MAX"
- 'pthread/keys/max            "PTHREAD_KEYS_MAX"
- 'pthread/stack/min           "PTHREAD_STACK_MIN"
- 'pthread/create/detached     "PTHREAD_CREATE_DETACHED"
- 'pthread/create/joinable     "PTHREAD_CREATE_JOINABLE"
-
- ;; BASIC STUFF
- 'null                        "NULL"
- 'arg/c                       "argc"
- 'arg/count                   "argc"
- 'arg/v                       "argv"
- 'arg/values                  "argv"
- 'size/t                      "size_t"
- 'integer                     "int"
- 'integer+                    "long"
- 'natural                     "unsigned int"
- 'natural+                    "unsigned long"
- 'real                        "float"
- 'real+                       "double"
- 'boolean                     "char"
- 'stringc                     "char*"
- '---                         "..."
- '-#                          "#"
- '-##                         "##"
- '-va-args-                   "__VA_ARGS__"
- '-empty-                     " "
- '--                          " "
- '-                           "_"
- '$                           nil
- 'int+                        "long int"
- 'int++                       "long long int"
- 'double+                     "long double"
- 'float+                      "double"
- 'float++                     "long double"
- 'template-params             "template-params")
+            ;; BASIC STUFF
+            (null                        "NULL")
+            (arg/c                       "argc")
+            (arg/count                   "argc")
+            (arg/v                       "argv")
+            (arg/values                  "argv")
+            (size/t                      "size_t")
+            (integer                     "int")
+            (integer+                    "long")
+            (natural                     "unsigned int")
+            (natural+                    "unsigned long")
+            (real                        "float")
+            (real+                       "double")
+            (boolean                     "char")
+            (stringc                     "char*")
+            (---                         "...")
+            (-#                          "#")
+            (-##                         "##")
+            (-va-args-                   "__VA_ARGS__")
+            (-empty-                     " ")
+            (--                          " ")
+            (-                           "_")
+            ($                           nil)
+            (int+                        "long int")
+            (int++                       "long long int")
+            (double+                     "long double")
+            (float+                      "double")
+            (float++                     "long double")
+            (template-params             "template-params"))))
 
 (defun count-lines-in-file (filename)
   (let ((n 0))
