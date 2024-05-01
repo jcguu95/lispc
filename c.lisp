@@ -102,12 +102,8 @@
               (list (f/list//n (car x) (- n 2)))
               (list (f/list//n x (1- n)))))))
 
-
-(defun strsof (xs)
-  (format nil "~{~a~}" xs))
-
 (defun chs->str (x)
-  (strsof x))
+  (format nil "~{~a~}" xs))
 
 (defun str->chs (x)
   (loop for c across x collect c))
@@ -134,7 +130,7 @@
 
 
 (defun addsyms (&rest syms)
-  (read-from-string (strsof syms)))
+  (read-from-string (chs->str syms)))
 
 (defun macn (x &optional n)
   (def n 1)
@@ -461,10 +457,11 @@
     (&optional nym &rest xs)
   (cofy nym)
   (format nil "(~a){~{~a~^~(, ~)~}}" nym (mapcar #'cof xs)))
-(defun/c sym/add
-    (&rest xs)
+
+(defun/c sym/add (&rest xs)
   (cofsy xs)
-  (strsof xs))
+  (chs->str xs))
+
 (defun/c slot
     (a &rest bs)
   (cofy a)
@@ -929,16 +926,17 @@
     (opr &rest xs)
   (cofsy xs)
   (format nil (format nil "(~~{(~~a)~~^~~(~a~~)~~})" opr) xs))
-(defun/c funcall-if
-    (test func &rest args)
+
+(defun/c funcall-if (test func &rest args)
   (if test
       (apply #'funcall-c func args)
-      (strsof (mapcar #'cof args))))
-(defun/c apply-if
-    (test func args)
+      (chs->str (mapcar #'cof args))))
+
+(defun/c apply-if (test func args)
   (if test
       (apply #'funcall-c func args)
-      (strsof (mapcar #'cof args))))
+      (chs->str (mapcar #'cof args))))
+
 (defun/c test-eq
     (a b)
   (eq a b))
@@ -1631,7 +1629,8 @@
             (apply #'c cl-codes))))
 
 (defun tempfilename (&optional extension)
-  (labels ((genfilename () (strsof `(temp ,(random 1.0) ,extension))))
+  (labels ((genfilename ()
+             (chs->str `(temp ,(random 1.0) ,extension))))
     (let ((filename (genfilename)))
       (loop while (probe-file filename) do
         (setf filename (genfilename)))
@@ -1708,7 +1707,6 @@
 (compile 'strof)
 (compile 'f/list)
 (compile 'f/list/n)
-(compile 'strsof)
 (compile 'chs->str)
 (compile 'str->chs)
 (compile 'replace-char)
