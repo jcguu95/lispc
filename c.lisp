@@ -59,8 +59,8 @@
 (defmacro inhash (k hash)
   `(nth-value 1 (gethash ,k ,hash)))
 
-(defmacro csyn (k v)
-  `(sethash ,k ,v *c-synonyms*))
+(defun csyn (k v)
+  (sethash k v *c-synonyms*))
 
 (defmacro cunsyn (k)
   `(remhash ,k *c-synonyms*))
@@ -132,8 +132,6 @@
                         (if (eq (char s 0) #\-) (Lcamelcase-c (cof (subseq s 1)))
                             (replace-char #\- #\_ (string-downcase s))))))))))
 
-(defmacro sethash (k v hash)
-  `(setf (gethash ,k ,hash) ,v))
 
 (defun addsyms (&rest syms)
   (read-from-string (strsof syms)))
@@ -1666,16 +1664,17 @@
             (if (zerop hr) "" (format nil "~2,'0d:" hr))
             min sec)))
 
-(defun c-cl-file-continuous (filein &optional fileout ie (interval 1))
+(defun c-cl-file-continuous (filein &optional fileout ignore-error? (interval 1))
   (format t "Press ^C to stop.")
-  (do ((i 0 (+ i interval))) (nil)
+  (do ((i 0 (+ i interval)))
+      (nil)
     (progn
       (format t "~&~a" (elapsed-time i))
-      (if ie
-          (ignore-errors (c-file<-cl-file filein fileout))
+      (if ignore-error?
+          (ignore-errors
+           (c-file<-cl-file filein fileout))
           (c-file<-cl-file filein fileout))
       (sleep interval))))
-
 
 (defun compile-cl-file (filein &key fileout tags libs c-file cc)
   (def fileout "a.out")
