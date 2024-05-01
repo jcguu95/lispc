@@ -80,7 +80,7 @@
 (defun compile-c ()
   (uiop:run-program (format nil "gcc ~a -o ~a" *file-out* *exec-out*)))
 
-(defun strof (x)
+(defun str<- (x)
   (format nil "~a" x))
 
 (defun f/list (x)
@@ -102,24 +102,28 @@
               (list (f/list//n (car x) (- n 2)))
               (list (f/list//n x (1- n)))))))
 
-(defun chs->str (x)
+(defun str<-lst (xs)
   (format nil "~{~a~}" xs))
 
-(defun str->chs (x)
+(defun chars<-str (x)
   (loop for c across x collect c))
 
 (defun replace-char (before after str)
-  (chs->str (mapcar #'(lambda (x) (if (eq x before) after x)) (str->chs str))))
+  ;; e.g. (replace-char #\- #\_ "a_b-c-d_e")      ; => "a_b_c_d_e"
+  (str<-lst (mapcar #'(lambda (x) (if (eq x before) after x))
+                    (chars<-str str))))
 
 (defun numeric-string (x)
   (ignore-errors (numberp (read-from-string x))))
 
-(defun alphap (x)
-  (member (char-upcase x) (str->chs "ABCDEFGHIJKLMNOPQRSTUVWXYZ")))
+(defun a-Z? (char)
+  (member (char-upcase char)
+          (chars<-str "ABCDEFGHIJKLMNOPQRSTUVWXYZ")))
 
 (defun c-strify (x &optional leavemostlyalone)
-  (if (stringp x) x
-      (let ((s (strof x)))
+  (if (stringp x)
+      x
+      (let ((s (str<- x)))
         (if leavemostlyalone
             (string-downcase s)
             (if (numeric-string s) s
@@ -130,7 +134,7 @@
 
 
 (defun addsyms (&rest syms)
-  (read-from-string (chs->str syms)))
+  (read-from-string (str<-lst syms)))
 
 (defun macn (x &optional n)
   (def n 1)
@@ -274,17 +278,17 @@
   `(write-out (format nil "~a;~%" (c ,@xs))))
 
 (defun symtrim (x n)
-  (read-from-string (subseq (strof x) n)))
+  (read-from-string (subseq (str<- x) n)))
 
 (defun capitalize-c (str)
   (format nil "~a~a"
-          (string-upcase (char (strof str) 0))
-          (string-downcase (subseq (strof str) 1))))
+          (string-upcase (char (str<- str) 0))
+          (string-downcase (subseq (str<- str) 1))))
 
 (defun uncapitalize-c (str)
   (format nil "~a~a"
-          (string-downcase (char (strof str) 0))
-          (subseq (strof str) 1)))
+          (string-downcase (char (str<- str) 0))
+          (subseq (str<- str) 1)))
 
 (defun flatten (xs)
   (if (atom xs) (list xs) (mapcan #'flatten xs)))
@@ -301,19 +305,19 @@
 
 (defun split-str (str ch)
   (remove-if #'(lambda (x) (eq (length x) 0))
-             (mapcar #'chs->str (divide-at (str->chs str) ch))))
+             (mapcar #'str<-lst (divide-at (chars<-str str) ch))))
 
 (defun lowercase-c (&rest strs)
-  (format nil "~{~a~}" (mapcar #'string-downcase (mapcar #'strof strs))))
+  (format nil "~{~a~}" (mapcar #'string-downcase (mapcar #'str<- strs))))
 
 (defun uppercase-c (&rest strs)
-  (format nil "~{~a~}" (mapcar #'string-upcase (mapcar #'strof strs))))
+  (format nil "~{~a~}" (mapcar #'string-upcase (mapcar #'str<- strs))))
 
 (defun camelcase-c (&rest strs)
   (setf strs
-        (flatten (mapcan #'(lambda (x) (split-str x #\-)) (mapcar #'strof strs))))
+        (flatten (mapcan #'(lambda (x) (split-str x #\-)) (mapcar #'str<- strs))))
   (setf strs
-        (flatten (mapcan #'(lambda (x) (split-str x #\_)) (mapcar #'strof strs))))
+        (flatten (mapcan #'(lambda (x) (split-str x #\_)) (mapcar #'str<- strs))))
   (format nil "~{~a~}" (mapcar #'capitalize-c strs)))
 
 (defun dashify-c (&rest strs)
@@ -321,7 +325,7 @@
 
 (defun lcamelcase-c (&rest strs)
   (setf strs
-        (flatten (mapcan #'(lambda (x) (split-str x #\-)) (mapcar #'strof strs))))
+        (flatten (mapcan #'(lambda (x) (split-str x #\-)) (mapcar #'str<- strs))))
   (format nil "~a~{~a~}" (string-downcase (car strs)) (mapcar #'capitalize-c (cdr strs))))
 
 (defmacro with-optional-first-arg (args nym default-value possible-values &body body)
@@ -369,9 +373,9 @@
               (c-strify x))
           (if (atom (car x))
               (if (and
-                   (> (length (strof (car x))) 1)
+                   (> (length (str<- (car x))) 1)
                    (not (fboundp (cnym (car x)))))
-                  (case (char (strof (car x)) 0)
+                  (case (char (str<- (car x)) 0)
                     (#\@ (apply #'call-c (cof (symtrim (car x) 1)) (cdr x)))
                     (#\[ (apply #'nth-c (cof (symtrim (car x) 2)) (cdr x)))
                     (#\] (apply #'arr-c (cof (symtrim (car x) 1)) (cdr x)))
@@ -380,9 +384,9 @@
                     (#\* (apply #'ptr-c (cof (symtrim (car x) 1)) (cdr x)))
                     (#\. (apply #'mem-c (cof (symtrim (car x) 1)) (cdr x)))
                     (#\> (apply #'slot-c (cof (symtrim (car x) 1)) (cdr x)))
-                    (#\= (apply #'camelcase-c (strof (symtrim (car x) 1)) (mapcar #'strof (cdr x))))
-                    (#\% (apply #'lcamelcase-c (strof (symtrim (car x) 1)) (mapcar #'strof (cdr x))))
-                    (#\- (apply #'lcamelcase-c (strof (symtrim (car x) 1)) (mapcar #'strof (cdr x))))
+                    (#\= (apply #'camelcase-c (str<- (symtrim (car x) 1)) (mapcar #'str<- (cdr x))))
+                    (#\% (apply #'lcamelcase-c (str<- (symtrim (car x) 1)) (mapcar #'str<- (cdr x))))
+                    (#\- (apply #'lcamelcase-c (str<- (symtrim (car x) 1)) (mapcar #'str<- (cdr x))))
                     (otherwise (apply (cnym (car x)) (cdr x))))
                   (apply (cnym (car x)) (cdr x)))
               (format nil "~{~a~^~(;~%~)~}" (mapcar #'cof x))))))
@@ -460,7 +464,7 @@
 
 (defun/c sym/add (&rest xs)
   (cofsy xs)
-  (chs->str xs))
+  (str<-lst xs))
 
 (defun/c slot
     (a &rest bs)
@@ -930,12 +934,12 @@
 (defun/c funcall-if (test func &rest args)
   (if test
       (apply #'funcall-c func args)
-      (chs->str (mapcar #'cof args))))
+      (str<-lst (mapcar #'cof args))))
 
 (defun/c apply-if (test func args)
   (if test
       (apply #'funcall-c func args)
-      (chs->str (mapcar #'cof args))))
+      (str<-lst (mapcar #'cof args))))
 
 (defun/c test-eq
     (a b)
@@ -1137,7 +1141,7 @@
     (if (eq (car code) 'const)
         (progn (setf constif " const ") (setf code (cdr code))))
     (format nil "~a ~a~a~a(~a)~a~a" typ opr
-            (if (alphap (char (strof oper) 0))
+            (if (a-Z? (char (str<- oper) 0))
                 " "
                 "")
             oper (vars-c args) constif
@@ -1630,7 +1634,7 @@
 
 (defun tempfilename (&optional extension)
   (labels ((genfilename ()
-             (chs->str `(temp ,(random 1.0) ,extension))))
+             (str<-lst `(temp ,(random 1.0) ,extension))))
     (let ((filename (genfilename)))
       (loop while (probe-file filename) do
         (setf filename (genfilename)))
@@ -1704,11 +1708,11 @@
 (compile 'change-file)
 (compile 'change-exec)
 (compile 'compile-c)
-(compile 'strof)
 (compile 'f/list)
 (compile 'f/list/n)
-(compile 'chs->str)
-(compile 'str->chs)
+(compile 'str<-)
+(compile 'str<-lst)
+(compile 'chars<-str)
 (compile 'replace-char)
 (compile 'c-strify)
 (compile 'addsyms)
