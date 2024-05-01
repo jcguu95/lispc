@@ -1,11 +1,11 @@
 ;;;; Copyright Jonathan Baca, 2016
 
 ;; (defvar *lbrac* #\[)
-(defvar *file-out* nil)
-(defvar *exec-out* nil)
+(defvar *file-out*      nil)
+(defvar *exec-out*      nil)
 (defvar *last-compiled* nil)
-(defvar *c-synonyms* (make-hash-table))
-(defvar *macro-list* (make-hash-table))
+(defvar *c-synonyms*    (make-hash-table))
+(defvar *macro-list*    (make-hash-table))
 (defvar *template-list* (make-hash-table))
 
 (defmacro lisp/c-macro (nym llist &rest code)
@@ -16,8 +16,7 @@
        (defun/c ,nym (&rest ,args) (c (apply #',helper ,args))))))
 
 (defmacro macropairs (m &rest xs)
-  `(progn
-     ,@(mapcar #'(lambda (x) `(,m ,@x)) (pairify xs))))
+  `(progn ,@(mapcar #'(lambda (x) `(,m ,@x)) (pairify xs))))
 
 (defmacro sethash (k v hash)
   `(setf (gethash ,k ,hash) ,v))
@@ -31,12 +30,12 @@
 (defmacro cunsyn (k)
   `(remhash ,k *c-synonyms*))
 
-(defun change-file (file &optional is-h)
-  (setf *exec-out* (c-strify file))
-  (setf *file-out* (format nil "~a.~a" *exec-out* (if is-h #\h #\c))))
+;; (defun change-file (file &optional is-h)
+;;   (setf *exec-out* (c-strify file))
+;;   (setf *file-out* (format nil "~a.~a" *exec-out* (if is-h #\h #\c))))
 
-(defun change-exec (nym)
-  (setf *exec-out* (c-strify nym)))
+;; (defun change-exec (nym)
+;;   (setf *exec-out* (c-strify nym)))
 
 (defun compile-c ()
   (uiop:run-program (format nil "gcc ~a -o ~a" *file-out* *exec-out*)))
@@ -44,7 +43,7 @@
 (defmacro decr (x)
   `(setf ,x (1- ,x)))
 
-(defun c-strify (x &optional just-downcase)
+(defun c-strify (x &optional leave-mostly-alone)
   (unless (stringp x) (setf x (str<- x)))
   (cond (leave-mostly-alone
          (just-downcase x))
@@ -230,10 +229,10 @@
            (setf ,args (cdr ,args)))
        ,@body)))
 
-(defun bar (&rest xs)
-  (with-optional-first-arg xs atmos 'cloudy (cloudy sunny rainy)
-    (with-optional-first-arg xs deg 0 (0 1 2 3 4 5)
-      (list atmos deg xs))))
+;; (defun bar (&rest xs)
+;;   (with-optional-first-arg xs atmos 'cloudy (cloudy sunny rainy)
+;;     (with-optional-first-arg xs deg 0 (0 1 2 3 4 5)
+;;       (list atmos deg xs))))
 
 (defun cof (x)
   (if (null x)
@@ -1407,9 +1406,8 @@
                                       (read-from-string s nil))
                                     (setf s (subseq s n))
                                     result))))
-    (format nil "/* Compile Time: ~a */~%~a"
-            (timestamp)
-            (apply #'c cl-codes))))
+    ;; (format nil "/* Compile Time: ~a */~%~a" (timestamp) (apply #'c cl-codes))
+    (format nil "~a" (apply #'c cl-codes))))
 
 (defun c-file<-cl-file (filein &optional fileout)
   "Entry point to compiling a .cl file to a .c file."

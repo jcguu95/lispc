@@ -83,7 +83,7 @@
   (if (atom xs) (list xs) (mapcan #'flatten xs)))
 (assert
  (and
-  (equal (flatten nil) (()))
+  (equal (flatten nil) '(()))
   (equal (flatten 'x) '(x))
   (equal (flatten '(x)) '(x))
   (equal (flatten '(x y)) '(x y))
@@ -172,13 +172,13 @@
 ;;   (loop :for i :from 1 :to n
 ;;         :collect (gensym)))
 
-(defun symbol-append-c (nym)
-  (nth-value 0 (concat-symbols nym '-c)))
-(assert (eq (symbol-append-c 'xyz) 'xyz-c))
-
 (defun concat-symbols (&rest syms)
   (read-from-string (str<-lst syms)))
 (assert (eq 'abc (concat-symbols 'a 'b 'c)))
+
+(defun symbol-append-c (nym)
+  (nth-value 0 (concat-symbols nym '-c)))
+(assert (eq (symbol-append-c 'xyz) 'xyz-c))
 
 (defun trim-symbol (x n)
   (check-type x symbol)
