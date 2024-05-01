@@ -120,9 +120,8 @@
   `(setf ,x (1+ ,x)))
 
 (defmacro defun/c (f args &body body)
-  `(progn
-     (defun ,(cnym f) ,args ,@body) 
-     (compile ',(cnym f))))
+  `(progn (defun ,(cnym f) ,args ,@body)
+          (compile ',(cnym f))))
 
 (defmacro binop2 (oper &key nlp nrp nym)
   (def nym oper)
@@ -165,9 +164,18 @@
 (defmacro binop (oper &key nlp nrp nym nyms l r nparen)
   ;;; (format t "OPER:~a NYM:~a NYMS:~a NPAREN:~a~%" oper nym nyms nparen)
   (if nyms
-      `(progn ,@(mapcar #'(lambda (x) `(binop ,oper :nlp ,(un nlp) :nrp ,(un nrp) :nym ,x :l l :r r :nparen ,nparen)) nyms))
+      `(progn ,@(mapcar #'(lambda (x)
+                            `(binop ,oper :nlp ,(un nlp)
+                                          :nrp ,(un nrp)
+                                          :nym ,x
+                                          :l l
+                                          :r r
+                                          :nparen ,nparen))
+                        nyms))
       (if (or l r)
-          (if l `(lredop ,oper :nym ,nym :nparen ,nparen) `(rredop ,oper :nym ,nym :nparen ,nparen))
+          (if l
+              `(lredop ,oper :nym ,nym :nparen ,nparen)
+              `(rredop ,oper :nym ,nym :nparen ,nparen))
           `(binop2 ,oper :nlp ,nlp :nrp ,nrp :nym ,nym))))
 
 (defmacro pre (oper &key nym nparen)
@@ -399,10 +407,13 @@
                      (list (car xs) nil)
                      xs))))
 
-(defun/c syn (a b) (progn (csyn a b) ""))
+(defun/c syn (a b)
+  (csyn a b)
+  "")
 
 (defun/c unsyn (a)
-  (progn (cunsyn a) ""))
+  (cunsyn a)
+  "")
 
 (defun/c progn (&rest xs)
   (format nil "~{  ~a;~^~%~}" (mapcar #'cof xs)))
@@ -555,35 +566,26 @@
       (format nil "union ~a" nym)))
 
 (defun/c block (&optional lines (bracket t))
-  (let ((preq "") (unempty (and lines (not (equal '(nil) lines)))))
-    (if (eq 'const (car lines))
-        (progn (setf preq " const ") (setf lines (cdr lines))))
-    (if (listp (car lines))
-        (if (eq '-> (caar lines))
-            (progn
-              (setf preq (format nil "~a -> ~a" preq (cof (cadar lines))))
-              (setf lines (cdr lines)))))
+  (let ((preq "")
+        (unempty (and lines (not (equal '(nil) lines)))))
+    (when (eq 'const (car lines))
+      (setf preq " const ")
+      (setf lines (cdr lines)))
+    (when (and (listp (car lines))
+               (eq '-> (caar lines)))
+      (setf preq (format nil "~a -> ~a" preq (cof (cadar lines))))
+      (setf lines (cdr lines)))
     (format nil "~a~a~a~{   ~a~(;~%~)~}~a" preq
-            (if bracket
-                #\{
-                "")
-            (if unempty
-                #\Newline
-                "")
-            (if unempty
-                (mapcar #'cof (fold/list lines))
-                nil)
-            (if bracket
-                #\}
-                ""))))
+            (if bracket #\{ "")
+            (if unempty #\Newline "")
+            (if unempty (mapcar #'cof (fold/list lines)) nil)
+            (if bracket #\} ""))))
 
 (defun/c func (nym &optional typ vars &rest body)
   (cofy nym)
   (cofy typ)
   (format nil "~a ~a(~a)~a" typ nym (vars-c vars #\, nil)
-          (if body
-              (block-c body)
-              "")))
+          (if body (block-c body) "")))
 
 (defun/c inline (arg)
   (format nil "inline ~a" (cof arg)))
@@ -645,7 +647,7 @@
         (if (stringp filename)
             filename
             (format nil "~a.cl" (cof filename))))
-  (progn (c-code<-file filename))
+  (c-code<-file filename)
   (format nil "/* ~a LOADED */" filename))
 
 (defun/c macro (nym &rest xs)
@@ -728,31 +730,29 @@
         (format nil "/**DEFINED: \"~a\" (lispmacro)**/" f))))
 
 (defun/c lisp/c-macro (nym llist &rest body)
-  (progn
-    (eval `(lisp/c-macro ,nym ,llist ,@body))
-    (format nil "/**LISP/C MACRO \"~a\"**/" nym)))
+  (eval `(lisp/c-macro ,nym ,llist ,@body))
+  (format nil "/**LISP/C MACRO \"~a\"**/" nym))
 
 (defun/c lambda (llist template &rest args)
   (cof (eval `(apply (replacify-lambda ,llist ,template) ',args))))
 
 (defun/c template (f vars template)
-  (progn
-    (eval `(defun/c ,f (&rest args)
-             (cof (apply (replacify-lambda ,vars ,template) (mapcar #'cof args)))))
-    (sethash f t *templatelist*)
-    (format nil "/**DEFINED: \"~a\" (template)**/" f)))
+  (eval `(defun/c ,f (&rest args)
+           (cof (apply (replacify-lambda ,vars ,template) (mapcar #'cof args)))))
+  (sethash f t *templatelist*)
+  (format nil "/**DEFINED: \"~a\" (template)**/" f))
 
 (defun/c templates (f vars template)
-  (progn
-    (eval `(defun/c ,f (&rest argss)
-             (apply #'progn-c
-                    (mapcar #'cof
-                            (mapcar
-                             #'(lambda (args)
-                                 (apply (replacify-lambda ,vars ,template)
-                                        (mapcar #'cof (fold/list args))))
-                             argss)))))
-    ""))
+  (eval
+   `(defun/c ,f (&rest argss)
+      (apply #'progn-c
+             (mapcar #'cof
+                     (mapcar
+                      #'(lambda (args)
+                          (apply (replacify-lambda ,vars ,template)
+                                 (mapcar #'cof (fold/list args))))
+                      argss)))))
+  "")
 
 (defun/c cuda/dim3 (typ x y)
   (cofy typ)
@@ -772,8 +772,8 @@
 (defun/c repeat (x &optional (n 1))
   (cofy x)
   (format nil "~{~a~^ ~}"
-          (loop for i from 1 to n
-                collect x)))
+          (loop :for i :from 1 :to n
+                :collect x)))
 
 (defun/c funcall (func &rest args)
   (apply (cnym func) args))
@@ -783,19 +783,13 @@
   (apply (cnym func) args))
 
 (defun/c mapcar (&rest argss)
-  (with-optional-first-arg argss
-      brackets?
-      nil
-      (t nil)
+  (with-optional-first-arg argss brackets? nil (t nil)
     (let ((func (car argss)))
       (setf argss (cdr argss))
       (block-c (apply #'mapcar (cnym func) argss) brackets?))))
 
 (defun/c mapargs (&rest argss)
-  (with-optional-first-arg argss
-      brackets?
-      nil
-      (t nil)
+  (with-optional-first-arg argss brackets? nil (t nil)
     (let ((func (car argss)))
       (setf argss (cdr argss))
       (block-c (mapcar #'(lambda (args) (apply-c func args)) argss)
@@ -918,12 +912,11 @@
 
 (defun/c typ& (&optional nym (n 1) const)
   (cofy nym)
-  (if (not (numberp n))
-      (progn (setf n 1) (setf const 'const)))
+  (unless ((numberp n))
+    (setf n 1)
+    (setf const 'const))
   (format nil "~a~a~a" nym
-          (if const
-              (format nil " ~a" (cof const))
-              "")
+          (if const (format nil " ~a" (cof const)) "")
           (repeatnrepeatnrepeatn #\& n)))
 
 (defun/c ptr& (&optional nym (n 1))
@@ -1481,8 +1474,7 @@
 
 (defun c-cl-file-continuous (filein &optional fileout ignore-error? (interval 1))
   (format t "Press ^C to stop.")
-  (do ((i 0 (+ i interval)))
-      (nil)
+  (do ((i 0 (+ i interval))) (nil)
     (progn
       (format t "~&~a" (elapsed-time i))
       (if ignore-error?
