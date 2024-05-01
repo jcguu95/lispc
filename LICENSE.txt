@@ -1,5 +1,6 @@
 MIT License
 
+Copyright (c) 2024 Jin-Cheng Guu jcguu95@gmail.com
 Copyright (c) 2016 Jonathan Carlos Baca jonathan.carlos.baca@gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
