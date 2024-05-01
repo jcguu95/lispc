@@ -58,6 +58,7 @@
         (t
          (replace-char #\- #\_ (string-downcase x)))))
 
+;; NOTE 'nym' seems to stand for 'symbol' or 'name'.
 (defun file-ext (nym ext)
   (format nil "~a.~a" (c-strify nym) (c-strify ext)))
 
