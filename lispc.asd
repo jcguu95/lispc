@@ -45,10 +45,11 @@
                 (asdf:system-relative-pathname system (format nil "test/~a.cl" name))
                 tmp-file)
                ;; Compare the result with the pre-compiled result under ./test.
-               (assert
-                (string= (uiop:read-file-string tmp-file)
-                         (uiop:read-file-string (asdf:system-relative-pathname
-                                                 system (format nil "test/~a.c" name)))))
+               (unless
+                   (string= (uiop:read-file-string tmp-file)
+                            (uiop:read-file-string (asdf:system-relative-pathname
+                                                    system (format nil "test/~a.c" name))))
+                 (error "Wrong."))
                ;; FIXME It should not be redefining functions while compiling.. e.g.
                ;; > WARNING: redefining LISPC::LOOP-N-C in DEFUN
                ;; > WARNING: redefining LISPC::VOIDINT-C in DEFUN
