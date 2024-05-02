@@ -49,7 +49,7 @@
                    (string= (uiop:read-file-string tmp-file)
                             (uiop:read-file-string (asdf:system-relative-pathname
                                                     system (format nil "test/~a.c" name))))
-                 (format t "Test failed for <~a>.~%" name)
+                 (format t "Test failed for <~a>; signaling an error..~%" name)
                  (error "Wrong."))
                ;; FIXME It should not be redefining functions while compiling.. e.g.
                ;; > WARNING: redefining LISPC::LOOP-N-C in DEFUN
