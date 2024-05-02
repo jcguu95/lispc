@@ -4,7 +4,7 @@
 
 /**DEFINED: "SQ" (template)**/;
 
-#define DIM 1000
+#define DIM 100
 ;
 
 struct cu_complex{
