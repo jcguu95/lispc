@@ -33,7 +33,7 @@
    (o system)
    "DOC: Compile test *.cl files, and compare the results with the precompiled ones."
    (declare (ignore o))
-   (format t "Testing system: ~a..~%" system)
+   (format t "~%Testing system: ~a..~%" system)
    (loop :for name :in '("test" "cuda" "myls" "multi")
          :do (let ((*package* (find-package :lispc)) ; FIXME Why is this necessary? Something is wrong in c.lisp.
                    (tmp-file (uiop:merge-pathnames*
@@ -45,14 +45,16 @@
                 (asdf:system-relative-pathname system (format nil "test/~a.cl" name))
                 tmp-file)
                ;; Compare the result with the pre-compiled result under ./test.
-               (assert
-                (string= (uiop:read-file-string tmp-file)
-                         (uiop:read-file-string (asdf:system-relative-pathname
-                                                 system (format nil "test/~a.c" name)))))
+               (unless
+                   (string= (uiop:read-file-string tmp-file)
+                            (uiop:read-file-string (asdf:system-relative-pathname
+                                                    system (format nil "test/~a.c" name))))
+                 (format t "Test failed for <~a>; signaling an error..~%" name)
+                 (error "Wrong."))
                ;; FIXME It should not be redefining functions while compiling.. e.g.
                ;; > WARNING: redefining LISPC::LOOP-N-C in DEFUN
                ;; > WARNING: redefining LISPC::VOIDINT-C in DEFUN
                ;; > WARNING: redefining LISPC::INTVOID-C in DEFUN
                ;; > Test passes for multi.
-               (format t "Test passes for ~a.~%" name)
+               (format t "Test passed for <~a>.~%" name)
                (uiop:delete-file-if-exists tmp-file)))))
