@@ -44,19 +44,23 @@
   `(setf ,x (1- ,x)))
 
 (defun c-strify (x &optional leave-mostly-alone)
-  (unless (stringp x) (setf x (str<- x)))
-  (cond (leave-mostly-alone
-         (just-downcase x))
-        ((numeric-string? x)
-         x)
-        ((eq (char x 0) #\!)
-         (replace-char #\- #\_ (cof (subseq x 1))))
-        ((eq (char x 0) #\=)
-         (camelcase-c (cof (subseq x 1))))
-        ((eq (char x 0) #\-)
-         (Lcamelcase-c (cof (subseq x 1))))
-        (t
-         (replace-char #\- #\_ (string-downcase x)))))
+  (if (stringp x)
+      x
+      (progn
+        (setf x (str<- x))
+        (check-type x string)
+        (cond (leave-mostly-alone
+               (just-downcase x))
+              ((numeric-string? x)
+               x)
+              ((eq (char x 0) #\!)
+               (replace-char #\- #\_ (cof (subseq x 1))))
+              ((eq (char x 0) #\=)
+               (camelcase-c (cof (subseq x 1))))
+              ((eq (char x 0) #\-)
+               (Lcamelcase-c (cof (subseq x 1))))
+              (t
+               (replace-char #\- #\_ (string-downcase x)))))))
 
 ;; NOTE 'nym' seems to stand for 'symbol' or 'name'.
 (defun file-ext (nym ext)
