@@ -1,7 +1,7 @@
 (cl:in-package #:asdf-user)
 
 (defsystem #:lispc
-  :description "LISP/c defines a lispy langauge, and compiles it into C."
+  :description "LISP/c: A lispy langauge compiling to C."
   :author ("Jonathan Baca <https://github.com/eratosthenesia>"
            "Jin-Cheng Guu <jcguu95@gmail.com>")
   :maintainer "Jin-Cheng Guu <jcguu95@gmail.com>"

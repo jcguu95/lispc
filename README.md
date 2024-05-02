@@ -9,5 +9,5 @@
 
 2. Mold the Language
 
-   + Resolve as many unnecessary macros as possible.
-   + Tweak parts I dislike.
+   + Resolve as many unnecessary macros as possible, while preserving the tests.
+   + Tweak parts I dislike, and move to `v2`.
