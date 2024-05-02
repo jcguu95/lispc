@@ -4,7 +4,7 @@
 
 /**DEFINED: "SQ" (template)**/;
 
-#define dim 1000
+#define DIM 1000
 ;
 
 struct cu_complex{
@@ -35,8 +35,8 @@ cu_complex cu_complex_add(cu_complex x,cu_complex y){
 __device__ int julia( x, y){
    const float scale=1.5;
    /**DEFINED: "JVAR" (template)**/;
-   float jx=((scale)*(((int)(((((((dim)/(2)))-(x)))/(((dim)/(2))))))));
-   float jy=((scale)*(((int)(((((((dim)/(2)))-(x)))/(((dim)/(2))))))));
+   float jx=((scale)*(((int)(((((((DIM)/(2)))-(x)))/(((DIM)/(2))))))));
+   float jy=((scale)*(((int)(((((((DIM)/(2)))-(x)))/(((DIM)/(2))))))));
    /**DEFINED: "CVAR" (template)**/;
    struct cu_complex c=((struct cu_complex)({-9.8, 0.156}));
    struct cu_complex a=((struct cu_complex)({jx, jy}));
@@ -51,9 +51,9 @@ __device__ int julia( x, y){
 };
 
 __global__ void kernel(unsigned char *ptr){
-   int x=blockidx.x;
-   int y=blockidx.y;
-   int offset=((x)+(((y)*(griddim.x))));
+   int x=blockIdx.x;
+   int y=blockIdx.y;
+   int offset=((x)+(((y)*(gridDim.x))));
    int julia_value=julia(x,y);
    (((ptr)[((0)+(((offset)*(4))))])=(((255)*(julia_value))));
    (((ptr)[((1)+(((offset)*(4))))])=(0));
@@ -64,13 +64,13 @@ __global__ void kernel(unsigned char *ptr){
 ;
 
 int main(int argc,char **argv){
-   cpubitmap bitmap(dim,dim);
+   CPUbitmap bitmap(DIM,DIM);
    unsigned char *dev_bitmap;
-   handle_error(cudamalloc(((void**)(&(dev_bitmap))),(bitmap).image_size()));
-   dim3 grid(dim,dim);
+   HANDLE_ERROR(cudaMalloc(((void**)(&(dev_bitmap))),(bitmap).image_size()));
+   dim3 grid(DIM,DIM);
    kernel<<<grid,1>>>(dev_bitmap);
-   handle_error(cudamemcpy((bitmap).get_ptr(),dev_bitmap,(bitmap).image_size(),cudamemcpydevicetohost));
+   HANDLE_ERROR(cudaMemcpy((bitmap).get_ptr(),dev_bitmap,(bitmap).image_size(),cudaMemcpyDeviceToHost));
    (bitmap).display_and_exit();
-   handle_error(cudafree(dev_bitmap));
+   HANDLE_ERROR(cudaFree(dev_bitmap));
 };
 

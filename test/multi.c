@@ -13,27 +13,27 @@
 void *threadfunc(void *x){
    sleep(0);
    int i=((int)(((size_t)(x))));
-   printf("hello from thread %d\n",((1)+(((int)(((size_t)(x)))))));
-   return null;
+   printf("Hello from thread %d\n",((1)+(((int)(((size_t)(x)))))));
+   return NULL;
 };
 
-#define nthreads 12
+#define NTHREADS 12
 ;
 
 int main(int argc,char **argv){
-   pthread_t threads[nthreads];
+   pthread_t threads[NTHREADS];
    {
     i;
-   int maxi=nthreads;
+   int maxi=NTHREADS;
    for(((i)=(0));((i)<(maxi));++(i)){
-   pthread_create(&((threads)[i]),null,&(threadfunc),((void*)(((size_t)(i)))));
+   pthread_create(&((threads)[i]),NULL,&(threadfunc),((void*)(((size_t)(i)))));
 };
 };
    {
     i;
-   int maxi=nthreads;
+   int maxi=NTHREADS;
    for(((i)=(0));((i)<(maxi));++(i)){
-   pthread_join((threads)[i],null);
+   pthread_join((threads)[i],NULL);
 };
 };
    return 0;

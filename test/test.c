@@ -41,7 +41,7 @@ linked_list_node *new_linked_list_node(linked_list_node *prev,linked_list_node *
 linked_list *new_linked_list(){
    linked_list *retval;
    ((retval)=(malloc(sizeof(linked_list))));
-   (((retval)->first)=(((retval)->last)=(new_linked_list_node(null,null,null))));
+   (((retval)->first)=(((retval)->last)=(new_linked_list_node(NULL,NULL,NULL))));
    (((retval)->length)=(0));
    return retval;
 };
@@ -60,7 +60,7 @@ void **listify_linked_list_(linked_list_node *curr, n);
 
 
 /**********************************/
-/* produces null_terminated list. */
+/* Produces null-terminated list. */
 /**********************************/
 
 ;
@@ -72,12 +72,12 @@ void **listify_linked_list(linked_list *list){
 void **listify_linked_list_(linked_list_node *curr, n){
    void **ret;
    
-/* allocate ret as appropriate, then set it. */
+/* Allocate ret as appropriate, then set it. */
 
 ;
    if(curr) {
      ((ret)=(listify_linked_list_((curr)->next,((n)+(1)))));
-  (((ret)[n])=(null));;
+  (((ret)[n])=(NULL));;
 }else{
      ((ret)=(malloc(((n)*(sizeof(void*))))));
   (((ret)[n])=((curr)->data));;
@@ -87,7 +87,7 @@ void **listify_linked_list_(linked_list_node *curr, n){
 
 
 /********************/
-/* deletes the list */
+/* Deletes the list */
 /********************/
 
 ;
@@ -108,7 +108,7 @@ void *delete_linked_list_(linked_list_node *curr,char free_data){
    free(curr);
 };
 
-#define arrlen 12
+#define ARRLEN 12
 ;
 
 /**DEFINED: "SECOND" (template)**/;
@@ -121,11 +121,11 @@ void *delete_linked_list_(linked_list_node *curr,char free_data){
 ;
 
 int main(int argc,char **argv){
-   float x[arrlen];
+   float x[ARRLEN];
     i;
    (((x)[2])=(23.45f));
-   printf("currently, the second value of x is %f\n",(x)[2]);
-   for(((i)=(0));((i)<(arrlen));++(i)){
+   printf("Currently, the second value of x is %f\n",(x)[2]);
+   for(((i)=(0));((i)<(ARRLEN));++(i)){
    (((x)[i])=(((((float)(i)))/(2))));
    printf("%f %d\n",(x)[i],i);
 };
