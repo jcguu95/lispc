@@ -1,4 +1,5 @@
 ;;;; Utility functions that have nothing to deal with C.
+(in-package :lispc)
 
 (defun pairify (xs)
   (if (null xs)
@@ -68,7 +69,7 @@
       (if stream
           (loop for line = (read-line stream nil 'done)
                 until (eq line 'done)
-                do (incr n))))
+                do (incf n))))
     n))
 
 (defun temp-filename (&optional extension)

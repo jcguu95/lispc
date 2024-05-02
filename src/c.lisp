@@ -1,4 +1,7 @@
 ;;;; Copyright Jonathan Baca, 2016
+;;;; Copyright Jin-Cheng Guu, 2024
+
+(in-package :lispc)
 
 ;; (defvar *lbrac* #\[)
 ;; (defvar *file-out*      nil)
@@ -43,14 +46,14 @@
 (defmacro decr (x)
   `(setf ,x (1- ,x)))
 
-(defun c-strify (x &optional leave-mostly-alone)
+(defun c-strify (x &optional just-downcase?)
   (if (stringp x)
       x
       (progn
         (setf x (str<- x))
         (check-type x string)
-        (cond (leave-mostly-alone
-               (just-downcase x))
+        (cond (just-downcase?
+               (string-downcase x))
               ((numeric-string? x)
                x)
               ((eq (char x 0) #\!)
@@ -271,6 +274,7 @@
 
 ;;; DEFINE THE C LANGUAGE
 
+;; NOTE 'nyms' seems to stands for synonyms, symbols, or names.
 (binops (=   :l t :nyms (= set let <- ":="))
         (!=  :l t :nyms (!= neq diff different))
         (==  :r t :nyms (== eq same))
@@ -281,7 +285,7 @@
         (&&  :r t :nyms (&& and et und y))
         (&   :r t :nyms (& bit-and band .and bit-et bet .et bit-und bund .und bit-y by .y ))
         (&=  :l t :nyms (&= &-eq bit-and-eq band-eq .and-eq bit-et-eq bet-eq .et-eq bit-und-eq bund-eq
-                            .und-eq bit-y-eq by-eq .y-eq &= bit-and= band= .and= bit-et= bet=
+                            .und-eq bit-y-eq by-eq .y-eq bit-and= band= .and= bit-et= bet=
                             .et= bit-und= bund= .und= bit-y= by= .y= ))
         ("||":r t :nyms (or uel oder o))
         ("|" :r t :nyms (bit-or .or bor bit-uel .uel buel bit-oder .oder boder bit-o .o bo))
@@ -304,7 +308,7 @@
         (= :l t :nparen t :nym =!)
         (<<= :l t :nyms (<<= l-shift-eq shift-left-eq shl-eq l-shift= shift-left= shl=))
         (>>  :r t :nyms (>> r-shift shift-right shr))
-        (>>= :l t :nyms (>>= r-shift-eq shift-right-eq shr-eq >>= r-shift= shift-right= shr=))
+        (>>= :l t :nyms (>>= r-shift-eq shift-right-eq shr-eq r-shift= shift-right= shr=))
         )
 
 (preposts (++ :post nil :nyms (++  inc +inc incr pre++ +1 ++n))
@@ -619,11 +623,11 @@
 
 (defun/c ifdef (expr)
   (cofy expr)
-  (format nil "#ifdef ~~%" expr))
+  (format nil "#ifdef ~a~%" expr))
 
 (defun/c ifndef (expr)
   (cofy expr)
-  (format nil "#ifndef ~~%" expr))
+  (format nil "#ifndef ~a~%" expr))
 
 (defun/c |IF#| (expr)
   (cofy expr)
@@ -866,10 +870,11 @@
 
 (defun/c typ& (&optional nym (n 1) const)
   (cofy nym)
-  (unless ((numberp n))
+  (unless (numberp n)
     (setf n 1)
     (setf const 'const))
-  (format nil "~a~a~a" nym
+  (format nil "~a~a~a"
+          nym
           (if const (format nil " ~a" (cof const)) "")
           (str<repeat-n< #\& n)))
 
@@ -1008,7 +1013,7 @@
 
 (defun/c explicit (&rest xs)
   (cofsy xs)
-  (format nil "explicit ~{~a~}"))
+  (format nil "explicit ~{~a~}" xs))
 
 (macropairs
  cfunc-syn
@@ -1062,7 +1067,7 @@
  char          ch
  str           s.
  varlist       v/l
- switch        sx
+ switch        sw
  call          c
  struct        s{}
  struct        sx

@@ -1,7 +1,9 @@
-(compile 'write-out)
+(in-package :lispc)
+
+;; (compile 'write-out)
 ;; (compile 'change-file)
 ;; (compile 'change-exec)
-(compile 'compile-c)
+;; (compile 'compile-c)
 (compile 'fold/list)
 (compile 'fold/list/n)
 (compile 'str<-)
