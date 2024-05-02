@@ -26,7 +26,8 @@ jobs:
           (format t "LISP: ~a (v.~a)~%" (lisp-implementation-type) (lisp-implementation-version))
           (format t "ASDF-VERSION: ~a~%" (asdf:asdf-version))
           (format t "ASDF-CENTRAL-REGISTRY: ~a~%" asdf:*central-registry*)
-          (asdf:load-system :lispc)
+          (handler-case (asdf:load-system :lispc)
+            (error (e) (uiop:quit 1)) )
           (format t "Done. Bye.~%")
-          (exit)
+          (uiop:quit 0)
         '
