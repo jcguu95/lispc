@@ -11,11 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Testing Github Action
-      run: echo Hello, world!
     - name: Install Roswell
-      env:
-        LISP: ${{ matrix.lisp }} # TODO ?
       run: |
         curl -L https://raw.githubusercontent.com/roswell/roswell/v22.12.14.113/scripts/install-for-ci.sh | sh
     - name: Run test
