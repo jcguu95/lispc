@@ -7,12 +7,30 @@ on:
     branches: [ "*" ]
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
-
     - name: Testing Github Action
       run: echo Hello, world!
+    - name: Install Roswell
+      env:
+        LISP: ${{ matrix.lisp }} # TODO ?
+      run: |
+        curl -L https://raw.githubusercontent.com/roswell/roswell/v22.12.14.113/scripts/install-for-ci.sh | sh
+    - name: Run test
+      run: |
+        set -ex
+        ros config set dynamic-space-size 2048
+        ros run --eval '(pprint "hello bye~%") (exit)'
+        # curl -L https://qlot.tech/installer | bash
+        # export PATH="/home/runner/.qlot/bin:$PATH"
+        # qlot install
+        # make lint
+        # if [ $(grep -r --include="*.lisp" 'lem::' | wc -l) -ne 0 ]; then
+        #   echo 'using `lem::` internal symbols'
+        #   echo 'https://google.github.io/styleguide/lispguide.xml?showone=Packages#Packages'
+        #   exit 1
+        # fi
+        #   .qlot/bin/rove lem-tests.asd
+        #   .qlot/bin/rove extensions/vi-mode/lem-vi-mode.asd
