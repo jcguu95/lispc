@@ -23,7 +23,7 @@ jobs:
         set -ex
         ros config set dynamic-space-size 2048
         ros run --eval '
-          (format t "LIST: ~a (v.~a)~%" (lisp-implementation-type) (lisp-implementation-version)))
+          (format t "LISP: ~a (v.~a)~%" (lisp-implementation-type) (lisp-implementation-version))
           (format t "ASDF-VERSION: ~a~%" (asdf:asdf-version))
           (format t "ASDF-CENTRAL-REGISTRY: ~a~%" asdf:*central-registry*)
           (asdf:load-system :lispc)
