@@ -18,11 +18,3 @@
                  (:file "utils"   )
                  (:file "c"       )
                  (:file "compile" )))))
-
-;; (defmethod perform ((o asdf:test-op)
-;;                     (s (eql (asdf:find-system '#:lispc))))
-;;   (declare (ignore o s))
-;;   (format t "Hello, we are testing LISPC.~%")
-;;   ;; (asdf:load-system '#:lispc)
-;;   ;; (funcall (read-from-string "lispc.test:run-tests")) ; TODO coming soon
-;;   )
