@@ -2,7 +2,7 @@
 
 1. Build Tests
 
-   + Check if old version works with `myls.cl`.
+   + Use the old version to generate c code, and use that as the standard test.
    + Write asd file with automatic tests.
    + Build github CI/CD.
    + Add more tests (e.g. by translating C codes I have, learning how c/macro works).
