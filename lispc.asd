@@ -34,7 +34,12 @@
    "DOC: Compile test *.cl files, and compare the results with the precompiled ones."
    (declare (ignore o))
    (format t "~%Testing system: ~a..~%" system)
-   (loop :for name :in '("test" "cuda" "myls" "multi")
+   ;; Test for all files *.cl in test.
+   (loop :for name :in (mapcar #'pathname-name
+                               (remove-if-not
+                                (lambda (pathname) (equal "cl" (pathname-type pathname)))
+                                (uiop:directory-files
+                                 (asdf:system-relative-pathname system (format nil "test/")))))
          :do (let ((*package* (find-package :lispc)) ; FIXME Why is this necessary? Something is wrong in c.lisp.
                    (tmp-file (uiop:merge-pathnames*
                               (format nil "~a-~a" (get-universal-time) (random 100000))
