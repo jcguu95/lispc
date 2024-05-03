@@ -15,7 +15,7 @@
 (compile 'macroexpand-n)
 (compile 'symbol-append-c)
 (compile 'c)
-(compile 'cof)
+(compile 'compile-form)
 (compile 'file-string)
 (compile 'c-code<-file)
 (compile 'temp-filename)
