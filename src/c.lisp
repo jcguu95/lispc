@@ -242,7 +242,8 @@
 ;;     (with-optional-first-arg xs deg 0 (0 1 2 3 4 5)
 ;;       (list atmos deg xs))))
 
-;; NOTE e.g. (cof `(header stdio)) ; => "#include <stdio.h>"
+;; NOTE e.g. (cof `(header stdio))             ; => "#include <stdio.h>"
+;; NOTE e.g. (cof `((header stdio) (? 1 2 3))) ; => (format nil "#include <stdio.h>~%;~%(1)?2:(3)")
 (defun cof (x)
   "Compile form (?)."
   (cond
@@ -384,12 +385,14 @@
   (format nil "~{  ~a;~^~%~}" (mapcar #'cof xs)))
 
 (defun/c ? (test ifyes ifno)
+  ;; (?-c "1" "2" "3") ; => "(1)?2:(3)"
   (cofy test)
   (cofy ifyes)
   (cofy ifno)
   (format nil "(~a)?~a:(~a)" test ifyes ifno))
 
 (defun/c if (test &optional ifyes ifno)
+  ;; (if-c "1" "2" "3") ; => (format nil "if(1) {~%   2;~%}else{~%   3;~%}")
   (cofy test)
   (cofy ifyes)
   (format nil "if(~a) {~%   ~a;~%}~a" test ifyes
@@ -398,6 +401,15 @@
               "")))
 
 (defun/c cond (&rest pairs)
+  ;; (cond-c '("1" "2") '("3" "4") '("5" "6"))
+  ;; ; =>
+  ;; "if(1) {
+  ;;   2;
+  ;; }else if(3){
+  ;;    4;
+  ;; }else if(5){
+  ;;    6;
+  ;; }"
   (format nil "if(~a) {~{~%  ~a;~}~%}~{~a~}" (cof (caar pairs))
           (mapcar #'cof (cdar pairs))
           (mapcar
@@ -1020,9 +1032,9 @@
   (cofsy xs)
   (format nil "explicit ~{~a~}" xs))
 
-(macropairs
+(macropairs                             ; Defines synonyms.
  cfunc-syn
- func          f{} ; (progn (defun f{}-c (&rest args) (apply #'func-c args)) (compile 'f{}-c))
+ func          f{} ; expands to: (progn (defun f{}-c (&rest args) (apply #'func-c args)) (compile 'f{}-c))
  funcarg       arg{}
  funcarg       fa{}
  namespace     n/s
