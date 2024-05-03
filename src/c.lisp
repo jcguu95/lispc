@@ -190,12 +190,6 @@
    NOTE An important function."
   (format nil "~{~a~^~(;~%~%~)~}" (mapcar #'compile-form xs)))
 
-;; (defun pc (&rest xs)
-;;   (format t "~a" (apply #'c xs)))
-
-;; (defmacro cwrite (&rest xs)
-;;   `(write-out (format nil "~a;~%" (c ,@xs))))
-
 (defun capitalize-c (str)
   (format nil "~a~a"
           (string-upcase (char (str<- str) 0))
@@ -665,14 +659,12 @@
 
 (defun/c comment (&rest xs)
   (let* ((small (eq (car xs) 's))
-         (s
-           (format nil "/* ~{~a~^ ~} */~%"
-                   (mapcar #'compile-form (if small (cdr xs) xs))))
-         (v
-           (if small
-               ""
-               (format nil "/**~a**/~%"
-                       (str<repeat-n< #\* (- (length s) 7))))))
+         (s (format nil "/* ~{~a~^ ~} */~%"
+                    (mapcar #'compile-form (if small (cdr xs) xs))))
+         (v (if small
+                ""
+                (format nil "/**~a**/~%"
+                        (str<repeat-n< #\* (- (length s) 7))))))
     (format nil "~%~a~a~a~%" v s v)))
 
 (defun/c header (nym &key local)
