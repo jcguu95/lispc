@@ -10,7 +10,7 @@
   :license "MIT"
   :bug-tracker "https://github.com/jcguu95/lispc"
   :source-control (:git "https://github.com/jcguu95/lispc.git")
-  :depends-on ()
+  :depends-on (:log4cl)
 
   :components
   ((:module "src"

@@ -244,6 +244,7 @@
 
 ;; NOTE e.g. (cof `(header stdio)) ; => "#include <stdio.h>"
 (defun cof (x)
+  "Compile form (?)."
   (cond
     ((null x) "")
     ((atom x)
@@ -251,9 +252,8 @@
          (cof (gethash x *c-synonyms*))
          (c-strify x)))
     ((atom (car x))
-     (if (and
-          (> (length (str<- (car x))) 1)
-          (not (fboundp (symbol-append-c (car x)))))
+     (if (and (> (length (str<- (car x))) 1)
+              (not (fboundp (symbol-append-c (car x)))))
          (case (char (str<- (car x)) 0)
            (#\@ (apply #'call-c (cof (trim-symbol (car x) 1)) (cdr x)))
            (#\[ (apply #'nth-c (cof (trim-symbol (car x) 2)) (cdr x)))
@@ -266,12 +266,22 @@
            (#\= (apply #'camelcase-c (str<- (trim-symbol (car x) 1)) (mapcar #'str<- (cdr x))))
            (#\% (apply #'lcamelcase-c (str<- (trim-symbol (car x) 1)) (mapcar #'str<- (cdr x))))
            (#\- (apply #'lcamelcase-c (str<- (trim-symbol (car x) 1)) (mapcar #'str<- (cdr x))))
-           (otherwise (apply (symbol-append-c (car x)) (cdr x))))
+           (t   (apply (symbol-append-c (car x)) (cdr x))))
          (apply (symbol-append-c (car x)) (cdr x))))
     (t (format nil "~{~a~^~(;~%~)~}" (mapcar #'cof x)))))
 
-(defmacro cofy (x) `(setf ,x (cof ,x)))
-(defmacro cofsy (x) `(setf ,x (mapcar #'cof (fold/list ,x))))
+(defmacro cofy (x)
+  ;; (let ((x 0)) (cofy x) x)                ; => "0"
+  ;; (let ((x '(header stdio))) (cofy x) x)                ; => "#include <stdio.h>"
+  `(setf ,x (cof ,x)))
+
+(defmacro cofsy (x)
+  ;; (let ((x '(0 1 2 3))) (cofsy x))         ; => '("0" "1" "2" "3")
+  ;; (let ((x 0)) (cofsy x))                  ; => '("0")
+  ;; (let ((x '((header header)))) (cofsy x)) ; => '("#include <header.h>")
+  `(setf ,x (mapcar #'cof (fold/list ,x))))
+
+
 
 ;;; DEFINE THE C LANGUAGE
 
@@ -330,19 +340,14 @@
   (cofy nym)
   (format nil "(~a){~{~a~^~(, ~)~}}" nym (mapcar #'cof xs)))
 
-
 (defun/c sym/add (&rest xs) (cofsy xs)
   (str<-lst xs))
 
-
+;; (slot-c "a" "b" "c") ; => "(a)->b->c"
 (defun/c slot (a &rest bs)
   (cofy a)
   (cofsy bs)
-  (format nil "(~a)~a~{~a~^~(->~)~}" a
-          (if bs
-              "->"
-              "")
-          bs))
+  (format nil "(~a)~a~{~a~^~(->~)~}" a (if bs "->" "") bs))
 
 (defun/c mem (a &rest bs)
   (cofy a)
@@ -375,6 +380,7 @@
   "")
 
 (defun/c progn (&rest xs)
+  ;; (progn-c "1" "2" 'c)                    ; => (format nil "  1;~%  2;~%  c;")
   (format nil "~{  ~a;~^~%~}" (mapcar #'cof xs)))
 
 (defun/c ? (test ifyes ifno)
@@ -591,15 +597,13 @@
   (format nil "~{~a~}" (cof xs)))
 
 (defun/c include (filename &key local)
+  ;; (include-c "abc" :local nil) ; => "#include <abc>"
+  ;; (include-c "abc" :local t)   ; => "#include \"abc\""
   (cofy filename)
   (format nil "#include ~a~a~a~%"
-          (if local
-              #\"
-              #\<)
+          (if local #\" #\<)
           filename
-          (if local
-              #\"
-              #\>)))
+          (if local #\" #\>)))
 
 (defun/c import (filename)
   (setf filename

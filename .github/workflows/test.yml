@@ -18,6 +18,9 @@ jobs:
       run: |
         set -ex
         ros config set dynamic-space-size 2048
+        curl -L https://qlot.tech/installer | bash
+        export PATH="/home/runner/.qlot/bin:$PATH"
+        qlot install
         ros run --eval '
           (format t "LISP: ~a (v.~a)~%" (lisp-implementation-type) (lisp-implementation-version))
           (format t "ASDF-VERSION: ~a~%" (asdf:asdf-version))
