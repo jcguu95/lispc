@@ -245,7 +245,7 @@
 ;; NOTE e.g. (compile-form `(header stdio))             ; => "#include <stdio.h>"
 ;; NOTE e.g. (compile-form `((header stdio) (? 1 2 3))) ; => (format nil "#include <stdio.h>~%;~%(1)?2:(3)")
 (defun compile-form (x)
-  "Compile form (?)."
+  "Compile form."
   (cond
     ((null x) "")
     ((atom x)
@@ -256,15 +256,15 @@
      (if (and (> (length (str<- (car x))) 1)
               (not (fboundp (symbol-append-c (car x)))))
          (case (char (str<- (car x)) 0)
-           (#\@ (apply #'call-c (compile-form (trim-symbol (car x) 1)) (cdr x)))
-           (#\[ (apply #'nth-c (compile-form (trim-symbol (car x) 2)) (cdr x)))
-           (#\] (apply #'arr-c (compile-form (trim-symbol (car x) 1)) (cdr x)))
-           (#\& (apply #'addr-c (compile-form (trim-symbol (car x) 1)) (cdr x)))
-           (#\^ (apply #'cast-c (compile-form (trim-symbol (car x) 1)) (cdr x)))
-           (#\* (apply #'ptr-c (compile-form (trim-symbol (car x) 1)) (cdr x)))
-           (#\. (apply #'mem-c (compile-form (trim-symbol (car x) 1)) (cdr x)))
-           (#\> (apply #'slot-c (compile-form (trim-symbol (car x) 1)) (cdr x)))
-           (#\= (apply #'camelcase-c (str<- (trim-symbol (car x) 1)) (mapcar #'str<- (cdr x))))
+           (#\@ (apply #'call-c       (compile-form (trim-symbol (car x) 1)) (cdr x)))
+           (#\[ (apply #'nth-c        (compile-form (trim-symbol (car x) 2)) (cdr x)))
+           (#\] (apply #'arr-c        (compile-form (trim-symbol (car x) 1)) (cdr x)))
+           (#\& (apply #'addr-c       (compile-form (trim-symbol (car x) 1)) (cdr x)))
+           (#\^ (apply #'cast-c       (compile-form (trim-symbol (car x) 1)) (cdr x)))
+           (#\* (apply #'ptr-c        (compile-form (trim-symbol (car x) 1)) (cdr x)))
+           (#\. (apply #'mem-c        (compile-form (trim-symbol (car x) 1)) (cdr x)))
+           (#\> (apply #'slot-c       (compile-form (trim-symbol (car x) 1)) (cdr x)))
+           (#\= (apply #'camelcase-c  (str<- (trim-symbol (car x) 1)) (mapcar #'str<- (cdr x))))
            (#\% (apply #'lcamelcase-c (str<- (trim-symbol (car x) 1)) (mapcar #'str<- (cdr x))))
            (#\- (apply #'lcamelcase-c (str<- (trim-symbol (car x) 1)) (mapcar #'str<- (cdr x))))
            (t   (apply (symbol-append-c (car x)) (cdr x))))
