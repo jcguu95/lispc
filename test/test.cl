@@ -15,7 +15,9 @@
          ((pt last)  linked-list-node)
          length))
 
-(func (pt new-linked-list-node) linked-list-node (((pt prev) linked-list-node) ((pt next) linked-list-node) ((pt data) void))
+(func (pt new-linked-list-node) linked-list-node
+      (((pt prev) linked-list-node) ((pt next) linked-list-node) ((pt data) void))
+
       (var (pt retval) linked-list-node)
       (set retval (@malloc (@sizeof linked-list-node)))
       (set (slot retval prev) prev)
