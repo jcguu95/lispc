@@ -1,4 +1,3 @@
-;; #include <stdio.h>
 ;; #define SWAP(a, b) do { typeof(a) temp = a; a = b; b = temp; } while (0)
 ;; int main() {
 ;;     int x = 5, y = 10;
@@ -18,4 +17,3 @@
     (swap x y)
     (@printf (str "x = %d, y = %d\\n") x y)
     (return 0)))
-
