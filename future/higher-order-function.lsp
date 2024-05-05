@@ -12,10 +12,10 @@
 ;;     for (size_t i = 0; i < size; i++) { result[i] = f(arr[i]); }
 ;;     return result;
 ;; }
-(defun (*map :int) (((f :int<-int) :int)
-                    (*arr :int)
+(defun (map :int*) ((f    :int->int)
+                    (arr  :int*)
                     (size :size-t))
-  (set (*result :int)
+  (set (result :int*)
        (cast :int* (@malloc (* size (@sizeof :int)))))
   (for ((set (i :size-t) 0)
         (< i size)
