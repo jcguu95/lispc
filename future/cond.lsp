@@ -29,3 +29,15 @@
         (t
          (@printf (str "i is not present\\n"))))
   (return 0))
+
+;;; Tests
+(c `(== i 10))
+"i == 10"
+
+(c `(or (== i 15)
+        (== i 20)))
+"(i == 15) || (i == 20)"
+
+(c `(and (> i 0)
+         (< i 30)))
+"(i > 0) && (i < 30)"

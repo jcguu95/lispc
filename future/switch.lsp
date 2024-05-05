@@ -48,3 +48,22 @@
     (7 (@printf "Sunday\\n")    (break))
     (t (@printf "Invalid day number. Please enter a number between 1 and 7.\\n") (break)))
   (return 0))
+
+
+
+;; Tests
+(c `(@scanf (str "%d") (& day)))
+"scanf(\"%d\", &day)"
+
+(c `(case day
+      (1 (return 1))
+      (2 (return 2))
+      (t (return 0))))
+"switch (day) {
+  case 1:
+    return 1;
+  case 2:
+    return 2;
+  default:
+    return 0;
+}"
