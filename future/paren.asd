@@ -31,7 +31,7 @@
    (o system)
    (declare (ignore o))
    (format t "Testing system ~a..~%" system)
-   (uiop:symbol-call :fiveam '#:run! 'paren.test::paren.test))
+   (uiop:symbol-call :fiveam '#:run! (find-symbol "PAREN.TEST" "PAREN.TEST")))
   :components
   ((:module "test"
     :serial t
