@@ -153,6 +153,24 @@
        (c `(include "stdio.h"))
        "#include <stdio.h>")))
 
+(setf (gethash 'defun *functions*)
+      (lambda (form)
+        (let ((func-name (nth 0 form))
+              (arguments (nth 1 form))
+              (body (cddr form)))
+          (format nil "~a (~{~a~^, ~}) {~%~{  ~a;~%~}}"
+                  (resolve-declaration func-name)
+                  (mapcar #'resolve-declaration arguments)
+                  (mapcar #'c body)))))
+
+(setf (gethash 'return *functions*)
+      (lambda (form)
+        (format nil "return ~a" (car form))))
+
+(setf (gethash 'set *functions*)
+      (lambda (form)
+        (format nil "~a = ~a" (resolve-declaration (nth 0 form)) (c (nth 1 form)))))
+
 (test defun
   (is (equal
        (c `(defun (main :int) ((argc :int) (argv :char**))
@@ -163,8 +181,8 @@
   return 0;
 }"))
   (is (equal
-       (c `(defun (main :int)
-               (set (x :int) 5)
+       (c `(defun (main :int) ()
+             (set (x :int) 5)
              (set (y :int) 10)
              (return 0)))
        "int main () {
