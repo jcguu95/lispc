@@ -5,21 +5,66 @@
 
 (in-package :paren.test)
 
-(test add-2
- (is (= 2 (add-2 0)))
- (is (= 0 (add-2 -2))))
+
+
+(setf (readtable-case *readtable*) :invert)
+
+(defparameter *functions* (make-hash-table))
+
+(defun c (form)
+  "Compile lispy form into C code."
+  (let* ((operator (car form))
+         (function (gethash operator *functions*)))
+    (funcall function (cdr form))))
+
+(setf (gethash 'deftype *functions*)
+      (lambda (form)
+        (let ((type (nth 0 form))
+              (new-type (nth 1 form)))
+          (format nil "typedef ~a ~a;" type new-type))))
 
 (test typedef
-  (is (equal (c `(deftype (struct X) X))
+  (is (equal (c `(deftype (struct :x) x))
              "typedef struct X X;"))
-  (is (equal (c `(deftype (struct x) x))
-             "typedef struct x x;")))
+  (is (equal (c `(deftype (struct :Y) Y))
+             "typedef struct y y;")))
+
+(setf (gethash 'defstruct *functions*)
+      (lambda (form)
+        (let ((struct-name (nth 0 form))
+              (cells (nth 1 form)))
+          (format nil "struct ~a {~%~{  ~a;~^~%~}~%};"
+                  struct-name (mapcar #'resolve-declaration cells)))))
+
+(defun resolve-declaration (declaration)
+  (let ((variable (nth 0 declaration)))
+    (multiple-value-bind (type pointer-count)
+        (resolve-type (nth 1 declaration))
+      (format nil "~a ~a~a"
+              type
+              (make-string pointer-count :initial-element #\*)
+              variable))))
+
+(resolve-declaration '(value :int))
+
+(defun resolve-type (type-spec)
+  (cond
+    ((keywordp type-spec)
+     (values (format nil "~a" type-spec) 0))
+    ((listp type-spec)
+     (assert (eq '* (car type-spec)))
+     (if (integerp (nth 1 type-spec))
+         (values (resolve-type (nth 2 type-spec))
+                 (nth 1 type-spec))
+         (values (resolve-type (nth 1 type-spec))
+                 1)))
+    (t (error "Unsupported case."))))
 
 (test defstruct
   (is (equal
        (c `(defstruct X
              ((value :int)
-              (next  :X*))))
+              (next (* :X)))))
        "struct X {
   int value;
   X *next;
