@@ -3,19 +3,37 @@
 
 ;;;
 
-(defparameter *functions* (make-hash-table))
+(defparameter *functions* (make-hash-table :test #'equal))
+
+;; A Utility Function
+(defun invert-case (string)
+  (if (string= "" string)
+      string
+      (loop :for index :from 0 :to (1- (length string))
+            :do (cond
+                  ((upper-case-p (char string index))
+                   (setf (char string index) (char-downcase (char string index))))
+                  ((lower-case-p (char string index))
+                   (setf (char string index) (char-upcase   (char string index)))))
+            :finally (return string))))
+
+(defun op-name (operator)
+  (check-type operator symbol)
+  (symbol-name operator))
 
 (defun c (form)
   "Compile lispy form into C code."
   (if (or (symbolp form)
           (numberp form))
-      (format nil "~a" form)            ; FIXME Case has to be flipped.
+      (invert-case (format nil "~a" form)) ; FIXME Case has to be flipped.
       (let* ((operator (car form))
-             (op-name (symbol-name operator)))
+             (op-name (op-name operator)))
         (if (eq #\@ (char op-name 0))
             (let ((function-name (subseq op-name 1)))
-              (format nil "~a(~{~a~^, ~})" function-name (mapcar #'c (cdr form)))) ; FIXME Case of function-name has to be inverted.
-            (let ((function (gethash operator *functions*)))
+              (format nil "~a(~{~a~^, ~})"
+                      (invert-case function-name)
+                      (mapcar #'c (cdr form)))) ; FIXME Case of function-name has to be inverted.
+            (let ((function (gethash op-name *functions*)))
               (funcall function (cdr form)))))))
 
 (defun resolve-declaration (declaration)
@@ -44,7 +62,7 @@
   "Define a C operation."
   ;; FIXME FORM is a special keyword here. This is ugly. What should we do?
   (declare (ignore _))
-  `(setf (gethash ',name *functions*)
+  `(setf (gethash (op-name ',name) *functions*)
          (lambda (form) ,@body)))
 
 (def-cop deftype ()

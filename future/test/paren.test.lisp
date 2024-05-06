@@ -5,6 +5,12 @@
 
 ;;;
 
+(test invert-case
+  (is (string= (paren::invert-case "AbC") "aBc"))
+  (is (string= (paren::invert-case "abc") "ABC"))
+  (is (string= (paren::invert-case "ABC") "abc"))
+  (is (string= (paren::invert-case "Ab1") "aB1")))
+
 (test typedef
   (is (equal (c `(deftype (struct :x) x))
              "typedef struct X X;"))
