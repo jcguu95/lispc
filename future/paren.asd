@@ -11,7 +11,10 @@
   :source-control (:git "https://github.com/jcguu95/lispc.git")
   :depends-on (:log4cl)
   :components
-  ((:file "paren")))
+  ((:module "src"
+    :serial t
+    :components ((:file "packages")
+                 (:file "paren")))))
 
 (defsystem #:paren.test
   :description "Tests for PAREN."
@@ -23,5 +26,14 @@
   :bug-tracker "https://github.com/jcguu95/lispc"
   :source-control (:git "https://github.com/jcguu95/lispc.git")
   :depends-on (:paren :fiveam)
+  :perform
+  (load-op                              ; Test whenever load.
+   (o system)
+   (declare (ignore o))
+   (log:info "Testing system ~a." system)
+   (fiveam:run! 'paren.test::paren.test))
   :components
-  ((:file "paren.test")))
+  ((:module "test"
+    :serial t
+    :components ((:file "packages")
+                 (:file "paren.test")))))
