@@ -30,8 +30,8 @@
   (load-op                              ; Test whenever load.
    (o system)
    (declare (ignore o))
-   (log:info "Testing system ~a." system)
-   (fiveam:run! 'paren.test::paren.test))
+   (format t "Testing system ~a..~%" system)
+   (uiop:symbol-call :fiveam '#:run! 'paren.test::paren.test))
   :components
   ((:module "test"
     :serial t
