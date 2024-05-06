@@ -13,9 +13,16 @@
 
 (defun c (form)
   "Compile lispy form into C code."
-  (let* ((operator (car form))
-         (function (gethash operator *functions*)))
-    (funcall function (cdr form))))
+  (if (or (symbolp form)
+          (numberp form))
+      (format nil "~a" form)            ; FIXME Case has to be flipped.
+      (let* ((operator (car form))
+             (op-name (symbol-name operator)))
+        (if (eq #\@ (char op-name 0))
+            (let ((function-name (subseq op-name 1)))
+              (format nil "~a(~{~a~^, ~})" function-name (mapcar #'c (cdr form)))) ; FIXME Case of function-name has to be inverted.
+            (let ((function (gethash operator *functions*)))
+              (funcall function (cdr form)))))))
 
 (setf (gethash 'deftype *functions*)
       (lambda (form)
@@ -72,36 +79,74 @@
 
 (test malloc-size-of
   (is (equal
-       (c `(def (x1 :X*) (@malloc (@sizeof X))))
-       "X *x1 = malloc(sizeof(X));")))
+       (c `(@malloc (@sizeof x)))
+       "malloc(sizeof(X))")))
+
+(setf (gethash '-> *functions*)
+      (lambda (form)
+        (format nil "~{~a~^->~}" form)))
 
 (test ->
   (is (equal
-       (c `(def (-> x1 value) 10))
-       "x1->value = 10;"))
+       (c `(-> x1 value))
+       "x1->value"))
   (is (equal
-       (c `(def (-> x1 next)  x2))
-       "x1->next = x2;"))
+       (c `(-> x1 next next value))
+       "x1->next->next->value"))
   (is (equal
        (c `(@printf (str "Answer: %d.\\n") (-> x1 next next value)))
        "printf(\"Answer: %d.\\n\", x1->next->next->value);")))
+
+(setf (gethash 'str *functions*)
+      (lambda (form)
+        (format nil "~s" (car form))))
 
 (test string
   (is (equal
        (c `(str "ABC"))
        "\"ABC\"")))
 
+(setf (gethash '== *functions*)
+      (lambda (form)
+        (format nil "(~a == ~a)" (c (nth 0 form)) (c (nth 1 form)))))
+
+(setf (gethash '> *functions*)
+      (lambda (form)
+        (format nil "(~a > ~a)" (c (nth 0 form)) (c (nth 1 form)))))
+
+(setf (gethash '< *functions*)
+      (lambda (form)
+        (format nil "(~a < ~a)" (c (nth 0 form)) (c (nth 1 form)))))
+
+(test ==
+  (is (equal
+       (c `(== i 0))
+       "(i == 0)")))
+
+(setf (gethash 'or *functions*)
+      (lambda (form)
+        (format nil "(~a || ~a)" (c (nth 0 form)) (c (nth 1 form)))))
+
 (test or
   (is (equal
        (c `(or (== i 15)
                (== i 20)))
-       "(i == 15) || (i == 20)")))
+       "((i == 15) || (i == 20))")))
+
+(setf (gethash 'and *functions*)
+      (lambda (form)
+        (format nil "(~a && ~a)" (c (nth 0 form)) (c (nth 1 form)))))
 
 (test and
   (is (equal
        (c `(and (> i 0)
                 (< i 30)))
-       "(i > 0) && (i < 30)")))
+       "((i > 0) && (i < 30))")))
+
+(setf (gethash 'include *functions*)
+      (lambda (form)
+        (format nil "#include <~a>" (car form))))
+;; TODO Implement include for local libs too.
 
 (test include
   (is (equal
