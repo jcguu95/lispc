@@ -10,6 +10,11 @@
   :bug-tracker "https://github.com/jcguu95/lispc"
   :source-control (:git "https://github.com/jcguu95/lispc.git")
   :depends-on (:log4cl)
+  :perform
+  (test-op
+   (o system)
+   (declare (ignore o system))
+   (asdf:load-system :paren.test))
   :components
   ((:module "src"
     :serial t
@@ -26,14 +31,14 @@
   :bug-tracker "https://github.com/jcguu95/lispc"
   :source-control (:git "https://github.com/jcguu95/lispc.git")
   :depends-on (:paren :fiveam)
+  :components
+  ((:module "test"
+    :serial t
+    :components ((:file "packages")
+                 (:file "paren.test"))))
   :perform
   (load-op                              ; Test whenever load.
    (o system)
    (declare (ignore o))
    (format t "Testing system ~a..~%" system)
-   (uiop:symbol-call :fiveam '#:run! (find-symbol "PAREN.TEST" "PAREN.TEST")))
-  :components
-  ((:module "test"
-    :serial t
-    :components ((:file "packages")
-                 (:file "paren.test")))))
+   (uiop:symbol-call :fiveam '#:run! (find-symbol "PAREN.TEST" "PAREN.TEST"))))
