@@ -5,10 +5,12 @@
 
 ;;;
 
+;; TODO Other keywords, C preprocessor macros, `int x[8]`, `int x[]`.
+
 (test invert-case
   (is (string= (paren::invert-case "AbC") "aBc"))
   (is (string= (paren::invert-case "abc") "ABC"))
-  (is (string= (paren::invert-case "ABC") "abc"))
+  (is (string= (paren::invert-case "ABC") "abc")) ; FIXME
   (is (string= (paren::invert-case "Ab1") "aB1")))
 
 (test typedef
@@ -27,7 +29,10 @@
   X *next;
 };")))
 
-(test malloc-size-of
+(test funcall
+  (is (equal
+       (c `(@printf (str "x = %d, y = %d \\n") X Y))
+       "printf(\"x = %d, y = %d \\n\", x, y)"))
   (is (equal
        (c `(@malloc (@sizeof x)))
        "malloc(sizeof(X))")))
@@ -45,40 +50,70 @@
 
 (test string
   (is (equal
+       (c `(str "ABCd"))
+       "\"ABCd\""))
+  ;; FIXME Why is this wrong?
+  (is (equal
        (c `(str "ABC"))
        "\"ABC\"")))
 
 (test ==
   (is (equal
-       (c `(== i 0))
+       (c `(== I 0))
        "(i == 0)")))
 
 (test or
   (is (equal
-       (c `(or (== i 15)
-               (== i 20)))
+       (c `(or (== I 15)
+               (== I 20)))
        "((i == 15) || (i == 20))")))
 
 (test and
   (is (equal
-       (c `(and (> i 0)
-                (< i 30)))
+       (c `(and (> I 0)
+                (< I 30)))
        "((i > 0) && (i < 30))")))
 
 (test include
   (is (equal
-       (c `(include "stdio.h"))
-       "#include <stdio.h>")))
+       (c `(include :system ("stdio.h" "stdlib.h" "math.h")
+                    :local ("emacs.h")))
+       "#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include \"emacs.h\"
+")))
 
-(test defun
+(test type
   (is (equal
-       (c `(defun (main :int) ((argc :int) (argv :char**))
-             (@printf (str "Hello, world!"))
+       (c '(set (x :int)))
+       "int x"))
+  (is (equal
+       (c '(set (x (* 1 :int))))
+       "int *x"))
+  (is (equal
+       (c '(set (x (* 2 :int))))
+       "int **x"))
+  (is (equal
+       (c `(defun (main :int) ((argc :int) (argv (* 2 :char)))
              (return 0)))
        "int main (int argc, char **argv) {
-  printf(\"Hello, world!\");
   return 0;
-}"))
+}")))
+
+
+(test set
+  (is (equal
+       (c '(set (x :int)))
+       "int x"))
+  (is (equal
+       (c '(set (x (* 1 :int))))
+       "int *x"))
+  (is (equal
+       (c '(set (x (* 1 :int)) 42))
+       "int *x = 42")))
+
+(test defun
   (is (equal
        (c `(defun (main :int) ()
              (set (x :int) 5)
@@ -87,7 +122,7 @@
        "int main () {
   int x = 5;
   int y = 10;
-  return 0 ;
+  return 0;
 }")))
 
 (test assignment
@@ -97,11 +132,6 @@
   (is (equal
        (c `(set (y :int) 10))
        "int y = 10")))
-
-(test printf
-  (is (equal
-       (c `(@printf (str "x = %d, y = %d \\n") x y))
-       "printf(\"x = %d, y = %d\\n\", x, y)")))
 
 (test return
   (is (equal

@@ -68,7 +68,8 @@
 (def-cop deftype ()
   (let ((type (nth 0 form))
         (new-type (nth 1 form)))
-    (format nil "typedef ~a ~a;" type new-type)))
+    ;; FIXME
+    (format nil "typedef ~a ~a;" (resolve-type type) new-type)))
 
 (def-cop defstruct ()
   (let ((struct-name (nth 0 form))
@@ -91,7 +92,17 @@
 (def-cop <   () (format nil "(~a < ~a)" (c (nth 0 form)) (c (nth 1 form))))
 (def-cop or  () (format nil "(~a || ~a)" (c (nth 0 form)) (c (nth 1 form))))
 (def-cop and () (format nil "(~a && ~a)" (c (nth 0 form)) (c (nth 1 form))))
-(def-cop set () (format nil "~a = ~a" (resolve-declaration (nth 0 form)) (c (nth 1 form))))
-(def-cop str () (format nil "~s" (car form)))
+(def-cop str () (format nil "\"~a\"" (car form)))
 (def-cop return  () (format nil "return ~a" (car form)))
-(def-cop include () (format nil "#include <~a>" (car form)))
+
+(def-cop include ()
+  (concatenate
+   'string
+   (format nil "~{#include <~a>~%~}" (getf form :system))
+   (format nil "~{#include \"~a\"~%~}" (getf form :local))))
+
+(def-cop set ()
+  (let ((value (nth 1 form)))
+    (if value
+        (format nil "~a = ~a" (resolve-declaration (nth 0 form)) (c value))
+        (format nil "~a"      (resolve-declaration (nth 0 form))))))
