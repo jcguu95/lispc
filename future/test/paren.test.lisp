@@ -65,14 +65,16 @@
              (c `(deftype (:struct :Y) Y)))))
 
 (test defstruct
-  (is (equal "struct X {
+  (is (equal
+       (format nil "~:
+struct X {
   int value;
   X *next;
-};"
-             (c `(defstruct X
-                   ((value :int)
-                    (next (* :X)))))
-             )))
+};")
+       (c `(defstruct X
+             ((value :int)
+              (next (* :X)))))
+       )))
 
 (test funcall
   (is (equal
@@ -128,11 +130,12 @@
 
 (test include
   (is (equal
-       "#include <stdio.h>
+       (format nil "~:
+#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include \"emacs.h\"
-"
+")
        (c `(include :system ("stdio.h" "stdlib.h" "math.h")
                     :local ("emacs.h")))
        )))
@@ -148,9 +151,10 @@
        "int **x"
        (c '(set (x (* 2 :int))))))
   (is (equal
-       "int main (int argc, char **argv) {
+       (format nil "~:
+int main (int argc, char **argv) {
   return 0;
-}"
+}")
        (c `(defun (main :int) ((argc :int) (argv (* 2 :char)))
              (return 0))))))
 
@@ -168,11 +172,12 @@
 
 (test defun
   (is (equal
-       "int main () {
+       (format nil "~:
+int main () {
   int x = 5;
   int y = 10;
   return 0;
-}"
+}")
        (c `(defun (main :int) ()
              (set (x :int) 5)
              (set (y :int) 10)
