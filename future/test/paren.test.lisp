@@ -5,7 +5,7 @@
 
 ;;;
 
-;; TODO Other keywords, C preprocessor macros, `int x[8]`, `int x[]`.
+;; TODO Other C keywords, C preprocessor macros, `int x[8]`, `int x[]`, {1,2,3}.
 
 (test invert-case                       ; util
   (is (string= "aBc" (paren::invert-case "AbC")))
