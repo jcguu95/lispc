@@ -5,12 +5,14 @@
 
 ;;;
 
-;; TODO Other C keywords, C preprocessor macros, `int x[8]`, `int x[]`, {1,2,3}.
+;; TODO Other C keywords, C preprocessor macros
+;;
+;; TODO Ensure that I cover https://stackoverflow.com/questions/12602413/difference-between-int-x-and-int-x
 
 (test invert-case                       ; util
-  (is (string= "aBc" (paren::invert-case "AbC")))
-  (is (string= "abc" (paren::invert-case "ABC")))
-  (is (string= "aB1" (paren::invert-case "Ab1")))
+  (is (string= "aBc"  (paren::invert-case "AbC")))
+  (is (string= "abc"  (paren::invert-case "ABC")))
+  (is (string= "aB1"  (paren::invert-case "Ab1")))
   (is (string= "ABCD" (paren::invert-case "abcd")))
   ;; FIXME Why is this wrong? Very weird bug.. It is correct while manually
   ;; evaluated in the buffer. And it seems to fail only for the string "abc".
@@ -58,7 +60,7 @@
              (paren::resolve-declaration '(aBcDe1 :int))))
   )
 
-(test typedef
+(test deftype
   (is (equal "typedef struct x x;"
              (c `(deftype (:struct :x) x))))
   (is (equal "typedef struct Y Y;"
@@ -83,6 +85,10 @@ struct X {
   (is (equal
        "malloc(sizeof(x))"
        (c `(@malloc (@sizeof x))))))
+
+(test array
+  (is (equal "{1, 2, 3}"
+             (c `(vec 1 2 3)))))
 
 (test ->
   (is (equal
@@ -145,6 +151,15 @@ struct X {
        "int x"
        (c '(set (x :int)))))
   (is (equal
+       "int x[]"
+       (c '(set (x (:array nil :int))))))
+  (is (equal
+       "int x[3]"
+       (c '(set (x (:array 3 :int))))))
+  (is (equal
+       "int x[3] = {1, 2, 3}"
+       (c '(set (x (:array 3 :int)) (vec 1 2 3))))) ; TODO Maybe vec should just be an alias to array.
+  (is (equal
        "int *x"
        (c '(set (x (* 1 :int))))))
   (is (equal
@@ -163,6 +178,9 @@ int main (int argc, char **argv) {
   (is (equal
        "int x"
        (c '(set (x :int)))))
+  (is (equal
+       "int x = {1, 2, 3}"
+       (c '(set (x :int) (vec 1 2 3)))))
   (is (equal
        "int *x"
        (c '(set (x (* 1 :int))))))

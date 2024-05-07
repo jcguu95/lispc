@@ -69,7 +69,9 @@
                   1)))
        ((eq :struct (nth 0 type-spec))
         ;; e.g. (struct :int) => (:struct int)
-        (list :struct (resolve-type (nth 1 type-spec))))))
+        (list :struct (resolve-type (nth 1 type-spec))))
+       ((eq :array (nth 0 type-spec))
+        (list :array (nth 1 type-spec) (resolve-type (nth 2 type-spec))))))
     (t (error "Unsupported case."))))
 
 (defun resolve-declaration (declaration)
@@ -90,7 +92,16 @@
                  variable)))
       ((eq :struct (car type))
        (let ((base-type (resolve-type (nth 1 type))))
-         (format nil "struct ~a ~a" base-type variable))))))
+         (format nil "struct ~a ~a" base-type variable)))
+      ;; E.g.
+      ;; (c '(set (x (:array 3 :int) (vec 1 2 3))))
+      ;; (c '(set (x (:array nil :int) (vec 1 2 3))))
+      ((eq :array (car type))
+       (let ((length (nth 1 type))
+             (base-type (resolve-type (nth 2 type))))
+         (unless length (setf length ""))
+         (format nil "~a ~a[~a]" base-type variable length)))
+      (t (error "Unsupported case.")))))
 
 (defmacro def-cop (name vars &body body)
   "Define a C operation."
@@ -145,3 +156,6 @@
     (if value
         (format nil "~a = ~a" (resolve-declaration (nth 0 form)) (c value))
         (format nil "~a"      (resolve-declaration (nth 0 form))))))
+
+(def-cop vec (form)
+  (format nil "{~{~a~^, ~}}" form))
