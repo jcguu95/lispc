@@ -32,6 +32,8 @@
          (format nil "~a" (resolve-symbol form)))
         ((numberp form)
          (format nil "~a" form))
+        ((stringp form)
+         form)
         (t
          (let* ((operator (car form))
                 (op-name (op-name operator)))

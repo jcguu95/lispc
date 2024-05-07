@@ -1,13 +1,18 @@
 (in-package :paren.test)
-;; (setf (readtable-case *readtable*) :invert)
+(setf (readtable-case *readtable*) :invert)
 (def-suite paren.test)
 (in-suite paren.test)
 
-;;;
+;;; TODOs
 
 ;; TODO Other C keywords, C preprocessor macros
 ;;
 ;; TODO Ensure that I cover https://stackoverflow.com/questions/12602413/difference-between-int-x-and-int-x
+;; In particular,
+;; int (*x)[] // declare x as pointer to array of int
+;; int *x[] // declare x as array of pointer to int
+
+;;; Tests
 
 (test invert-case                       ; util
   (is (string= "aBc"  (paren::invert-case "AbC")))
@@ -173,7 +178,6 @@ int main (int argc, char **argv) {
        (c `(defun (main :int) ((argc :int) (argv (* 2 :char)))
              (return 0))))))
 
-
 (test set
   (is (equal
        "int x"
@@ -213,3 +217,24 @@ int main () {
   (is (equal
        "return 0"
        (c `(return 0)))))
+
+;; NOTE Some C constructs are unsupported by paren. The users are allowed to
+;; write any C code as strings.
+;;
+;; + =int (*(*foo)(void ))[3]=: declare foo as pointer to function (void) returning pointer to array 3 of int
+;; + =const int (* volatile bar)[64]=: declare bar as volatile pointer to array 64 of const int
+;; + =(double (^)(int , long long ))foo=: cast foo into block(int, long long) returning double
+(test inline
+  (is (equal
+       (format nil "~:
+int main () {
+  int (*(*foo)(void ))[3];
+  const int (* volatile bar)[64];
+  (double (^)(int , long long ))baz;
+  return 0;
+}")
+       (c `(defun (main :int) ()
+             "int (*(*foo)(void ))[3]"
+             "const int (* volatile bar)[64]"
+             "(double (^)(int , long long ))baz"
+             (return 0))))))
