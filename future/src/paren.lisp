@@ -76,6 +76,19 @@
         (list :array (nth 1 type-spec) (resolve-type (nth 2 type-spec))))))
     (t (error "Unsupported case."))))
 
+
+;; NOTE C declarations is in general messy. For example,
+;;
+;;   int *(x[]), int *x[]: declare x as array of pointer to int
+;;   int ((*x)[]), int (*x)[]: declare x as pointer to array of int
+;;   int *(*x)[]: declare x as pointer to array of pointer to int
+;;   int (**x)[], int (*(*(x)))[]: declare x as pointer to pointer to array of int
+;;   int **x[], int **(x[]): declare x as array of pointer to pointer to int
+;;   int (*(*x)[])[]: declare x as pointer to array of pointer to array of int
+;;
+;; We will support only a tiny fraction of them. However, the user can use
+;; inline strings to write any C code.
+
 (defun resolve-declaration (declaration)
   (let* ((variable (resolve-symbol (nth 0 declaration)))
          (type (resolve-type (nth 1 declaration))))

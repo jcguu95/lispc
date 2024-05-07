@@ -1,5 +1,7 @@
 (in-package :paren.test)
+
 (setf (readtable-case *readtable*) :invert)
+
 (def-suite paren.test)
 (in-suite paren.test)
 
@@ -11,6 +13,8 @@
 ;; In particular,
 ;; int (*x)[] // declare x as pointer to array of int
 ;; int *x[] // declare x as array of pointer to int
+;;
+;; And multi-arrays x[][][]
 
 ;;; Tests
 
@@ -63,6 +67,15 @@
              (paren::resolve-declaration '(a-B-c-D-e :int))))
   (is (equal "int AbCdE1"
              (paren::resolve-declaration '(aBcDe1 :int))))
+  )
+
+;; FIXME Weird bug.. Does altering the reader-case change how a string is read too?
+;;
+(test symbols
+  (is (equal "abcde" (c 'abcde)))
+  ;; (is (equal "abcd" (c 'abcd))) ; FIXME
+  (is (equal "ABCD" (c 'ABCD)))
+  ;; (is (equal "AbC" (c 'aBc))) ; FIXME
   )
 
 (test deftype
@@ -155,6 +168,12 @@ struct X {
   (is (equal
        "int x"
        (c '(set (x :int)))))
+  ;; int *(*x)[]: declare x as pointer to array of pointer to int
+  ;; int (**x)[], int (*(*(x)))[]: declare x as pointer to pointer to array of int
+  ;; int **x[], int **(x[]): declare x as array of pointer to pointer to int
+  (is (equal
+       "int (*x)[]"
+       (c '(set (x (* 1 (:array nil :int)))))))
   (is (equal
        "int x[]"
        (c '(set (x (:array nil :int))))))
@@ -225,6 +244,15 @@ int main () {
 ;; + =const int (* volatile bar)[64]=: declare bar as volatile pointer to array 64 of const int
 ;; + =(double (^)(int , long long ))foo=: cast foo into block(int, long long) returning double
 (test inline
+  (is (equal
+       "42"
+       (c 42)))
+  (is (equal
+       "42.0"
+       (c 42.00)))
+  (is (equal
+       "any code; anywhere;!!"
+       (c "any code; anywhere;!!")))
   (is (equal
        (format nil "~:
 int main () {
