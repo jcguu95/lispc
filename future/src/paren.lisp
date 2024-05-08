@@ -50,8 +50,18 @@
 (defun resolve-symbol (symbol)
   (invert-case (substitute #\_ #\- (symbol-name symbol))))
 
+;; TODO Redo for the type system: Basic types are represented as keywords,
+;; while composed types are represented as lists whose cars are of the
+;; following: :pointer, :function, :struct, :array. The users can write
+;; instead :pt, :fn, :{}, :[] respectively, but a normalizer will transform it
+;; into the canonical, longer forms. Write util functions to handle and
+;; inspect types. Allow users to define more type operators (e.g. :pt :fn as
+;; above). Finally, write a printer, and integrate that with SET and DECLARE.
+;; Mention that the type system is by no means complete, yet the user can
+;; inline any C codes so that's not a problem.
+
 ;; TODO Write a spec for types.
-(defun resolve-type (type-spec)
+(defun resolve-type (type-spec)         ; TODO NORMALIZING
   (cond
     ((stringp type-spec)
      type-spec)
