@@ -184,3 +184,6 @@
 
 (def-cop vec (form)
   (format nil "{~{~a~^, ~}}" form))
+
+;; TODO Add a function that directly executes a *.lsp file by compiling into
+;; C, executing, and printing its output to repl.
