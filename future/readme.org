@@ -1,0 +1,19 @@
+* TODOs
+** Basic Functionalities
+*** New Type System
+**** DONE Type Spec
+**** NEXT Type Formatter
+*** Preprocessor Directives
+
+e.g. #ifndef..
+*** Block and GOTO
+
+*** Lisp Interopts
+
+*** Design: Perhaps don't invert readtable?
+
+If we do not invert case in readtable, we must then use =:perserve= mode, and
+the users must use explicit uppercase for lisp interopt.
+
+** Provide Many Examples as Programmatic Tests
+*** Transpile examples from Learn C the Hard Way
