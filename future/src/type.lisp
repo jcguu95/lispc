@@ -1,14 +1,27 @@
 ;; TODO Redo for the type system: Basic types are represented as keywords,
 ;; while composed types are represented as lists whose cars are of the
-;; following: :pt, :fn, :struct, :array. The users can write
-;; instead :pt, :fn, :{}, :[] respectively, but a normalizer will transform it
-;; into the canonical, longer forms. Write util functions to handle and
-;; inspect types. Allow users to define more type operators (e.g. :pt :fn as
-;; above). Finally, write a printer, and integrate that with SET and DECLARE.
+;; following: :pt, :fn, :struct, :array.
+
+;; TODO The users can write instead :pt, :fn, :(), :{}, :[] respectively, but
+;; a normalizer will transform it into the canonical, longer forms. Write util
+;; functions to handle and inspect types. Allow users to define more type
+;; operators (e.g. :pt :fn as above).
+
+;; TODO Finally, write a printer, and integrate that with SET and DECLARE.
 ;; Mention that the type system is by no means complete, yet the user can
 ;; inline any C codes so that's not a problem.
 
 ;; TODO Change syntax from (:array () :int) to (:array :int)
+
+;; TODO Support `volatile pointer`. (an example from https://cdecl.org/):
+;; declare bar as volatile pointer to array 64 of const int
+;;
+;; const int (* volatile bar)[64]
+
+;; TODO Support `cast`. An example from https://cdecl.org/: cast foo into
+;; block(int, long long) returning double
+;;
+;; (double (^)(int , long long ))foo
 
 (defun type? (form)
   (if (keywordp form)
@@ -36,7 +49,7 @@
            (let ((name (nth 1 form)))
              (and (= 2 (length form))
                   (or (stringp name)
-                      (keywordp name))  ; TODO better error message for failure
+                      (keywordp name)) ; TODO better error message for failure
                   kind)))
           (:array
            (let ((length (nth 1 form))
@@ -162,6 +175,10 @@
   ;; int (((foo)[])[])
   (equal "int (((~a)[])[])"
          (fmt-string<-type '(:array () (:array () :int))))
+  ;; TODO Contribution Opportunity - Can we improve the printer to reduce
+  ;; unnecessary parentheses? For example, the output should ideally be "int
+  ;; foo[][]" instead of "int (((foo)[])[])". Contributions with a proof or
+  ;; supporting evidence are welcome.
 
   ;; declare foo as pointer to array 9 of struct X
   ;; struct X ((*(foo))[9])
@@ -274,21 +291,4 @@
    "int ((*((*(~a))(void)))[3])"
    (fmt-string<-type
     '(:pt (:fn (:pt (:array 3 :int))
-              (:void)))))
-
-  ;; TODO Support `volatile pointer`
-  ;;
-  ;; An example from https://cdecl.org/
-  ;;
-  ;; declare bar as volatile pointer to array 64 of const int
-  ;;
-  ;; const int (* volatile bar)[64]
-
-  ;; TODO Support `cast`.
-  ;;
-  ;; An example from https://cdecl.org/
-  ;;
-  ;; cast foo into block(int, long long) returning double
-  ;;
-  ;; (double (^)(int , long long ))foo
-  ))
+              (:void)))))))
