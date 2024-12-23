@@ -285,7 +285,7 @@ struct x {
   (is (equal
        "int ((x)[3]) = {1, 2, 3}"
        ;; TODO Maybe vec should just be an alias to array.
-       (c '(set (x (:array 3 :int)) (vec 1 2 3))))))
+       (c '(declare (x (:array 3 :int)) (vec 1 2 3))))))
 
 (test ->
   (is (equal
@@ -339,23 +339,27 @@ struct x {
                     :local ("emacs.h")))
        )))
 
-(test set
+(test declare
   (is (equal
        "int (x)"
-       (c '(set (x :int)))))
+       (c '(declare (x :int)))))
   (is (equal
        "int (x) = {1, 2, 3}"
-       (c '(set (x :int) (vec 1 2 3)))))
+       (c '(declare (x :int) (vec 1 2 3)))))
   (is (equal
        "int (*(x))"
-       (c '(set (x (:pointer :int 1))))))
+       (c '(declare (x (:pointer :int 1))))))
   (is (equal
        "int (*(x)) = 42"
-       (c '(set (x (:pointer :int 1)) 42))))
-  ;; TODO FIXME
+       (c '(declare (x (:pointer :int 1)) 42)))))
+
+(test set
+  (is (equal
+       (c `(set x 10))
+       "x = 10"))
   (is (equal
        (c `(set (-> x1 value) 10))
-       "x1->value = 10;")))
+       "x1->value = 10")))
 
 (test defun
   (is (equal
@@ -366,8 +370,8 @@ int (main) () {
   return 0;
 }")
        (c `(defun (main :int) ()
-             (set (x :int) 5)
-             (set (y :int) 10)
+             (declare (x :int) 5)
+             (declare (y :int) 10)
              (return 0)))))
 
   (is (equal
@@ -381,10 +385,10 @@ int (main) (int (argc), char (**(argv))) {
 (test assignment
   (is (equal
        "int (x) = 5"
-       (c `(set (x :int) 5))))
+       (c `(declare (x :int) 5))))
   (is (equal
        "int (y) = 10"
-       (c `(set (y :int) 10)))))
+       (c `(declare (y :int) 10)))))
 
 (test case
   (is

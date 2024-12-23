@@ -115,11 +115,20 @@ case, leave the string unchanged."
    (format nil "~{#include <~a>~%~}" (getf form :system))
    (format nil "~{#include \"~a\"~%~}" (getf form :local))))
 
-(def-cop set (form)
+(def-cop declare (form)
   (let ((value (nth 1 form)))
     (if value
-        (format nil "~a = ~a" (resolve-declaration (nth 0 form)) (c value))
-        (format nil "~a"      (resolve-declaration (nth 0 form))))))
+        (format nil "~a = ~a"
+                (resolve-declaration (nth 0 form))
+                (c value))
+        (format nil "~a"
+                (resolve-declaration (nth 0 form))))))
+
+(def-cop set (form)
+  (assert (= (length form) 2))
+  (format nil "~a = ~a"
+          (c (nth 0 form))
+          (c (nth 1 form))))
 
 (def-cop vec (form)
   (format nil "{~{~a~^, ~}}" form))
