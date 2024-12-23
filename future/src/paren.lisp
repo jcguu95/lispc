@@ -44,7 +44,9 @@ case, leave the string unchanged."
         (t
          (let* ((operator (car form))
                 (op-name (op-name operator)))
-           (if (eq #\@ (char op-name 0))
+           (if (and
+                (> (length op-name) 1)
+                (eq #\@ (char op-name 0)))
                ;; funcall
                (let ((function-name (subseq op-name 1)))
                  (format nil "~a(~{~a~^, ~})"
@@ -100,8 +102,14 @@ case, leave the string unchanged."
 
 (def-cop ->  (form) (format nil "~{~a~^->~}" (mapcar #'c form)))
 (def-cop ==  (form) (format nil "(~a == ~a)" (c (nth 0 form)) (c (nth 1 form))))
-(def-cop >   (form) (format nil "(~a > ~a)" (c (nth 0 form)) (c (nth 1 form))))
-(def-cop <   (form) (format nil "(~a < ~a)" (c (nth 0 form)) (c (nth 1 form))))
+(def-cop >   (form) (format nil "(~a > ~a)"  (c (nth 0 form)) (c (nth 1 form))))
+(def-cop <   (form) (format nil "(~a < ~a)"  (c (nth 0 form)) (c (nth 1 form))))
+(def-cop +   (form) (format nil "(~{(~a)~^ + ~})" (mapcar #'c form)))
+(def-cop -   (form) (format nil "(~{(~a)~^ - ~})" (mapcar #'c form)))
+(def-cop *   (form) (format nil "(~{(~a)~^ * ~})" (mapcar #'c form)))
+(def-cop /   (form) (format nil "(~{(~a)~^ / ~})" (mapcar #'c form))) ; TODO Add test.
+(def-cop ++  (form) (format nil "(~a++)"     (c (nth 0 form))))
+(def-cop --  (form) (format nil "(~a--)"     (c (nth 0 form))))
 (def-cop or  (form) (format nil "(~a || ~a)" (c (nth 0 form)) (c (nth 1 form))))
 (def-cop and (form) (format nil "(~a && ~a)" (c (nth 0 form)) (c (nth 1 form))))
 (def-cop return (form) (format nil "return ~a" (c (nth 0 form))))
@@ -162,6 +170,19 @@ case, leave the string unchanged."
                  (setf result (format nil "~a~%  case ~a:~%    ~a;" result (c (nth 0 subform)) (c (nth 1 subform))))))
     (setf result (format nil "~a~%}" result))))
 
+(def-cop for (form)
+  (with-output-to-string (stream)
+    (format stream "for (~{~a~^; ~}) {~%" (mapcar #'c (nth 0 form)))
+    (loop :for subform :in (cdr form)
+          :do (format stream "  ~a~%" (c subform)))
+    (format stream "}")))
+
+(def-cop cast (form)
+  (format nil "(~a)(~a)" (fmt-string<-type (nth 0 form)) (c (nth 1 form))))
+
+(def-cop @ (form)
+    (format nil "~a[~a]" (c (nth 0 form)) (c (nth 1 form))))
+
 ;;;
 
 (defun read-file-into-list (file-path)
@@ -181,13 +202,16 @@ case, leave the string unchanged."
 
 (defun compile-lsp-file (file-path)
   (with-open-file
-      (stream (replace-file-extension file-path "c")
-              :direction :output
-              :if-exists :supersede)
-    (format stream
-            (with-output-to-string (stream)
-              (loop :for form :in (read-file-into-list file-path)
-                    :do (format stream (c form)))))))
+      (out-stream (replace-file-extension file-path "c")
+                  :direction :output
+                  :if-exists :supersede)
+    (write-line
+     (with-output-to-string (stream)
+       (loop :for form :in (read-file-into-list file-path)
+             :do (format stream "~a" (c form))))
+     out-stream
+     )))
 
 ;; (compile-lsp-file "./examples/switch.lsp")
 ;; (compile-lsp-file "./examples/cond.lsp")
+;; (compile-lsp-file "./examples/higher-order-function.lsp")

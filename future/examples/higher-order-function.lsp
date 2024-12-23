@@ -1,7 +1,6 @@
 ;; #include <stdio.h>
 ;; #include <stdlib.h>
-(include stdio)
-(include stdlib)
+(include :system ("stdio.h" "stdlib.h"))
 
 ;; int square(int x) { return x * x; }
 (defun (square :int) ((x :int))
@@ -12,35 +11,39 @@
 ;;     for (size_t i = 0; i < size; i++) { result[i] = f(arr[i]); }
 ;;     return result;
 ;; }
-(defun (map :int*) ((f    :int->int)
-                    (arr  :int*)
-                    (size :size-t))
-  (def (result :int*)
-       (cast :int* (@malloc (* size (@sizeof :int)))))
-  (for ((def (i :size-t) 0)
+
+;; FIXME Adopt new type spec for function declaration type.
+(defun (map (:pointer :int)) ((f    :int->int)
+                              (arr  :int*)
+                              (size :size-t))
+  (declare (result (:pointer :int))
+           (cast (:pointer :int)
+                 (@malloc (* size (@sizeof :int)))))
+  (for ((declare (i :size-t) 0)
         (< i size)
         (++ i))
-    (def (@ result i)
-         (@f (@ arr i))))
+       (set (@ result i) (@f (@ arr i))))
   (return result))
 
 ;; int main() {
 ;;     int numbers[] = {1, 2, 3, 4, 5};
 ;;     size_t size = sizeof(numbers) / sizeof(numbers[0]);
 ;;     int* result = map(square, numbers, size);
-;;     for (size_t i = 0; i < size; i++) { printf("%d ", result[i]); }
+;;     for (size_t i = 0; i < size; i++) { printf("%d ", result[i+1]); printf("%d ", result[i]); }
 ;;     printf("\n");
 ;;     return 0;
 ;; }
+
 (defun (main :int) ()
-  (def (numbers :int[]) (vec 1 2 3 4 5))
-  (def (size :size-t) (/ (@sizeof numbers)
-                         (@sizeof (@ numbers 0))))
-  (def (result :int*)
-       (@map square numbers size))
-  (for ((def (i :size-t) 0)
+  (declare (numbers :int[]) (vec 1 2 3 4 5))
+  (declare (size :size-t) (/ (@sizeof numbers)
+                             (@sizeof (@ numbers 0))))
+  (declare (result :int*)
+           (@map square numbers size))
+  (for ((declare (i :size-t) 0)
         (< i size)
         (++ i))
-    (@printf (str "%d") (@ result i)))
+       (@printf (str "%d") (@ result (+ i 1)))
+       (@printf (str "%d") (@ result i)))
   (@printf (str "\\n"))
   (return 0))

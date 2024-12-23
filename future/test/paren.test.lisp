@@ -279,6 +279,12 @@ struct x {
        "malloc(sizeof(x))"
        (c `(@malloc (@sizeof x))))))
 
+(test cast
+  (is
+   (string=
+    (c '(cast (:pointer :int) (@malloc (* size (@sizeof :int)))))
+    "(int (*(~a)))(malloc(((size) * (sizeof(int)))))")))
+
 (test array
   (is (equal "{1, 2, 3}"
              (c `(vec 1 2 3))))
@@ -314,6 +320,24 @@ struct x {
   (is (equal
        "(i == 0)"
        (c '(== i 0)))))
+
+(test +-*/
+  (is
+   (string=
+    (c '(+ i j 2 k 1))
+    "((i) + (j) + (2) + (k) + (1))"))
+  (is
+   (string=
+    (c '(- i j 2 k 1))
+    "((i) - (j) - (2) - (k) - (1))"))
+  (is
+   (string=
+    (c '(++ i))
+    "(i++)"))
+  (is
+   (string=
+    (c '(-- i))
+    "(i--)")))
 
 (test or
   (is (equal
@@ -360,6 +384,28 @@ struct x {
   (is (equal
        (c `(set (-> x1 value) 10))
        "x1->value = 10")))
+
+(test for
+  (string=
+   (c '(for ((declare (i :size-t) 0)
+             (< i size)
+             (++ i))
+        (@printf (str "%d") (@ result (+ i 1)))
+        (@printf (str "%d") (@ result i))))
+   (format nil
+           "~:
+for (size-t (i) = 0; (i < size); (i++)) {
+  printf(\"%d\", (result[((i)+(1))]))
+  printf(\"%d\", (result[i]))
+}")))
+
+(test @
+    (is (string=
+         (c '(@ result i))
+         "result[i]"))
+    (is (string=
+         (c '(@ result (+ i j)))
+         "result[((i) + (j))]")))
 
 (test cond
   (is
