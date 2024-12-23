@@ -23,7 +23,7 @@
     + `#line`: Sets line numbers and filenames for error messages.
     Note that newlines need to be separated by `\`.
         
-  + [ ] Block and GOTO
+  + [X] Implement control flow: block, label, goto.
   + [ ] Lisp Interopts
 
 + Workflow

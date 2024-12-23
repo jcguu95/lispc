@@ -271,6 +271,35 @@ struct x {
               (next (:pointer :x)))))
        )))
 
+(test control-flow
+  (is
+   (string=
+    (c
+     '(block
+       (cond ((< x 0)
+              (goto negative)))
+       (cond ((< y 0)
+              (block
+                  (label negative)
+                (@printf (str "Negative\\n"))
+                (return))))))
+    "{
+if (x < 0) {
+    goto negative;
+}
+if (y < 0) {
+    {
+negative:
+printf(\"Negative\\n\")
+return
+
+}
+}
+
+}"
+    ;; FIXME Fix indentation.
+    )))
+
 (test funcall
   (is (equal
        "printf(\"x = %d, y = %d \\n\", x, y)"
@@ -410,13 +439,14 @@ for (size-t (i) = 0; (i < size); (i++)) {
 (test cond
   (is
    (string=
+    ;; FIXME Fix indentation and spacing.
     "if (i == 10) {
     printf(\"i is 10\\n\")
-} else if ((i == 15) || (i == 20)) {
+}else if ((i == 15) || (i == 20)) {
     printf(\"i is 15 or 20\\n\")
-} else if ((i > 0) && (i < 30)) {
+}else if ((i > 0) && (i < 30)) {
     printf(\"i is between 0 and 30\\n\")
-} else {
+}else {
     printf(\"i is not present\\n\")
 }"
     (c '(cond ((== i 10)
