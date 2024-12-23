@@ -2,28 +2,12 @@
 
 ;;;
 
-;; Debug
-(defun inspect! (&rest rest)
-  (break)
-  rest)
-
 (defparameter *functions* (make-hash-table :test #'equal))
 
-;; A Utility Function
-;; (defun invert-case (string)
-;;   "If all English characters are uppercase, convert them to lowercase. If all
-;;  English characters are lowercase, convert them to uppercase. If the English
-;;  characters are mixed case, leave them unchanged."
-;;   (if (string= "" string)
-;;       string
-;;       (loop :for index :from 0 :to (1- (length string))
-;;             :do (cond
-;;                   ((upper-case-p (char string index))
-;;                    (setf (char string index) (char-downcase (char string index))))
-;;                   ((lower-case-p (char string index))
-;;                    (setf (char string index) (char-upcase   (char string index)))))
-;;             :finally (return string))))
+;; Debug Util
+(defun inspect! (&rest rest) (break) rest)
 
+;; Utility
 (defun invert-case (string)
   "If all English characters in the string are uppercase, convert them to lowercase.
 If all are lowercase, convert them to uppercase. If the characters are mixed
@@ -79,8 +63,10 @@ case, leave the string unchanged."
          (type (nth 1 declaration)))
     (format nil (fmt-string<-type type) variable)))
 
+;;;
+
 (defmacro def-cop (name vars &body body)
-  "Define a C operation."
+  "Define a C operator."
   (assert (= 1 (length vars)))
   `(setf (gethash (op-name ',name) *functions*)
          (lambda (,(car vars)) ,@body)))
@@ -116,7 +102,7 @@ case, leave the string unchanged."
 (def-cop <   (form) (format nil "(~a < ~a)" (c (nth 0 form)) (c (nth 1 form))))
 (def-cop or  (form) (format nil "(~a || ~a)" (c (nth 0 form)) (c (nth 1 form))))
 (def-cop and (form) (format nil "(~a && ~a)" (c (nth 0 form)) (c (nth 1 form))))
-(def-cop return  (form) (format nil "return ~a" (car form)))
+(def-cop return (form) (format nil "return ~a" (c (nth 0 form))))
 
 (def-cop str (form)
   (format nil "\"~a\"" (car form)))
@@ -136,3 +122,5 @@ case, leave the string unchanged."
 (def-cop vec (form)
   (format nil "{~{~a~^, ~}}" form))
 
+(def-cop & (form)
+  (format nil "&~a" (c (nth 0 form))))

@@ -415,3 +415,9 @@ int (main) () {
              "const int (* volatile bar)[64]"
              "(double (^)(int , long long ))baz"
              (return 0))))))
+
+(test integration-test?
+  (is
+   (string=
+    (c `(@scanf (str "%d") (& day)))
+    "scanf(\"%d\", &day)")))
