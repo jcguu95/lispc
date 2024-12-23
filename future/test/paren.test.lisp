@@ -471,10 +471,13 @@ int (main) (int (argc), char (**(argv))) {
 switch (day) {
   case 1:
     return 1;
+    break;
   case 2:
     return 2;
+    break;
   default:
     return 0;
+    break;
 }"))))
 
 (test return

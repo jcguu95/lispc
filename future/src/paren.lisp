@@ -81,14 +81,14 @@ case, leave the string unchanged."
          (new-type (nth 1 form)))
     (case kind-of-type
       (:keyword
-       (format nil "typedef ~a ~a;~%" (c (nth 1 type)) (c new-type)))
+       (format nil "typedef ~a ~a;" (c (nth 1 type)) (c new-type)))
       (:struct
-       (format nil "typedef struct ~a ~a;~%" (c (nth 1 type)) (c new-type))))))
+       (format nil "typedef struct ~a ~a;" (c (nth 1 type)) (c new-type))))))
 
 (def-cop defstruct (form)
   (let ((struct-name (nth 0 form))
         (cells (nth 1 form)))
-    (format nil "struct ~a {~%~{  ~a;~^~%~}~%};~%"
+    (format nil "struct ~a {~%~{  ~a;~^~%~}~%};"
             (c struct-name) (mapcar #'resolve-declaration cells))))
 
 (def-cop defun (form)
@@ -166,8 +166,8 @@ case, leave the string unchanged."
     (loop :for subform :in (cdr form)
           :do
              (if (eq t (car subform))
-                 (setf result (format nil "~a~%  default:~%    ~a;" result (c (nth 1 subform))))
-                 (setf result (format nil "~a~%  case ~a:~%    ~a;" result (c (nth 0 subform)) (c (nth 1 subform))))))
+                 (setf result (format nil "~a~%  default:~%    ~a;~%    break;" result (c (nth 1 subform))))
+                 (setf result (format nil "~a~%  case ~a:~%    ~a;~%    break;" result (c (nth 0 subform)) (c (nth 1 subform))))))
     (setf result (format nil "~a~%}" result))))
 
 (def-cop for (form)
@@ -211,19 +211,15 @@ case, leave the string unchanged."
     (write-line
      (with-output-to-string (stream)
        (loop :for form :in (read-file-into-list file-path)
-             :do (format stream "~a" (c form))))
+             :do (format stream "~a~%" (c form))))
      out-stream
      )))
 
-;; (compile-lsp-file "./examples/hello-world.lsp")
-
-;; (compile-lsp-file "./examples/switch.lsp")
-
-;; (compile-lsp-file "./examples/cond.lsp")
-
-;; (compile-lsp-file "./examples/type-struct-example.lsp")
-
-;; (compile-lsp-file "./examples/higher-order-function.lsp")
+(compile-lsp-file "./examples/hello-world.lsp")
+(compile-lsp-file "./examples/switch.lsp")
+(compile-lsp-file "./examples/cond.lsp")
+(compile-lsp-file "./examples/type-struct-example.lsp")
+(compile-lsp-file "./examples/higher-order-function.lsp")
 
 ;; NOTE TODO Need to first implement preprocessor directives, and then the cop
 ;; `let` in the file.
