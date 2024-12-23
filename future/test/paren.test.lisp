@@ -75,13 +75,13 @@
    ;; declare foo as pointer to array 9 of struct X
    ;; struct X ((*(foo))[9])
    (equal
-    "struct X ((*(~a))[9])"
-    (paren::fmt-string<-type '(:pointer (:array 9 (:struct :X))))))
+    "struct x ((*(~a))[9])"
+    (paren::fmt-string<-type '(:pointer (:array 9 (:struct :x))))))
   (is
    ;; declare foo as struct X
    (equal
-    "struct X (~a)"
-    (paren::fmt-string<-type '(:struct :X))))
+    "struct x (~a)"
+    (paren::fmt-string<-type '(:struct :x))))
   (is
    ;; declare foo as function returning int
    ;; int ((foo)())
@@ -110,8 +110,8 @@
    ;; declare foo as function (void, pointer to struct X) returning void
    ;; void ((foo)(void,struct X (*)))
    (equal
-    "void ((~a)(void,struct X (*)))"
-    (paren::fmt-string<-type '(:function :void (:void (:pointer (:struct :X)))))))
+    "void ((~a)(void,struct x (*)))"
+    (paren::fmt-string<-type '(:function :void (:void (:pointer (:struct :x)))))))
   (is
    ;; declare foo as function (int, char, function returning array of void) returning void
    ;; void foo(int , char , void ()[])
@@ -131,14 +131,14 @@
    ;; declare foo as function returning pointer to array 9 of struct X
    ;; struct X ((*((foo)()))[9])
    (equal
-    "struct X ((*((~a)()))[9])"
-    (paren::fmt-string<-type '(:function (:pointer (:array 9 (:struct :X))) ()))))
+    "struct x ((*((~a)()))[9])"
+    (paren::fmt-string<-type '(:function (:pointer (:array 9 (:struct :x))) ()))))
   (is
    ;; declare foo as pointer to function returning array 9 of struct X
    ;; struct X (((*(foo))())[9])
    (equal
-    "struct X (((*(~a))())[9])"
-    (paren::fmt-string<-type '(:pointer (:function (:array 9 (:struct :X)) ())))))
+    "struct x (((*(~a))())[9])"
+    (paren::fmt-string<-type '(:pointer (:function (:array 9 (:struct :x)) ())))))
   (is
    ;; A complicated example (http://unixwiz.net/techtips/reading-cdecl.html)
    ;;
@@ -199,22 +199,18 @@
              (paren::resolve-declaration '(x :int))))
   (is (equal "int (x_y)"
              (paren::resolve-declaration '(x-y :int))))
-  (is (equal "int (x)"
-             (paren::resolve-declaration '(X :int))))
   (is (equal "int (*(x))"
-             (paren::resolve-declaration '(X (:pointer :int 1)))))
+             (paren::resolve-declaration '(x (:pointer :int 1)))))
   (is (equal "char (**(argv))"
              (paren::resolve-declaration '(argv (:pointer :char 2)))))
   (is (equal "x (*(next))"
-             (paren::resolve-declaration '(next (:pointer :X))))) ; FIXME The printed x should be capitalized.
+             (paren::resolve-declaration '(next (:pointer :x)))))
+  (is (equal "struct x (window)"
+             (paren::resolve-declaration '(window (:struct :x)))))
   (is (equal "struct X (window)"
-             (paren::resolve-declaration '(window (:struct :X)))))
-  (is (equal "struct X (***(a_b_c))"
-             (paren::resolve-declaration '(a-b-c (:pointer (:struct :X) 3)))))
-  (is (equal "int (a_b_c_d_e)"
-             (paren::resolve-declaration '(a-B-c-D-e :int))))
-  (is (equal "int (abcde1)"
-             (paren::resolve-declaration '(aBcDe1 :int)))))
+             (paren::resolve-declaration '(window (:struct :|x|)))))
+  (is (equal "struct xX (window)"
+             (paren::resolve-declaration '(window (:struct :|xX|))))))
 
 (test symbols
   (is (equal "abcde" (c 'abcde)))
@@ -222,21 +218,23 @@
   (is (equal "ABCDE" (c '|abcde|))))
 
 (test deftype
-  (is (equal "typedef struct X X;"
+  (is (equal "typedef struct x x;"
              (c `(deftype (:struct :x) x))))
-  (is (equal "typedef struct Y Y;"
-             (c `(deftype (:struct :Y) Y)))))
+  (is (equal "typedef struct y y;"
+             (c `(deftype (:struct :y) y))))
+  (is (equal "typedef struct Y y;"
+             (c `(deftype (:struct :|y|) y)))))
 
 (test defstruct
   (is (equal
        (format nil "~:
-struct X {
+struct x {
   int (value);
   x (*(next));
-};")                                    ; FIXME The second x should be capitalized.
-       (c `(defstruct X
+};")
+       (c `(defstruct x
              ((value :int)
-              (next (:pointer :X)))))
+              (next (:pointer :x)))))
        )))
 
 (test funcall

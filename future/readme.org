@@ -32,3 +32,4 @@ Under the =./examples/= directory, process all =*.lsp= files, compile them with
 
 ** Provide Many Examples as Programmatic Tests
 *** Transpile examples from Learn C the Hard Way
+*** Persuading example showing superiority of lisp macro

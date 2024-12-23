@@ -91,15 +91,15 @@ case, leave the string unchanged."
          (new-type (nth 1 form)))
     (case kind-of-type
       (:keyword
-       (format nil "typedef ~a ~a;" (nth 1 type) new-type))
+       (format nil "typedef ~a ~a;" (c (nth 1 type)) (c new-type)))
       (:struct
-       (format nil "typedef struct ~a ~a;" (nth 1 type) new-type)))))
+       (format nil "typedef struct ~a ~a;" (c (nth 1 type)) (c new-type))))))
 
 (def-cop defstruct (form)
   (let ((struct-name (nth 0 form))
         (cells (nth 1 form)))
     (format nil "struct ~a {~%~{  ~a;~^~%~}~%};"
-            struct-name (mapcar #'resolve-declaration cells))))
+            (c struct-name) (mapcar #'resolve-declaration cells))))
 
 (def-cop defun (form)
   (let ((func-name (nth 0 form))

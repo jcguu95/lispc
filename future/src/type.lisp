@@ -94,8 +94,8 @@
       (:struct
        (let ((name (nth 1 type)))
          (if no-filler
-             (format nil "struct ~a" name)
-             (format nil "struct ~a (~~a)" name))))
+             (format nil "struct ~a" (invert-case (symbol-name name)))
+             (format nil "struct ~a (~~a)" (invert-case (symbol-name name))))))
       (:array
        (let ((length (nth 1 type))
              (subtype (nth 2 type)))
@@ -110,5 +110,5 @@
                (if no-filler
                    "~a"
                    "~a (~~a)")
-               (string-downcase (symbol-name kind)))))
+               (invert-case (symbol-name kind)))))
     ))
