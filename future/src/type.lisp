@@ -88,14 +88,40 @@
                         (format nil "(~{~a,~})"
                                 (loop :for type :in from-types
                                       :collect (fmt-string<-type type t)))
-                        (format nil "(~~a)(~{~a~^,~})"
+                        ;; NOTE We must add extra parenthesis for function
+                        ;; type. An opaque example is
+                        ;;
+                        ;;   char *((*((*(*(((foo)[])[8]))) ()))[])
+                        ;;
+                        ;; which means
+                        ;;
+                        ;;   declare foo as array of array 8 of pointer to
+                        ;;   pointer to function returning pointer to array of
+                        ;;   pointer to char
+                        ;;
+                        ;; But if you remove the parenthesis for the function
+                        ;; part, you get
+                        ;;
+                        ;;   char *((*(*(*(((foo)[])[8])) ()))[])
+                        ;;
+                        ;; which means
+                        ;;
+                        ;;   declare foo as array of array 8 of pointer to
+                        ;;   function returning pointer to pointer to array of
+                        ;;   pointer to char
+                        ;;
+                        ;; according to https://cdecl.org/
+                        ;;
+                        ;; TODO I should come up with an simpler example to
+                        ;; illustrate the point.
+                        (format nil "(~~a) (~{~a~^,~})"
                                 (loop :for type :in from-types
                                       :collect (fmt-string<-type type t)))))))
       (:struct
        (let ((name (nth 1 type)))
          (if no-filler
              (format nil "struct ~a" (invert-case (symbol-name name)))
-             (format nil "struct ~a (~~a)" (invert-case (symbol-name name))))))
+             (format nil "struct ~a ~~a" (invert-case (symbol-name name))))))
       (:array
        (let ((length (nth 1 type))
              (subtype (nth 2 type)))
@@ -109,6 +135,6 @@
        (format nil
                (if no-filler
                    "~a"
-                   "~a (~~a)")
+                   "~a ~~a")
                (invert-case (symbol-name kind)))))
     ))

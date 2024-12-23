@@ -28,7 +28,8 @@
         
   + [X] Implement control flow: block, label, goto.
   + [X] Lisp Interopts: The c-operator `lisp`.
-  + [ ] Remove extra parenthesis for symbol expansion.
+  + [X] Remove extra parenthesis for expansion.
+  + [ ] Implement the c-operator `let` for C-macros (may better call it `c-macro`).
 
 + Workflow
 
@@ -44,7 +45,6 @@
     
     + [ ] Fix (nested) indentation.
     + [ ] Fix semicolon and newline issue.
-    + [ ] Implement the c-operator `let` for C-macros (may better call it `c-macro`).
     + [ ] Build comparison test workflow against example files.
     + [ ] Build integration test for the behavior of generated c code.
     
@@ -56,3 +56,4 @@
   + [ ] Transpile examples from part of Emacs's source code.
   + [ ] Give persuading example showing superiority of lisp macro.
   + [ ] After `Paren` is stable, use it to implement `BOCL`.
+  + [ ] Package as docker container.
