@@ -221,6 +221,45 @@
         '(:pointer (:function (:pointer (:array 3 :int))
                     (:void)))))))
 
+(test indent
+  (is
+   (string=
+    (format nil "~:
+  1
+  2
+
+  3
+  4
+
+")
+    (paren::indent (format nil "~:
+1
+2
+
+3
+4
+
+"))))
+
+  (is
+   (string=
+    (format nil "~:
+    1
+    2
+
+    3
+    4
+
+")
+    (paren::indent (format nil "~:
+1
+2
+
+3
+4
+
+") :space-count 4))))
+
 (test invert-case                       ; util
   (is (string= "" (paren::invert-case "")))
   (is (string= "hello" (paren::invert-case "HELLO")))

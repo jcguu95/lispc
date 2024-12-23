@@ -1,15 +1,5 @@
 (in-package :paren)
 
-(def-cop deftype (form)
-  (let* ((type (nth 0 form))
-         (kind-of-type (car type))
-         (new-type (nth 1 form)))
-    (case kind-of-type
-      (:keyword
-       (format nil "typedef ~a ~a;" (c (nth 1 type)) (c new-type)))
-      (:struct
-       (format nil "typedef struct ~a ~a;" (c (nth 1 type)) (c new-type))))))
-
 (def-cop lisp (form)
   ;; (log:debug `(progn ,@form))
   (eval `(progn ,@form)))
@@ -22,6 +12,16 @@
           :do (format s "~a" (c subform))
           :do (when (< k (1- (length form)))
                 (format s "~%~%")))))
+
+(def-cop deftype (form)
+  (let* ((type (nth 0 form))
+         (kind-of-type (car type))
+         (new-type (nth 1 form)))
+    (case kind-of-type
+      (:keyword
+       (format nil "typedef ~a ~a;" (c (nth 1 type)) (c new-type)))
+      (:struct
+       (format nil "typedef struct ~a ~a;" (c (nth 1 type)) (c new-type))))))
 
 (def-cop defstruct (form)
   (let ((struct-name (nth 0 form))
@@ -90,25 +90,26 @@
             (c (nth 0 (car form)))
             (c (nth 1 (car form))))
     (loop :for subform :in (butlast (cdr form))
-          :do (format stream "else if ~a {~%    ~a~%}"
+          :do (format stream " else if ~a {~%    ~a~%}"
                       (c (nth 0 subform))
                       (c (nth 1 subform))))
     (let ((last-form (car (last (cdr form)))))
       (when last-form
         (if (eq t (nth 0 last-form))
-            (format stream "else {~%    ~a~%}"
+            (format stream " else {~%    ~a~%}"
                     (c (nth 1 last-form)))
-            (format stream "else if ~a {~%    ~a~%}"
+            (format stream " else if ~a {~%    ~a~%}"
                     (c (nth 0 last-form))
                     (c (nth 1 last-form))))))))
 
 (def-cop case (form)
   (let ((result (format nil "switch (~a) {" (c (nth 0 form)))))
     (loop :for subform :in (cdr form)
-          :do
-             (if (eq t (car subform))
-                 (setf result (format nil "~a~%  default:~%    ~a;~%    break;" result (c (nth 1 subform))))
-                 (setf result (format nil "~a~%  case ~a:~%    ~a;~%    break;" result (c (nth 0 subform)) (c (nth 1 subform))))))
+          :do (if (eq t (car subform))
+                  (setf result (format nil "~a~%  default:~%    ~a;~%    break;"
+                                       result (c (nth 1 subform))))
+                  (setf result (format nil "~a~%  case ~a:~%    ~a;~%    break;"
+                                       result (c (nth 0 subform)) (c (nth 1 subform))))))
     (setf result (format nil "~a~%}" result))))
 
 (def-cop for (form)
