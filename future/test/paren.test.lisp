@@ -417,6 +417,24 @@ int (main) () {
              (return 0))))))
 
 (test integration-test?
+
+  (is
+   (string=
+    (c `(== i 10))
+    "(i == 10)"))
+
+  (is
+   (string=
+    (c `(or (== i 15)
+            (== i 20)))
+    "((i == 15) || (i == 20))"))
+
+  (is
+   (string=
+    (c `(and (> i 0)
+             (< i 30)))
+    "((i > 0) && (i < 30))"))
+ 
   (is
    (string=
     (c `(@scanf (str "%d") (& day)))
