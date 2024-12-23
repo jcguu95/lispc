@@ -42,9 +42,10 @@
     + [ ] Fix semicolon and newline issue.
     + [ ] Implement lisp interopt.
     + [ ] Implement the c-operator `let` for C-macros.
-    + [ ] Build automatic comparison test workflow against example files.
+    + [ ] Build comparison test workflow against example files.
+    + [ ] Build integration test for the behavior of generated c code.
     
-  + [ ] Break code into `paren.type`, `paren.cop`.
+  + [ ] Break the code and tests into `paren.type(.test)`, `paren.cop(.test)`.
 
 + Provide Examples (as Programmatic Tests)
 
