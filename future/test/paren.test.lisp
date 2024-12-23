@@ -29,137 +29,171 @@
              "int (**((~a)[9]))"))
   (is (equal (paren::fmt-string<-type '(:pointer (:array 9 (:pointer :int)) 2))
              "int (*((**(~a))[9]))"))
+
+  ;; declare foo as pointer to pointer to pointer to int
   (is
-   ;; declare foo as pointer to pointer to pointer to int
    (equal (paren::fmt-string<-type '(:pointer :int 3))
           "int (***(~a))"))
+
+  ;; declare foo as pointer to int
   (is
-   ;; declare foo as pointer to int
    (equal (paren::fmt-string<-type '(:pointer :int 1))
           "int (*(~a))"))
+ 
   (is
    (equal (paren::fmt-string<-type '(:pointer :int))
           "int (*(~a))"))
+
+  ;; declare foo as array of pointer to array of int
+  ;;
+  ;; int ((*((foo)[]))[])
   (is
-   ;; declare foo as array of pointer to array of int
-   ;; int ((*((foo)[]))[])
    (equal
     "int ((*((~a)[]))[])"
     (paren::fmt-string<-type '(:array () (:pointer (:array () :int))))))
+
+  ;; declare foo as pointer to array of pointer to array of int
+  ;;
+  ;; int (*(*foo)[])[]
   (is
-   ;; declare foo as pointer to array of pointer to array of int
-   ;; int (*(*foo)[])[]
    (equal
     "int ((*((*(~a))[]))[])"
     (paren::fmt-string<-type '(:pointer (:array () (:pointer (:array () :int)))))))
+
+  ;; declare foo as pointer to array of int
+  ;;
+  ;; int ((*foo)[])
   (is
-   ;; declare foo as pointer to array of int
-   ;; int ((*foo)[])
    (equal "int ((*(~a))[])"
           (paren::fmt-string<-type '(:pointer (:array () :int)))))
+
+  ;; declare foo as array of int
+  ;;
+  ;; int ((foo)[])
   (is
-   ;; declare foo as array of int
-   ;; int ((foo)[])
    (equal "int ((~a)[])"
           (paren::fmt-string<-type '(:array () :int))))
+
+  ;; declare foo as array of array of int
+  ;;
+  ;; int (((foo)[])[])
   (is
-   ;; declare foo as array of array of int
-   ;; int (((foo)[])[])
    (equal "int (((~a)[])[])"
           (paren::fmt-string<-type '(:array () (:array () :int)))))
-  (is ;; TODO Contribution Opportunity - Can we improve the printer to reduce
-   ;; unnecessary parentheses? For example, the output should ideally be "int
-   ;; foo[][]" instead of "int (((foo)[])[])". Contributions with a proof or
-   ;; supporting evidence are welcome.
 
-   ;; declare foo as pointer to array 9 of struct X
-   ;; struct X ((*(foo))[9])
+  ;; TODO Contribution Opportunity - Can we improve the printer to reduce
+  ;; unnecessary parentheses? For example, the output should ideally be "int
+  ;; foo[][]" instead of "int (((foo)[])[])". Contributions with a proof or
+  ;; supporting evidence are welcome.
+  ;;
+  ;; declare foo as pointer to array 9 of struct X
+  ;;
+  ;; struct X ((*(foo))[9])
+  (is
    (equal
     "struct x ((*(~a))[9])"
     (paren::fmt-string<-type '(:pointer (:array 9 (:struct :x))))))
+
+  ;; declare foo as struct X
   (is
-   ;; declare foo as struct X
    (equal
     "struct x (~a)"
     (paren::fmt-string<-type '(:struct :x))))
+
+  ;; declare foo as function returning int
+  ;;
+  ;; int ((foo)())
   (is
-   ;; declare foo as function returning int
-   ;; int ((foo)())
    (equal
     "int ((~a)())"
     (paren::fmt-string<-type '(:function :int ()))))
+
+  ;; declare foo as function (int, char) returning int
+  ;;
+  ;; int ((foo)(int,char))
   (is
-   ;; declare foo as function (int, char) returning int
-   ;; int ((foo)(int,char))
    (equal
     "int ((~a)(int,char))"
     (paren::fmt-string<-type '(:function :int (:int :char)))))
+
+  ;; declare foo as function (int, char) returning void
+  ;;
+  ;; void ((foo)(int,char))
   (is
-   ;; declare foo as function (int, char) returning void
-   ;; void ((foo)(int,char))
    (equal
     "void ((~a)(int,char))"
     (paren::fmt-string<-type '(:function :void (:int :char)))))
+
+  ;; declare foo as function (void, struct *X) returning void
+  ;;
+  ;; void ((foo)(void,char))
   (is
-   ;; declare foo as function (void, struct *X) returning void
-   ;; void ((foo)(void,char))
    (equal
     "int ((~a)(int,char))"
     (paren::fmt-string<-type '(:function :int (:int :char)))))
+
+  ;; declare foo as function (void, pointer to struct X) returning void
+  ;;
+  ;; void ((foo)(void,struct X (*)))
   (is
-   ;; declare foo as function (void, pointer to struct X) returning void
-   ;; void ((foo)(void,struct X (*)))
    (equal
     "void ((~a)(void,struct x (*)))"
     (paren::fmt-string<-type '(:function :void (:void (:pointer (:struct :x)))))))
+
+  ;; declare foo as function (int, char, function returning array of void) returning void
+  ;;
+  ;; void foo(int , char , void ()[])
   (is
-   ;; declare foo as function (int, char, function returning array of void) returning void
-   ;; void foo(int , char , void ()[])
    (equal
     "void ((~a)(int,char,void ((())[])))"
     (paren::fmt-string<-type '(:function :void (:int :char (:function (:array () :void) ()))))))
+
   (is
-
-
    (equal
     "void ((~a)[])"
     (paren::fmt-string<-type '(:array () :void))))
+
   (is (equal
        "void (((~a)())[])"
        (paren::fmt-string<-type '(:function (:array () :void) ()))))
+
+  ;; declare foo as function returning pointer to array 9 of struct X
+  ;;
+  ;; struct X ((*((foo)()))[9])
   (is
-   ;; declare foo as function returning pointer to array 9 of struct X
-   ;; struct X ((*((foo)()))[9])
    (equal
     "struct x ((*((~a)()))[9])"
     (paren::fmt-string<-type '(:function (:pointer (:array 9 (:struct :x))) ()))))
+
+  ;; declare foo as pointer to function returning array 9 of struct X
+  ;;
+  ;; struct X (((*(foo))())[9])
   (is
-   ;; declare foo as pointer to function returning array 9 of struct X
-   ;; struct X (((*(foo))())[9])
    (equal
     "struct x (((*(~a))())[9])"
     (paren::fmt-string<-type '(:pointer (:function (:array 9 (:struct :x)) ())))))
+
+  ;; A complicated example (http://unixwiz.net/techtips/reading-cdecl.html)
+  ;;
+  ;; foo is array of array of 8 pointer to pointer to function returning
+  ;; pointer to array of pointer to char
+  ;;
+  ;; (foo
+  ;;  (:array ()
+  ;;          (:array 8
+  ;;                  (:pointer (:pointer (:function ()
+  ;;                                 (:pointer
+  ;;                                  (:array
+  ;;                                   ()
+  ;;                                   (:pointer :char)))))))))
+  ;;
+  ;; char (* ((* ((* (* ((foo []) [8]))) ())) []))
+  ;;
+  ;; declare foo as array of array 8 of pointer to pointer to function
+  ;; returning pointer to array of pointer to char
+  ;;
+  ;; char (*((*((*(*(((foo)[])[8])))()))[]))
   (is
-   ;; A complicated example (http://unixwiz.net/techtips/reading-cdecl.html)
-   ;;
-   ;; foo is array of array of 8 pointer to pointer to function returning pointer
-   ;; to array of pointer to char
-   ;;
-   ;; (foo
-   ;;  (:array ()
-   ;;          (:array 8
-   ;;                  (:pointer (:pointer (:function ()
-   ;;                                 (:pointer
-   ;;                                  (:array
-   ;;                                   ()
-   ;;                                   (:pointer :char)))))))))
-   ;;
-   ;; char (* ((* ((* (* ((foo []) [8]))) ())) []))
-   ;;
-   ;; declare foo as array of array 8 of pointer to pointer to function returning
-   ;; pointer to array of pointer to char
-   ;;
-   ;; char (*((*((*(*(((foo)[])[8])))()))[]))
    (equal
     "char (*((*((*(*(((~a)[])[8])))()))[]))"
     (paren::fmt-string<-type
@@ -247,7 +281,11 @@ struct x {
 
 (test array
   (is (equal "{1, 2, 3}"
-             (c `(vec 1 2 3)))))
+             (c `(vec 1 2 3))))
+  (is (equal
+       "int ((x)[3]) = {1, 2, 3}"
+       ;; TODO Maybe vec should just be an alias to array.
+       (c '(set (x (:array 3 :int)) (vec 1 2 3))))))
 
 (test ->
   (is (equal
@@ -258,7 +296,8 @@ struct x {
        (c `(-> x1 next next value))))
   (is (equal
        "printf(\"Answer: %d.\\n\", x1->next->next->value)"
-       (c `(@printf (str "Answer: %d.\\n") (-> x1 next next value))))))
+       (c `(@printf (str "Answer: %d.\\n")
+                    (-> x1 next next value))))))
 
 (test string
   (is (equal
@@ -269,12 +308,7 @@ struct x {
        (c '(str "ABCD"))))
   (is (equal
        "\"DEFUN\""
-       (c '(str "DEFUN"))))
-  ;; ;; FIXME Why is this wrong? Very weird bug..
-  ;; (is (equal
-  ;;      "\"ABC\""
-  ;;      (c '(str "ABC"))))
-  )
+       (c '(str "DEFUN")))))
 
 (test ==
   (is (equal
@@ -305,36 +339,6 @@ struct x {
                     :local ("emacs.h")))
        )))
 
-(test type
-  (is (equal
-       "int (x)"
-       (c '(set (x :int)))))
-  (is (equal
-       "int ((*(x))[])"
-       (c '(set (x (:pointer (:array nil :int) 1))))))
-  (is (equal
-       "int ((x)[])"
-       (c '(set (x (:array nil :int))))))
-  (is (equal
-       "int ((x)[3])"
-       (c '(set (x (:array 3 :int))))))
-  (is (equal
-       "int ((x)[3]) = {1, 2, 3}"
-       (c '(set (x (:array 3 :int)) (vec 1 2 3))))) ; TODO Maybe vec should just be an alias to array.
-  (is (equal
-       "int (*(x))"
-       (c '(set (x (:pointer :int 1))))))
-  (is (equal
-       "int (**(x))"
-       (c '(set (x (:pointer :int 2))))))
-  (is (equal
-       (format nil "~:
-int (main) (int (argc), char (**(argv))) {
-  return 0;
-}")
-       (c `(defun (main :int) ((argc :int) (argv (:pointer :char 2)))
-             (return 0))))))
-
 (test set
   (is (equal
        "int (x)"
@@ -360,6 +364,14 @@ int (main) () {
        (c `(defun (main :int) ()
              (set (x :int) 5)
              (set (y :int) 10)
+             (return 0)))))
+
+  (is (equal
+       (format nil "~:
+int (main) (int (argc), char (**(argv))) {
+  return 0;
+}")
+       (c `(defun (main :int) ((argc :int) (argv (:pointer :char 2)))
              (return 0))))))
 
 (test assignment
@@ -376,15 +388,19 @@ int (main) () {
        (c `(return 0)))))
 
 (test inline
+
   (is (equal
        "42"
        (c 42)))
+
   (is (equal
        "42.0"
        (c 42.00)))
+
   (is (equal
        "any code; anywhere;!!"
        (c "any code; anywhere;!!")))
+
   (is (equal
        (format nil "~:
 int (main) () {
