@@ -229,18 +229,6 @@ case, leave the string unchanged."
 ;; `let` in the file.
 ;;
 ;; (compile-lsp-file "./examples/c-macro.lsp")
-;;
-;; A list of preproc directives:
-;; + #define: Defines macros.
-;; + #undef: Undefines macros.
-;; + #include: Includes external files.
-;; + #if, #ifdef, #ifndef: Conditional compilation.
-;; + #else, #elif, #endif: Provides alternatives in conditional compilation.
-;; + #pragma: Compiler-specific instructions.
-;; + #error: Causes a compilation error with a message.
-;; + #line: Sets line numbers and filenames for error messages.
-;;
-;; Note that newlines need to be separated by `\`
 
 ;; NOTE TODO Need to implement lisp interopt first:
 ;; (compile-lsp-file "./examples/nested-loops.lsp")
