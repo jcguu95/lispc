@@ -1,5 +1,5 @@
 ;; #include <stdio.h>
-(include "stdio.h")
+(include :system ("stdio.h"))
 
 ;; int main(int argc,char **argv)
 ;; {

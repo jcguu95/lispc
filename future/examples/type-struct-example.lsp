@@ -1,10 +1,9 @@
 ;; #include <stdio.h>
 ;; #include <stdlib.h>
-(include "stdio.h")
-(include "stdlib.h")
+(include :system ("stdio.h" "stdlib.h"))
 
 ;; typedef struct X X;
-(typedef (struct X) X)
+(deftype (:struct X) X)
 
 ;; struct X {
 ;;   int value;
@@ -29,14 +28,14 @@
 ;;   return 0;
 ;; }
 (defun (main :int) ()
-  (def (x1 :X*) (@malloc (@sizeof X)))
-  (def (x2 :X*) (@malloc (@sizeof X)))
-  (def (x3 :X*) (@malloc (@sizeof X)))
-  (def (-> x1 value) 10)
-  (def (-> x2 value) 20)
-  (def (-> x3 value) 30)
-  (def (-> x1 next)  x2)
-  (def (-> x2 next)  x3)
+  (declare (x1 :X*) (@malloc (@sizeof X)))
+  (declare (x2 :X*) (@malloc (@sizeof X)))
+  (declare (x3 :X*) (@malloc (@sizeof X)))
+  (set (-> x1 value) 10)
+  (set (-> x2 value) 20)
+  (set (-> x3 value) 30)
+  (set (-> x1 next)  x2)
+  (set (-> x2 next)  x3)
   (@printf (str "x1->value             = %d\\n") (-> x1 value))
   (@printf (str "x1->next->value       = %d\\n") (-> x1 next value))
   (@printf (str "x1->next->next->value = %d\\n") (-> x1 next next value))
