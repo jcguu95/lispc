@@ -20,15 +20,15 @@ e.g. #ifndef..
 
 *** Lisp Interopts
 
-** Provide Many Examples as Programmatic Tests
-*** Transpile examples from Learn C the Hard Way
+** compile-lsp-file
 
-** Run automatic tests in =./examples/=
+Add a function that directly executes a *.lsp file by compiling into C,
+executing, and printing its output to repl.
+
+*** Run automatic tests in =./examples/=
 
 Under the =./examples/= directory, process all =*.lsp= files, compile them with
 =paren=, and compare the results with the corresponding =*.c= files.
 
-** TODO compile-lsp-file
-
-Add a function that directly executes a *.lsp file by compiling into C,
-executing, and printing its output to repl.
+** Provide Many Examples as Programmatic Tests
+*** Transpile examples from Learn C the Hard Way
