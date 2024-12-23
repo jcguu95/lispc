@@ -43,8 +43,11 @@
     + [ ] Implement lisp interopt.
     + [ ] Implement the c-operator `let` for C-macros.
     + [ ] Build automatic comparison test workflow against example files.
+    
+  + [ ] Break code into `paren.type`, `paren.cop`.
 
 + Provide Examples (as Programmatic Tests)
+
   + [ ] Transpile examples from Learn C the Hard Way.
   + [ ] Transpile examples from part of Emacs's source code.
   + [ ] Give persuading example showing superiority of lisp macro.
