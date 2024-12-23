@@ -33,8 +33,7 @@ case, leave the string unchanged."
   (check-type operator symbol)
   (symbol-name operator))
 
-(defun c (form)
-  "Compile lispy form into C code."
+(defun c-expand-1 (form)
   ;; (log:debug form)
   (cond ((symbolp form)
          (format nil "~a" (resolve-symbol form)))
@@ -56,9 +55,16 @@ case, leave the string unchanged."
                ;; operator call
                (let ((function (gethash op-name *functions*)))
                  (if function
-                     (c (funcall function (cdr form))) ; NOTE Should we implement one like c-expand-1?
+                     (funcall function (cdr form))
                      (error "~a not found.~%" op-name))))))
         (t (error "Unrecognized type in form: ~a.~%" form))))
+
+(defun c (form)
+  "Compile lispy form into C code."
+  (let ((expanded-form (c-expand-1 form)))
+    (if (stringp expanded-form)
+        expanded-form
+        (c expanded-form))))
 
 (defun resolve-symbol (symbol)
   (invert-case (substitute #\_ #\- (symbol-name symbol))))
