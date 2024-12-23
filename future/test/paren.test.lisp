@@ -5,17 +5,6 @@
 (def-suite paren.test)
 (in-suite paren.test)
 
-;;; TODOs
-
-;; TODO Other C keywords, C preprocessor macros
-;;
-;; TODO Ensure that I cover https://stackoverflow.com/questions/12602413/difference-between-int-x-and-int-x
-;; In particular,
-;; int (*x)[] // declare x as pointer to array of int
-;; int *x[] // declare x as array of pointer to int
-;;
-;; And multi-arrays x[][][]
-
 ;;; Tests
 
 (test invert-case                       ; util
@@ -168,9 +157,6 @@ struct X {
   (is (equal
        "int (x)"
        (c '(set (x :int)))))
-  ;; int *(*x)[]: declare x as pointer to array of pointer to int
-  ;; int (**x)[], int (*(*(x)))[]: declare x as pointer to pointer to array of int
-  ;; int **x[], int **(x[]): declare x as array of pointer to pointer to int
   (is (equal
        "int ((*(x))[])"
        (c '(set (x (* 1 (:array nil :int)))))))
@@ -237,12 +223,6 @@ int (main) () {
        "return 0"
        (c `(return 0)))))
 
-;; NOTE Some C constructs are unsupported by paren. The users are allowed to
-;; write any C code as strings.
-;;
-;; + =int (*(*foo)(void ))[3]=: declare foo as pointer to function (void) returning pointer to array 3 of int
-;; + =const int (* volatile bar)[64]=: declare bar as volatile pointer to array 64 of const int
-;; + =(double (^)(int , long long ))foo=: cast foo into block(int, long long) returning double
 (test inline
   (is (equal
        "42"
