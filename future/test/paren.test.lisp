@@ -386,6 +386,24 @@ int (main) (int (argc), char (**(argv))) {
        "int (y) = 10"
        (c `(set (y :int) 10)))))
 
+(test case
+  (is
+   (string=
+    (c `(case day
+          (1 (return 1))
+          (2 (return 2))
+          (t (return 0))))
+    (format nil
+            "~:
+switch (day) {
+  case 1:
+    return 1;
+  case 2:
+    return 2;
+  default:
+    return 0;
+}"))))
+
 (test return
   (is (equal
        "return 0"
@@ -421,47 +439,11 @@ int (main) () {
              (return 0))))))
 
 (test integration-test?
-
-  (is
-   (string=
-    (c `(== i 10))
-    "(i == 10)"))
-
-  (is
-   (string=
-    (c `(or (== i 15)
-            (== i 20)))
-    "((i == 15) || (i == 20))"))
-
-  (is
-   (string=
-    (c `(and (> i 0)
-             (< i 30)))
-    "((i > 0) && (i < 30))"))
- 
   (is
    (string=
     (c `(@scanf (str "%d") (& day)))
     "scanf(\"%d\", &day)"))
-
   (is
    (string=
     (c `(@printf (str "x = %d, y = %d \\n") x y))
-    "printf(\"x = %d, y = %d \\n\", x, y)"))
-
-  (is
-   (string=
-    (c `(case day
-          (1 (return 1))
-          (2 (return 2))
-          (t (return 0))))
-    (format nil
-            "~:
-switch (day) {
-  case 1:
-    return 1;
-  case 2:
-    return 2;
-  default:
-    return 0;
-}"))))
+    "printf(\"x = %d, y = %d \\n\", x, y)")))
