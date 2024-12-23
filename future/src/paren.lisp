@@ -144,3 +144,33 @@ case, leave the string unchanged."
                  (setf result (format nil "~a~%  default:~%    ~a;" result (c (nth 1 subform))))
                  (setf result (format nil "~a~%  case ~a:~%    ~a;" result (c (nth 0 subform)) (c (nth 1 subform))))))
     (setf result (format nil "~a~%}" result))))
+
+;;;
+
+(defun read-file-into-list (file-path)
+  "Reads a string from a file and parses it into a Lisp list."
+  (with-open-file (stream file-path :direction :input)
+    (let ((file-contents (make-string (file-length stream))))
+      (read-sequence file-contents stream)
+      (read-from-string (format nil "(~a)" file-contents)))))
+
+(defun replace-file-extension (file-path new-extension)
+  "Replaces the file extension of FILE-PATH with NEW-EXTENSION."
+  (let* ((pathname (parse-namestring file-path))
+         (new-pathname (make-pathname :name (pathname-name pathname)
+                                      :type new-extension
+                                      :defaults pathname)))
+    (namestring new-pathname)))
+
+(defun compile-lsp-file (file-path)
+  (with-open-file
+      (stream (replace-file-extension file-path "c")
+              :direction :output
+              :if-exists :supersede)
+    (format stream
+            (with-output-to-string (stream)
+              (loop :for form :in (read-file-into-list file-path)
+                    :do (format stream (c form)))))))
+
+(compile-lsp-file "./examples/switch.lsp")
+;; (compile-lsp-file "./examples/cond.lsp")

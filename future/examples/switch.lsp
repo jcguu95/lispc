@@ -32,19 +32,19 @@
 ;;     return 0;
 ;; }
 
-(include "stdio.h")
+(include :system ("stdio.h"))
 
 (defun (main :int) ()
-  (def (day :int))
+  (declare (day :int))
   (@printf (str "Enter a number (1-7) to represent a day of the week: "))
   (@scanf (str "%d") (& day))
   (case day
-    (1 (@printf "Monday\\n")    (break))
-    (2 (@printf "Tuesday\\n")   (break))
-    (3 (@printf "Wednesday\\n") (break))
-    (4 (@printf "Thursday\\n")  (break))
-    (5 (@printf "Friday\\n")    (break))
-    (6 (@printf "Saturday\\n")  (break))
-    (7 (@printf "Sunday\\n")    (break))
-    (t (@printf "Invalid day number. Please enter a number between 1 and 7.\\n") (break)))
+    (1 (@printf "Monday\\n")   )
+    (2 (@printf "Tuesday\\n")  )
+    (3 (@printf "Wednesday\\n"))
+    (4 (@printf "Thursday\\n") )
+    (5 (@printf "Friday\\n")   )
+    (6 (@printf "Saturday\\n") )
+    (7 (@printf "Sunday\\n")   )
+    (t (@printf "Invalid day number. Please enter a number between 1 and 7.\\n")))
   (return 0))
