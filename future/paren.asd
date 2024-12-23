@@ -19,6 +19,7 @@
   ((:module "src"
     :serial t
     :components ((:file "packages")
+                 (:file "type")
                  (:file "paren")))))
 
 (defsystem #:paren.test

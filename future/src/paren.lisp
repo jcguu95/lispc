@@ -50,46 +50,10 @@
 (defun resolve-symbol (symbol)
   (invert-case (substitute #\_ #\- (symbol-name symbol))))
 
-;; TODO Redo for the type system: Basic types are represented as keywords,
-;; while composed types are represented as lists whose cars are of the
-;; following: :pointer, :function, :struct, :array. The users can write
-;; instead :pt, :fn, :{}, :[] respectively, but a normalizer will transform it
-;; into the canonical, longer forms. Write util functions to handle and
-;; inspect types. Allow users to define more type operators (e.g. :pt :fn as
-;; above). Finally, write a printer, and integrate that with SET and DECLARE.
-;; Mention that the type system is by no means complete, yet the user can
-;; inline any C codes so that's not a problem.
-
-;; TODO Write a spec for types.
-(defun resolve-type (type-spec)         ; TODO NORMALIZING
-  (cond
-    ((stringp type-spec)
-     type-spec)
-    ((keywordp type-spec)
-     type-spec)
-    ((listp type-spec)
-     (cond
-       ((find (nth 0 type-spec) '(* :*))
-        (if (integerp (nth 1 type-spec))
-            ;; e.g. (* 2 :int) => (:pointer int 2)
-            (list :pointer
-                  (resolve-type (nth 2 type-spec))
-                  (nth 1 type-spec))
-            ;; e.g. (* :int) => (:pointer int 1)
-            (list :pointer
-                  (resolve-type (nth 1 type-spec))
-                  1)))
-       ((eq :struct (nth 0 type-spec))
-        ;; e.g. (struct :int) => (:struct int)
-        (list :struct (resolve-type (nth 1 type-spec))))
-       ((eq :array (nth 0 type-spec))
-        (list :array (nth 1 type-spec) (resolve-type (nth 2 type-spec))))))
-    (t (error "Unsupported case."))))
-
 (defun resolve-declaration (declaration)
   (assert (= 2 (length declaration)))
   (let* ((variable (resolve-symbol (nth 0 declaration)))
-         (type (resolve-type (nth 1 declaration))))
+         (type (nth 1 declaration)))
     (format nil (fmt-string<-type type) variable)))
 
 (defmacro def-cop (name vars &body body)
@@ -99,7 +63,7 @@
          (lambda (,(car vars)) ,@body)))
 
 (def-cop deftype (form)
-  (let* ((type (resolve-type (nth 0 form)))
+  (let* ((type (nth 0 form))
          (kind-of-type (car type))
          (new-type (nth 1 form)))
     (case kind-of-type
@@ -149,5 +113,3 @@
 (def-cop vec (form)
   (format nil "{~{~a~^, ~}}" form))
 
-;; TODO Add a function that directly executes a *.lsp file by compiling into
-;; C, executing, and printing its output to repl.

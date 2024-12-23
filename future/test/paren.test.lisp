@@ -18,17 +18,17 @@
   ;; (is (string= "ABC" (paren::invert-case "abc")))
   )
 
-(test resolve-type ; util
-  (is (equal :int
-             (paren::resolve-type :int)))
-  (is (equal '(:pointer :int 2)
-             (paren::resolve-type '(* 2 :int))))
-  (is (equal '(:pointer :int 1)
-             (paren::resolve-type '(* 1 :int))))
-  (is (equal '(:pointer :int 1)
-             (paren::resolve-type '(*   :int))))
-  (is (equal '(:struct :int)
-             (paren::resolve-type '(:struct :int)))))
+;; (test resolve-type ; util
+;;   (is (equal :int
+;;              (paren::resolve-type :int)))
+;;   (is (equal '(:pointer :int 2)
+;;              (paren::resolve-type '(* 2 :int))))
+;;   (is (equal '(:pointer :int 1)
+;;              (paren::resolve-type '(* 1 :int))))
+;;   (is (equal '(:pointer :int 1)
+;;              (paren::resolve-type '(*   :int))))
+;;   (is (equal '(:struct :int)
+;;              (paren::resolve-type '(:struct :int)))))
 
 (test resolve-declaration               ; util
   (is (equal "int (x)"
@@ -38,15 +38,15 @@
   (is (equal "int (X)"
              (paren::resolve-declaration '(X :int))))
   (is (equal "int (*(X))"
-             (paren::resolve-declaration '(X (* 1 :int)))))
+             (paren::resolve-declaration '(X (:pointer :int 1)))))
   (is (equal "char (**(argv))"
-             (paren::resolve-declaration '(argv (* 2 :char)))))
+             (paren::resolve-declaration '(argv (:pointer :char 2)))))
   (is (equal "x (*(next))"
-             (paren::resolve-declaration '(next (* :X))))) ; FIXME The printed x should be capitalized.
+             (paren::resolve-declaration '(next (:pointer :X))))) ; FIXME The printed x should be capitalized.
   (is (equal "struct X (window)"
              (paren::resolve-declaration '(window (:struct :X)))))
   (is (equal "struct X (***(a_b_c))"
-             (paren::resolve-declaration '(a-b-c (* 3 (:struct :X))))))
+             (paren::resolve-declaration '(a-b-c (:pointer (:struct :X) 3)))))
   ;; NOTE By default, we set reader case to be :INVERT for the user to write
   ;; lisp code in lower case. In paren.lisp, we invert the case back. But
   ;; :INVERT only inverts the case only for symbols all of whose unescaped
@@ -55,8 +55,7 @@
   (is (equal "int (A_b_C_d_E)"
              (paren::resolve-declaration '(a-B-c-D-e :int))))
   (is (equal "int (AbCdE1)"
-             (paren::resolve-declaration '(aBcDe1 :int))))
-  )
+             (paren::resolve-declaration '(aBcDe1 :int)))))
 
 ;; FIXME Weird bug.. Does altering the reader-case change how a string is read too?
 ;;
@@ -82,7 +81,7 @@ struct X {
 };")                                    ; FIXME The second x should be capitalized.
        (c `(defstruct X
              ((value :int)
-              (next (* :X)))))
+              (next (:pointer :X)))))
        )))
 
 (test funcall
@@ -159,7 +158,7 @@ struct X {
        (c '(set (x :int)))))
   (is (equal
        "int ((*(x))[])"
-       (c '(set (x (* 1 (:array nil :int)))))))
+       (c '(set (x (:pointer (:array nil :int) 1))))))
   (is (equal
        "int ((x)[])"
        (c '(set (x (:array nil :int))))))
@@ -171,16 +170,16 @@ struct X {
        (c '(set (x (:array 3 :int)) (vec 1 2 3))))) ; TODO Maybe vec should just be an alias to array.
   (is (equal
        "int (*(x))"
-       (c '(set (x (* 1 :int))))))
+       (c '(set (x (:pointer :int 1))))))
   (is (equal
        "int (**(x))"
-       (c '(set (x (* 2 :int))))))
+       (c '(set (x (:pointer :int 2))))))
   (is (equal
        (format nil "~:
 int (main) (int (argc), char (**(argv))) {
   return 0;
 }")
-       (c `(defun (main :int) ((argc :int) (argv (* 2 :char)))
+       (c `(defun (main :int) ((argc :int) (argv (:pointer :char 2)))
              (return 0))))))
 
 (test set
@@ -192,10 +191,10 @@ int (main) (int (argc), char (**(argv))) {
        (c '(set (x :int) (vec 1 2 3)))))
   (is (equal
        "int (*(x))"
-       (c '(set (x (* 1 :int))))))
+       (c '(set (x (:pointer :int 1))))))
   (is (equal
        "int (*(x)) = 42"
-       (c '(set (x (* 1 :int)) 42)))))
+       (c '(set (x (:pointer :int 1)) 42)))))
 
 (test defun
   (is (equal

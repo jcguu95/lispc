@@ -32,3 +32,8 @@ the users must use explicit uppercase for lisp interopt.
 
 Under the =./examples/= directory, process all =*.lsp= files, compile them with
 =paren=, and compare the results with the corresponding =*.c= files.
+
+** TODO compile-lsp-file
+
+Add a function that directly executes a *.lsp file by compiling into C,
+executing, and printing its output to repl.
