@@ -19,7 +19,6 @@
   (is (not (paren::type? '(:array 0 :int))))
   (is (not (paren::type? '(:array 1 (:array 0 :int))))))
 
-
 (test fmt-string<-type
   ;; NOTE https://cdecl.org/
   (is (equal (paren::fmt-string<-type :int)
@@ -216,11 +215,11 @@
              (paren::resolve-declaration '(window (:struct :X)))))
   (is (equal "struct X (***(a_b_c))"
              (paren::resolve-declaration '(a-b-c (:pointer (:struct :X) 3)))))
-  ;; NOTE By default, we set reader case to be :INVERT for the user to write
-  ;; lisp code in lower case. In paren.lisp, we invert the case back. But
-  ;; :INVERT only inverts the case only for symbols all of whose unescaped
-  ;; characters are of the same case, so the behavior for symbols with mixed
-  ;; cases are inverted.
+  ;; NOTE: By default, we set the reader case to :INVERT, allowing the user to
+  ;; write Lisp code in lowercase. In paren.lisp, we revert the case back.
+  ;; However,:INVERT only affects symbols whose unescaped characters are
+  ;; uniformly cased. As a result, symbols with mixed-case characters are
+  ;; inverted differently.
   (is (equal "int (A_b_C_d_E)"
              (paren::resolve-declaration '(a-B-c-D-e :int))))
   (is (equal "int (AbCdE1)"
