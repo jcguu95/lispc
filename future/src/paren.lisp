@@ -1,5 +1,4 @@
 (in-package :paren)
-(setf (readtable-case *readtable*) :invert)
 
 ;;;
 
@@ -11,16 +10,40 @@
 (defparameter *functions* (make-hash-table :test #'equal))
 
 ;; A Utility Function
+;; (defun invert-case (string)
+;;   "If all English characters are uppercase, convert them to lowercase. If all
+;;  English characters are lowercase, convert them to uppercase. If the English
+;;  characters are mixed case, leave them unchanged."
+;;   (if (string= "" string)
+;;       string
+;;       (loop :for index :from 0 :to (1- (length string))
+;;             :do (cond
+;;                   ((upper-case-p (char string index))
+;;                    (setf (char string index) (char-downcase (char string index))))
+;;                   ((lower-case-p (char string index))
+;;                    (setf (char string index) (char-upcase   (char string index)))))
+;;             :finally (return string))))
+
 (defun invert-case (string)
+  "If all English characters in the string are uppercase, convert them to lowercase.
+If all are lowercase, convert them to uppercase. If the characters are mixed
+case, leave the string unchanged."
   (if (string= "" string)
       string
-      (loop :for index :from 0 :to (1- (length string))
-            :do (cond
-                  ((upper-case-p (char string index))
-                   (setf (char string index) (char-downcase (char string index))))
-                  ((lower-case-p (char string index))
-                   (setf (char string index) (char-upcase   (char string index)))))
-            :finally (return string))))
+      (let ((has-upper nil)
+            (has-lower nil))
+        ;; Classify the string
+        (dolist (char (coerce string 'list))
+          (cond
+            ((upper-case-p char) (setf has-upper t))
+            ((lower-case-p char) (setf has-lower t))))
+        (cond
+          ((and has-upper (not has-lower))
+           (map 'string #'char-downcase string))
+          ((and has-lower (not has-upper))
+           (map 'string #'char-upcase string))
+          (t
+           string)))))
 
 (defun op-name (operator)
   (check-type operator symbol)
@@ -87,7 +110,7 @@
             (mapcar #'resolve-declaration arguments)
             (mapcar #'c body))))
 
-(def-cop ->  (form) (format nil "~{~a~^->~}" form))
+(def-cop ->  (form) (format nil "~{~a~^->~}" (mapcar #'c form)))
 (def-cop ==  (form) (format nil "(~a == ~a)" (c (nth 0 form)) (c (nth 1 form))))
 (def-cop >   (form) (format nil "(~a > ~a)" (c (nth 0 form)) (c (nth 1 form))))
 (def-cop <   (form) (format nil "(~a < ~a)" (c (nth 0 form)) (c (nth 1 form))))

@@ -1,7 +1,5 @@
 (in-package :paren.test)
 
-(setf (readtable-case *readtable*) :invert)
-
 (def-suite paren.test)
 (in-suite paren.test)
 
@@ -188,24 +186,22 @@
                     (:void)))))))
 
 (test invert-case                       ; util
-  (is (string= "aBc"  (paren::invert-case "AbC")))
-  (is (string= "abc"  (paren::invert-case "ABC")))
-  (is (string= "aB1"  (paren::invert-case "Ab1")))
-  (is (string= "ABCD" (paren::invert-case "abcd")))
-  ;; FIXME Why is this wrong? Very weird bug.. It is correct while manually
-  ;; evaluated in the buffer. And it seems to fail only for the string "abc".
-  ;;
-  ;; (is (string= "ABC" (paren::invert-case "abc")))
-  )
+  (is (string= "" (paren::invert-case "")))
+  (is (string= "hello" (paren::invert-case "HELLO")))
+  (is (string= "我hello" (paren::invert-case "我HELLO")))
+  (is (string= "HELLO" (paren::invert-case "hello")))
+  (is (string= "我HELLO" (paren::invert-case "我hello")))
+  (is (string= "HelloWorld" (paren::invert-case "HelloWorld")))
+  (is (string= "我HelloWorld" (paren::invert-case "我HelloWorld"))))
 
 (test resolve-declaration               ; util
   (is (equal "int (x)"
              (paren::resolve-declaration '(x :int))))
   (is (equal "int (x_y)"
              (paren::resolve-declaration '(x-y :int))))
-  (is (equal "int (X)"
+  (is (equal "int (x)"
              (paren::resolve-declaration '(X :int))))
-  (is (equal "int (*(X))"
+  (is (equal "int (*(x))"
              (paren::resolve-declaration '(X (:pointer :int 1)))))
   (is (equal "char (**(argv))"
              (paren::resolve-declaration '(argv (:pointer :char 2)))))
@@ -215,27 +211,18 @@
              (paren::resolve-declaration '(window (:struct :X)))))
   (is (equal "struct X (***(a_b_c))"
              (paren::resolve-declaration '(a-b-c (:pointer (:struct :X) 3)))))
-  ;; NOTE: By default, we set the reader case to :INVERT, allowing the user to
-  ;; write Lisp code in lowercase. In paren.lisp, we revert the case back.
-  ;; However,:INVERT only affects symbols whose unescaped characters are
-  ;; uniformly cased. As a result, symbols with mixed-case characters are
-  ;; inverted differently.
-  (is (equal "int (A_b_C_d_E)"
+  (is (equal "int (a_b_c_d_e)"
              (paren::resolve-declaration '(a-B-c-D-e :int))))
-  (is (equal "int (AbCdE1)"
+  (is (equal "int (abcde1)"
              (paren::resolve-declaration '(aBcDe1 :int)))))
 
-;; FIXME Weird bug.. Does altering the reader-case change how a string is read too?
-;;
 (test symbols
   (is (equal "abcde" (c 'abcde)))
-  ;; (is (equal "abcd" (c 'abcd))) ; FIXME
-  (is (equal "ABCD" (c 'ABCD)))
-  ;; (is (equal "AbC" (c 'aBc))) ; FIXME
-  )
+  (is (equal "abCde" (c '|abCde|)))
+  (is (equal "ABCDE" (c '|abcde|))))
 
 (test deftype
-  (is (equal "typedef struct x x;"
+  (is (equal "typedef struct X X;"
              (c `(deftype (:struct :x) x))))
   (is (equal "typedef struct Y Y;"
              (c `(deftype (:struct :Y) Y)))))
@@ -293,20 +280,20 @@ struct X {
 
 (test ==
   (is (equal
-       "(I == 0)"
-       (c '(== I 0)))))
+       "(i == 0)"
+       (c '(== i 0)))))
 
 (test or
   (is (equal
-       "((I == 15) || (I == 20))"
-       (c `(or (== I 15)
-               (== I 20))))))
+       "((i == 15) || (i == 20))"
+       (c `(or (== i 15)
+               (== i 20))))))
 
 (test and
   (is (equal
-       "((I > 0) && (I < 30))"
-       (c `(and (> I 0)
-                (< I 30))))))
+       "((i > 0) && (i < 30))"
+       (c `(and (> i 0)
+                (< i 30))))))
 
 (test include
   (is (equal
