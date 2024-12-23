@@ -351,7 +351,11 @@ struct x {
        (c '(set (x (:pointer :int 1))))))
   (is (equal
        "int (*(x)) = 42"
-       (c '(set (x (:pointer :int 1)) 42)))))
+       (c '(set (x (:pointer :int 1)) 42))))
+  ;; TODO FIXME
+  (is (equal
+       (c `(set (-> x1 value) 10))
+       "x1->value = 10;")))
 
 (test defun
   (is (equal
@@ -439,6 +443,11 @@ int (main) () {
    (string=
     (c `(@scanf (str "%d") (& day)))
     "scanf(\"%d\", &day)"))
+
+  (is
+   (string=
+    (c `(@printf (str "x = %d, y = %d \\n") x y))
+    "printf(\"x = %d, y = %d \\n\", x, y)"))
 
   (is
    (string=
