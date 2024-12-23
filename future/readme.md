@@ -47,8 +47,6 @@
     + [ ] Fix semicolon and newline issue.
     + [ ] Build comparison test workflow against example files.
     + [ ] Build integration test for the behavior of generated c code.
-    
-  + [ ] Break the code and tests into `paren.type(.test)`, `paren.cop(.test)`.
 
 + Documentations and Examples (as Programmatic Tests)
 

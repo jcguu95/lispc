@@ -20,7 +20,9 @@
     :serial t
     :components ((:file "packages")
                  (:file "type")
-                 (:file "paren")))))
+                 (:file "paren")
+                 (:file "cop")
+                 (:file "compile")))))
 
 (defsystem #:paren.test
   :description "Tests for PAREN."
