@@ -251,6 +251,41 @@
   (is (equal "abCde" (c '|abCde|)))
   (is (equal "ABCDE" (c '|abcde|))))
 
+(test prog-badname
+  (is
+   (string=
+    (c '(progn-badname (@func1 1) (@func2 2) (@func3 3)))
+    (format nil "~:
+func1(1)
+
+func2(2)
+
+func3(3)"))))
+
+(test lisp                              ; interop
+  (is
+   (string=
+    (c
+     '(lisp
+       (defun gen-foo (type)
+         ;; paren code:
+         `(defun (,(intern (format nil "foo-~a" type)) ,type) ((x ,type) (y ,type))
+            (return (* 2 (+ x y)))))
+       `(progn-badname ,@(loop :for type :in '(:int :float :double)
+                               :collect (gen-foo type)))))
+
+    "int (foo_INT) (int (x), int (y)) {
+  return ((2) * (((x) + (y))));
+}
+
+float (foo_FLOAT) (float (x), float (y)) {
+  return ((2) * (((x) + (y))));
+}
+
+double (foo_DOUBLE) (double (x), double (y)) {
+  return ((2) * (((x) + (y))));
+}")))
+
 (test deftype
   (is (equal "typedef struct x x;"
              (c `(deftype (:struct :x) x))))

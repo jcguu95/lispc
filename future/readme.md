@@ -24,7 +24,7 @@
     Note that newlines need to be separated by `\`.
         
   + [X] Implement control flow: block, label, goto.
-  + [ ] Lisp Interopts
+  + [X] Lisp Interopts: The c-operator `lisp`.
 
 + Workflow
 

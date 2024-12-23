@@ -35,13 +35,14 @@ case, leave the string unchanged."
 
 (defun c (form)
   "Compile lispy form into C code."
+  ;; (log:debug form)
   (cond ((symbolp form)
          (format nil "~a" (resolve-symbol form)))
         ((numberp form)
          (format nil "~a" form))
         ((stringp form)
          form)
-        (t
+        ((listp form)
          (let* ((operator (car form))
                 (op-name (op-name operator)))
            (if (and
@@ -55,8 +56,9 @@ case, leave the string unchanged."
                ;; operator call
                (let ((function (gethash op-name *functions*)))
                  (if function
-                     (funcall function (cdr form))
-                     (error "~a not found.~%" op-name))))))))
+                     (c (funcall function (cdr form))) ; NOTE Should we implement one like c-expand-1?
+                     (error "~a not found.~%" op-name))))))
+        (t (error "Unrecognized type in form: ~a.~%" form))))
 
 (defun resolve-symbol (symbol)
   (invert-case (substitute #\_ #\- (symbol-name symbol))))
@@ -84,6 +86,19 @@ case, leave the string unchanged."
        (format nil "typedef ~a ~a;" (c (nth 1 type)) (c new-type)))
       (:struct
        (format nil "typedef struct ~a ~a;" (c (nth 1 type)) (c new-type))))))
+
+(def-cop lisp (form)
+  ;; (log:debug `(progn ,@form))
+  (eval `(progn ,@form)))
+
+;; TODO Even `progn` is not a good name. Choose something better.
+(def-cop progn-badname (form)
+  (with-output-to-string (s)
+    (loop :for subform :in form
+          :for k :to (length form)
+          :do (format s "~a" (c subform))
+          :do (when (< k (1- (length form)))
+                (format s "~%~%")))))
 
 (def-cop defstruct (form)
   (let ((struct-name (nth 0 form))
@@ -230,6 +245,7 @@ case, leave the string unchanged."
 (compile-lsp-file "./examples/hello-world.lsp")
 (compile-lsp-file "./examples/switch.lsp")
 (compile-lsp-file "./examples/cond.lsp")
+(compile-lsp-file "./examples/macro-example.lsp")
 (compile-lsp-file "./examples/type-struct-example.lsp")
 (compile-lsp-file "./examples/higher-order-function.lsp")
 

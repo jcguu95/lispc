@@ -1,10 +1,11 @@
 ;;; STAGE 0
 (lisp
  (defun gen-foo (type)
-   `(defun (,(format nil "foo-~a" type) ((x ,type) (y ,type)))
-        (return (* 2 (+ x y)))))
- (loop :for type :in '(:int :float :double)
-       :collect (gen-foo type)))
+   ;; paren code:
+   `(defun (,(intern (format nil "foo-~a" type)) ,type) ((x ,type) (y ,type))
+      (return (* 2 (+ x y)))))
+ `(progn-badname ,@(loop :for type :in '(:int :float :double)
+                         :collect (gen-foo type))))
 
 ;;; STAGE 1
 ;;
@@ -18,6 +19,7 @@
 ;;   (return (* 2 (+ x y))))
 
 ;;; STAGE 2
+;;;
 ;; int foo_INT(int x, int y) {
 ;;   return x + y * 2;
 ;; }
