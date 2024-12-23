@@ -66,7 +66,7 @@
     ((stringp type-spec)
      type-spec)
     ((keywordp type-spec)
-     (format nil "~a" type-spec))
+     type-spec)
     ((listp type-spec)
      (cond
        ((find (nth 0 type-spec) '(* :*))
@@ -86,47 +86,11 @@
         (list :array (nth 1 type-spec) (resolve-type (nth 2 type-spec))))))
     (t (error "Unsupported case."))))
 
-
-;; NOTE C declarations is in general messy. For example,
-;;
-;;   int *(x[]), int *x[]: declare x as array of pointer to int
-;;   int ((*x)[]), int (*x)[]: declare x as pointer to array of int
-;;   int *(*x)[]: declare x as pointer to array of pointer to int
-;;   int (**x)[], int (*(*(x)))[]: declare x as pointer to pointer to array of int
-;;   int **x[], int **(x[]): declare x as array of pointer to pointer to int
-;;   int (*(*x)[])[]: declare x as pointer to array of pointer to array of int
-;;
-;; We will support only a tiny fraction of them. However, the user can use
-;; inline strings to write any C code.
-
 (defun resolve-declaration (declaration)
+  (assert (= 2 (length declaration)))
   (let* ((variable (resolve-symbol (nth 0 declaration)))
          (type (resolve-type (nth 1 declaration))))
-    (cond
-      ((stringp type)
-       (format nil "~a ~a" type variable))
-      ((eq :pointer (car type))
-       (let ((base-type (resolve-type (nth 1 type)))
-             (pointer-count (nth 2 type)))
-         (format nil "~a ~a~a"
-                 ;; FIXME ugly code
-                 (if (listp base-type)
-                     (format nil "struct ~a" (nth 1 base-type))
-                     base-type)
-                 (make-string pointer-count :initial-element #\*)
-                 variable)))
-      ((eq :struct (car type))
-       (let ((base-type (resolve-type (nth 1 type))))
-         (format nil "struct ~a ~a" base-type variable)))
-      ;; E.g.
-      ;; (c '(set (x (:array 3 :int) (vec 1 2 3))))
-      ;; (c '(set (x (:array nil :int) (vec 1 2 3))))
-      ((eq :array (car type))
-       (let ((length (nth 1 type))
-             (base-type (resolve-type (nth 2 type))))
-         (unless length (setf length ""))
-         (format nil "~a ~a[~a]" base-type variable length)))
-      (t (error "Unsupported case.")))))
+    (format nil (fmt-string<-type type) variable)))
 
 (defmacro def-cop (name vars &body body)
   "Define a C operation."

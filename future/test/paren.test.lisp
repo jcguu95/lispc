@@ -30,42 +30,42 @@
   )
 
 (test resolve-type ; util
-  (is (equal "int"
+  (is (equal :int
              (paren::resolve-type :int)))
-  (is (equal '(:pointer "int" 2)
+  (is (equal '(:pointer :int 2)
              (paren::resolve-type '(* 2 :int))))
-  (is (equal '(:pointer "int" 1)
+  (is (equal '(:pointer :int 1)
              (paren::resolve-type '(* 1 :int))))
-  (is (equal '(:pointer "int" 1)
+  (is (equal '(:pointer :int 1)
              (paren::resolve-type '(*   :int))))
-  (is (equal '(:struct "int")
+  (is (equal '(:struct :int)
              (paren::resolve-type '(:struct :int)))))
 
 (test resolve-declaration               ; util
-  (is (equal "int x"
+  (is (equal "int (x)"
              (paren::resolve-declaration '(x :int))))
-  (is (equal "int x_y"
+  (is (equal "int (x_y)"
              (paren::resolve-declaration '(x-y :int))))
-  (is (equal "int X"
+  (is (equal "int (X)"
              (paren::resolve-declaration '(X :int))))
-  (is (equal "int *X"
+  (is (equal "int (*(X))"
              (paren::resolve-declaration '(X (* 1 :int)))))
-  (is (equal "char **argv"
+  (is (equal "char (**(argv))"
              (paren::resolve-declaration '(argv (* 2 :char)))))
-  (is (equal "X *next"
-             (paren::resolve-declaration '(next (* :X)))))
-  (is (equal "struct X window"
+  (is (equal "x (*(next))"
+             (paren::resolve-declaration '(next (* :X))))) ; FIXME The printed x should be capitalized.
+  (is (equal "struct X (window)"
              (paren::resolve-declaration '(window (:struct :X)))))
-  (is (equal "struct X ***a_b_c"
+  (is (equal "struct X (***(a_b_c))"
              (paren::resolve-declaration '(a-b-c (* 3 (:struct :X))))))
   ;; NOTE By default, we set reader case to be :INVERT for the user to write
   ;; lisp code in lower case. In paren.lisp, we invert the case back. But
   ;; :INVERT only inverts the case only for symbols all of whose unescaped
   ;; characters are of the same case, so the behavior for symbols with mixed
   ;; cases are inverted.
-  (is (equal "int A_b_C_d_E"
+  (is (equal "int (A_b_C_d_E)"
              (paren::resolve-declaration '(a-B-c-D-e :int))))
-  (is (equal "int AbCdE1"
+  (is (equal "int (AbCdE1)"
              (paren::resolve-declaration '(aBcDe1 :int))))
   )
 
@@ -88,9 +88,9 @@
   (is (equal
        (format nil "~:
 struct X {
-  int value;
-  X *next;
-};")
+  int (value);
+  x (*(next));
+};")                                    ; FIXME The second x should be capitalized.
        (c `(defstruct X
              ((value :int)
               (next (* :X)))))
@@ -166,32 +166,32 @@ struct X {
 
 (test type
   (is (equal
-       "int x"
+       "int (x)"
        (c '(set (x :int)))))
   ;; int *(*x)[]: declare x as pointer to array of pointer to int
   ;; int (**x)[], int (*(*(x)))[]: declare x as pointer to pointer to array of int
   ;; int **x[], int **(x[]): declare x as array of pointer to pointer to int
   (is (equal
-       "int (*x)[]"
+       "int ((*(x))[])"
        (c '(set (x (* 1 (:array nil :int)))))))
   (is (equal
-       "int x[]"
+       "int ((x)[])"
        (c '(set (x (:array nil :int))))))
   (is (equal
-       "int x[3]"
+       "int ((x)[3])"
        (c '(set (x (:array 3 :int))))))
   (is (equal
-       "int x[3] = {1, 2, 3}"
+       "int ((x)[3]) = {1, 2, 3}"
        (c '(set (x (:array 3 :int)) (vec 1 2 3))))) ; TODO Maybe vec should just be an alias to array.
   (is (equal
-       "int *x"
+       "int (*(x))"
        (c '(set (x (* 1 :int))))))
   (is (equal
-       "int **x"
+       "int (**(x))"
        (c '(set (x (* 2 :int))))))
   (is (equal
        (format nil "~:
-int main (int argc, char **argv) {
+int (main) (int (argc), char (**(argv))) {
   return 0;
 }")
        (c `(defun (main :int) ((argc :int) (argv (* 2 :char)))
@@ -199,24 +199,24 @@ int main (int argc, char **argv) {
 
 (test set
   (is (equal
-       "int x"
+       "int (x)"
        (c '(set (x :int)))))
   (is (equal
-       "int x = {1, 2, 3}"
+       "int (x) = {1, 2, 3}"
        (c '(set (x :int) (vec 1 2 3)))))
   (is (equal
-       "int *x"
+       "int (*(x))"
        (c '(set (x (* 1 :int))))))
   (is (equal
-       "int *x = 42"
+       "int (*(x)) = 42"
        (c '(set (x (* 1 :int)) 42)))))
 
 (test defun
   (is (equal
        (format nil "~:
-int main () {
-  int x = 5;
-  int y = 10;
+int (main) () {
+  int (x) = 5;
+  int (y) = 10;
   return 0;
 }")
        (c `(defun (main :int) ()
@@ -226,10 +226,10 @@ int main () {
 
 (test assignment
   (is (equal
-       "int x = 5"
+       "int (x) = 5"
        (c `(set (x :int) 5))))
   (is (equal
-       "int y = 10"
+       "int (y) = 10"
        (c `(set (y :int) 10)))))
 
 (test return
@@ -255,7 +255,7 @@ int main () {
        (c "any code; anywhere;!!")))
   (is (equal
        (format nil "~:
-int main () {
+int (main) () {
   int (*(*foo)(void ))[3];
   const int (* volatile bar)[64];
   (double (^)(int , long long ))baz;

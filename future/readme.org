@@ -10,7 +10,7 @@
 *** New Type System
 **** DONE Type Spec
 **** DONE Type Formatter
-**** TODO Hook into main code / main test
+**** DONE Hook into main code / main test
 
 *** Preprocessor Directives
 

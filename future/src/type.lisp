@@ -1,3 +1,5 @@
+(in-package :paren)
+
 ;; TODO Redo for the type system: Basic types are represented as keywords,
 ;; while composed types are represented as lists whose cars are of the
 ;; following: :pointer, :function, :struct, :array.
@@ -39,12 +41,12 @@
                   (type? subtype)
                   kind)))
           (:function
-              (let ((to-type (nth 1 form))
-                    (from-types (nth 2 form)))
-                (and (= 3 (length form))
-                     (type? to-type)
-                     (every #'type? from-types)
-                     kind)))
+           (let ((to-type (nth 1 form))
+                 (from-types (nth 2 form)))
+             (and (= 3 (length form))
+                  (type? to-type)
+                  (every #'type? from-types)
+                  kind)))
           (:struct
            (let ((name (nth 1 form)))
              (and (= 2 (length form))
