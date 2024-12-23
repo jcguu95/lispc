@@ -7,6 +7,187 @@
 
 ;;; Tests
 
+(test type?
+  (is (paren::type? :int))
+  (is (paren::type? '(:pointer (:array nil (:struct :X)) 3)))
+  (is (paren::type? '(:pointer :int)))        ; by default, this is a 1-pointer
+  (is (paren::type? '(:pointer :int 3)))      ; by default, this is a 3-pointer
+  (is (paren::type? '(:array () :int)))
+  (is (paren::type? '(:array 1 :int)))
+  (is (paren::type? '(:function :int (:int (:pointer (:array () :int) 1)))))
+  (is (not (paren::type? '(:pointer :int 0))))
+  (is (not (paren::type? '(:array 0 :int))))
+  (is (not (paren::type? '(:array 1 (:array 0 :int))))))
+
+
+(test fmt-string<-type
+  ;; NOTE https://cdecl.org/
+  (is (equal (paren::fmt-string<-type :int)
+             "int (~a)"))
+  (is (equal (paren::fmt-string<-type '(:array () :int))
+             "int ((~a)[])"))
+  (is (equal (paren::fmt-string<-type '(:array 9 :int))
+             "int ((~a)[9])"))
+  (is (equal (paren::fmt-string<-type '(:array 9 (:pointer :int 2)))
+             "int (**((~a)[9]))"))
+  (is (equal (paren::fmt-string<-type '(:pointer (:array 9 (:pointer :int)) 2))
+             "int (*((**(~a))[9]))"))
+  (is
+   ;; declare foo as pointer to pointer to pointer to int
+   (equal (paren::fmt-string<-type '(:pointer :int 3))
+          "int (***(~a))"))
+  (is
+   ;; declare foo as pointer to int
+   (equal (paren::fmt-string<-type '(:pointer :int 1))
+          "int (*(~a))"))
+  (is
+   (equal (paren::fmt-string<-type '(:pointer :int))
+          "int (*(~a))"))
+  (is
+   ;; declare foo as array of pointer to array of int
+   ;; int ((*((foo)[]))[])
+   (equal
+    "int ((*((~a)[]))[])"
+    (paren::fmt-string<-type '(:array () (:pointer (:array () :int))))))
+  (is
+   ;; declare foo as pointer to array of pointer to array of int
+   ;; int (*(*foo)[])[]
+   (equal
+    "int ((*((*(~a))[]))[])"
+    (paren::fmt-string<-type '(:pointer (:array () (:pointer (:array () :int)))))))
+  (is
+   ;; declare foo as pointer to array of int
+   ;; int ((*foo)[])
+   (equal "int ((*(~a))[])"
+          (paren::fmt-string<-type '(:pointer (:array () :int)))))
+  (is
+   ;; declare foo as array of int
+   ;; int ((foo)[])
+   (equal "int ((~a)[])"
+          (paren::fmt-string<-type '(:array () :int))))
+  (is
+   ;; declare foo as array of array of int
+   ;; int (((foo)[])[])
+   (equal "int (((~a)[])[])"
+          (paren::fmt-string<-type '(:array () (:array () :int)))))
+  (is ;; TODO Contribution Opportunity - Can we improve the printer to reduce
+   ;; unnecessary parentheses? For example, the output should ideally be "int
+   ;; foo[][]" instead of "int (((foo)[])[])". Contributions with a proof or
+   ;; supporting evidence are welcome.
+
+   ;; declare foo as pointer to array 9 of struct X
+   ;; struct X ((*(foo))[9])
+   (equal
+    "struct X ((*(~a))[9])"
+    (paren::fmt-string<-type '(:pointer (:array 9 (:struct :X))))))
+  (is
+   ;; declare foo as struct X
+   (equal
+    "struct X (~a)"
+    (paren::fmt-string<-type '(:struct :X))))
+  (is
+   ;; declare foo as function returning int
+   ;; int ((foo)())
+   (equal
+    "int ((~a)())"
+    (paren::fmt-string<-type '(:function :int ()))))
+  (is
+   ;; declare foo as function (int, char) returning int
+   ;; int ((foo)(int,char))
+   (equal
+    "int ((~a)(int,char))"
+    (paren::fmt-string<-type '(:function :int (:int :char)))))
+  (is
+   ;; declare foo as function (int, char) returning void
+   ;; void ((foo)(int,char))
+   (equal
+    "void ((~a)(int,char))"
+    (paren::fmt-string<-type '(:function :void (:int :char)))))
+  (is
+   ;; declare foo as function (void, struct *X) returning void
+   ;; void ((foo)(void,char))
+   (equal
+    "int ((~a)(int,char))"
+    (paren::fmt-string<-type '(:function :int (:int :char)))))
+  (is
+   ;; declare foo as function (void, pointer to struct X) returning void
+   ;; void ((foo)(void,struct X (*)))
+   (equal
+    "void ((~a)(void,struct X (*)))"
+    (paren::fmt-string<-type '(:function :void (:void (:pointer (:struct :X)))))))
+  (is
+   ;; declare foo as function (int, char, function returning array of void) returning void
+   ;; void foo(int , char , void ()[])
+   (equal
+    "void ((~a)(int,char,void ((())[])))"
+    (paren::fmt-string<-type '(:function :void (:int :char (:function (:array () :void) ()))))))
+  (is
+
+
+   (equal
+    "void ((~a)[])"
+    (paren::fmt-string<-type '(:array () :void))))
+  (is (equal
+       "void (((~a)())[])"
+       (paren::fmt-string<-type '(:function (:array () :void) ()))))
+  (is
+   ;; declare foo as function returning pointer to array 9 of struct X
+   ;; struct X ((*((foo)()))[9])
+   (equal
+    "struct X ((*((~a)()))[9])"
+    (paren::fmt-string<-type '(:function (:pointer (:array 9 (:struct :X))) ()))))
+  (is
+   ;; declare foo as pointer to function returning array 9 of struct X
+   ;; struct X (((*(foo))())[9])
+   (equal
+    "struct X (((*(~a))())[9])"
+    (paren::fmt-string<-type '(:pointer (:function (:array 9 (:struct :X)) ())))))
+  (is
+   ;; A complicated example (http://unixwiz.net/techtips/reading-cdecl.html)
+   ;;
+   ;; foo is array of array of 8 pointer to pointer to function returning pointer
+   ;; to array of pointer to char
+   ;;
+   ;; (foo
+   ;;  (:array ()
+   ;;          (:array 8
+   ;;                  (:pointer (:pointer (:function ()
+   ;;                                 (:pointer
+   ;;                                  (:array
+   ;;                                   ()
+   ;;                                   (:pointer :char)))))))))
+   ;;
+   ;; char (* ((* ((* (* ((foo []) [8]))) ())) []))
+   ;;
+   ;; declare foo as array of array 8 of pointer to pointer to function returning
+   ;; pointer to array of pointer to char
+   ;;
+   ;; char (*((*((*(*(((foo)[])[8])))()))[]))
+   (equal
+    "char (*((*((*(*(((~a)[])[8])))()))[]))"
+    (paren::fmt-string<-type
+     '(:array ()
+       (:array 8
+        (:pointer
+         (:pointer
+          (:function
+           (:pointer
+            (:array
+             ()
+             (:pointer :char)))
+           ()))))))))
+
+  ;; An example from https://cdecl.org/
+  ;;
+  ;; declare foo as pointer to function (void) returning pointer to array 3 of int
+  ;;
+  ;; int ((*((*(foo))(void)))[3])
+  (is (equal
+       "int ((*((*(~a))(void)))[3])"
+       (paren::fmt-string<-type
+        '(:pointer (:function (:pointer (:array 3 :int))
+                    (:void)))))))
+
 (test invert-case                       ; util
   (is (string= "aBc"  (paren::invert-case "AbC")))
   (is (string= "abc"  (paren::invert-case "ABC")))
@@ -17,18 +198,6 @@
   ;;
   ;; (is (string= "ABC" (paren::invert-case "abc")))
   )
-
-;; (test resolve-type ; util
-;;   (is (equal :int
-;;              (paren::resolve-type :int)))
-;;   (is (equal '(:pointer :int 2)
-;;              (paren::resolve-type '(* 2 :int))))
-;;   (is (equal '(:pointer :int 1)
-;;              (paren::resolve-type '(* 1 :int))))
-;;   (is (equal '(:pointer :int 1)
-;;              (paren::resolve-type '(*   :int))))
-;;   (is (equal '(:struct :int)
-;;              (paren::resolve-type '(:struct :int)))))
 
 (test resolve-declaration               ; util
   (is (equal "int (x)"
