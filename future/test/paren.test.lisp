@@ -388,7 +388,6 @@ int (main) (int (argc), char (**(argv))) {
        (c `(return 0)))))
 
 (test inline
-
   (is (equal
        "42"
        (c 42)))
@@ -401,6 +400,8 @@ int (main) (int (argc), char (**(argv))) {
        "any code; anywhere;!!"
        (c "any code; anywhere;!!")))
 
+  ;; NOTE Handy for users who just want to insert some code without learning
+  ;; this language paren.
   (is (equal
        (format nil "~:
 int (main) () {
