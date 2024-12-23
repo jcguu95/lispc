@@ -136,6 +136,23 @@ case, leave the string unchanged."
 (def-cop & (form)
   (format nil "&~a" (c (nth 0 form))))
 
+(def-cop cond (form)
+  (with-output-to-string (stream)
+    (format stream "if ~a {~%    ~a~%} "
+            (c (nth 0 (car form)))
+            (c (nth 1 (car form))))
+    (loop :for subform :in (butlast (cdr form))
+          :do (format stream "else if ~a {~%    ~a~%} "
+                      (c (nth 0 subform))
+                      (c (nth 1 subform))))
+    (let ((last-form (car (last form))))
+      (if (eq t (nth 0 last-form))
+          (format stream "else {~%    ~a~%}"
+                  (c (nth 1 last-form)))
+          (format stream "else if ~a {~%    ~a~%}"
+                  (c (nth 0 last-form))
+                  (c (nth 1 last-form)))))))
+
 (def-cop case (form)
   (let ((result (format nil "switch (~a) {" (c (nth 0 form)))))
     (loop :for subform :in (cdr form)
@@ -172,5 +189,5 @@ case, leave the string unchanged."
               (loop :for form :in (read-file-into-list file-path)
                     :do (format stream (c form)))))))
 
-(compile-lsp-file "./examples/switch.lsp")
+;; (compile-lsp-file "./examples/switch.lsp")
 ;; (compile-lsp-file "./examples/cond.lsp")

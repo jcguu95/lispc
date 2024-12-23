@@ -14,10 +14,10 @@
 ;;     return 0;
 ;; }
 
-(include "stdio.h")
+(include :system ("stdio.h"))
 
 (defun (main :int) ()
-  (def (i :int) 20)
+  (declare (i :int) 20)
   (cond ((== i 10)
          (@printf (str "i is 10\\n")))
         ((or (== i 15)
