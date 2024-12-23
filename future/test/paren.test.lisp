@@ -420,4 +420,21 @@ int (main) () {
   (is
    (string=
     (c `(@scanf (str "%d") (& day)))
-    "scanf(\"%d\", &day)")))
+    "scanf(\"%d\", &day)"))
+
+  (is
+   (string=
+    (c `(case day
+          (1 (return 1))
+          (2 (return 2))
+          (t (return 0))))
+    (format nil
+            "~:
+switch (day) {
+  case 1:
+    return 1;
+  case 2:
+    return 2;
+  default:
+    return 0;
+}"))))

@@ -52,7 +52,9 @@ case, leave the string unchanged."
                          (mapcar #'c (cdr form))))
                ;; operator call
                (let ((function (gethash op-name *functions*)))
-                 (funcall function (cdr form))))))))
+                 (if function
+                     (funcall function (cdr form))
+                     (error "~a not found.~%" op-name))))))))
 
 (defun resolve-symbol (symbol)
   (invert-case (substitute #\_ #\- (symbol-name symbol))))
@@ -124,3 +126,12 @@ case, leave the string unchanged."
 
 (def-cop & (form)
   (format nil "&~a" (c (nth 0 form))))
+
+(def-cop case (form)
+  (let ((result (format nil "switch (~a) {" (c (nth 0 form)))))
+    (loop :for subform :in (cdr form)
+          :do
+             (if (eq t (car subform))
+                 (setf result (format nil "~a~%  default:~%    ~a;" result (c (nth 1 subform))))
+                 (setf result (format nil "~a~%  case ~a:~%    ~a;" result (c (nth 0 subform)) (c (nth 1 subform))))))
+    (setf result (format nil "~a~%}" result))))
