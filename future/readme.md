@@ -55,3 +55,4 @@
   + [ ] Give persuading example showing superiority of lisp macro.
   + [ ] After `Paren` is stable, use it to implement `BOCL`.
   + [ ] Package as docker container.
+  + [ ] Find whether there's a c linter that can get rid of unnecessary parentheses.
