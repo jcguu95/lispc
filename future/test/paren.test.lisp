@@ -338,13 +338,13 @@ func3(3);"))))
     (format nil
             "~:
 int foo_INT (int x, int y) {
-  return ((2) * (((x) + (y))));
+  return (((2) * (((x) + (y)))));
 };
 float foo_FLOAT (float x, float y) {
-  return ((2) * (((x) + (y))));
+  return (((2) * (((x) + (y)))));
 };
 double foo_DOUBLE (double x, double y) {
-  return ((2) * (((x) + (y))));
+  return (((2) * (((x) + (y)))));
 };")                                    ; FIXME Fix semicolon problem.. or is there not problem? idk..
     )))
 
@@ -381,10 +381,10 @@ struct x {
                 (@printf (str "Negative\\n"))
                 (return))))))
     "{
-  if (x < 0) {
+  if ((x) < (0)) {
     goto negative;
   };
-  if (y < 0) {
+  if ((y) < (0)) {
     {
       negative:
       printf(\"Negative\\n\");
@@ -441,7 +441,7 @@ struct x {
 
 (test ==
   (is (equal
-       "(i == 0)"
+       "((i) == (0))"
        (c '(== i 0)))))
 
 (test +-*/
@@ -456,21 +456,21 @@ struct x {
   (is
    (string=
     (c '(++ i))
-    "(i++)"))
+    "((i)++)"))
   (is
    (string=
     (c '(-- i))
-    "(i--)")))
+    "((i)--)")))
 
 (test or
   (is (equal
-       "((i == 15) || (i == 20))"
+       "((((i) == (15))) || (((i) == (20))))"
        (c `(or (== i 15)
                (== i 20))))))
 
 (test and
   (is (equal
-       "((i > 0) && (i < 30))"
+       "((((i) > (0))) && (((i) < (30))))"
        (c `(and (> i 0)
                 (< i 30))))))
 
@@ -534,15 +534,16 @@ for (size-t (i) = 0; (i < size); (i++)) {
    (string=
     (format nil
             "~:
-if (i == 10) {
+if ((i) == (10)) {
   printf(\"i is 10\\n\");
-} else if ((i == 15) || (i == 20)) {
+} else if ((((i) == (15))) || (((i) == (20)))) {
   printf(\"i is 15 or 20\\n\");
-} else if ((i > 0) && (i < 30)) {
+} else if ((((i) > (0))) && (((i) < (30)))) {
   printf(\"i is between 0 and 30\\n\");
 } else {
   printf(\"i is not present\\n\");
 }")
+
     (c '(cond ((== i 10)
                (@printf (str "i is 10\\n")))
          ((or (== i 15)
@@ -560,7 +561,7 @@ if (i == 10) {
 int main () {
   int x = 5;
   int y = 10;
-  return 0;
+  return (0);
 }")
        (c `(defun (main :int) ()
              (declare (x :int) 5)
@@ -570,7 +571,7 @@ int main () {
   (is (equal
        (format nil "~:
 int main (int argc, char **(argv)) {
-  return 0;
+  return (0);
 }")
        (c `(defun (main :int) ((argc :int) (argv (:pointer :char 2)))
              (return 0))))))
@@ -594,20 +595,24 @@ int main (int argc, char **(argv)) {
             "~:
 switch (day) {
   case 1:
-    return 1;
+    return (1);
     break;
   case 2:
-    return 2;
+    return (2);
     break;
   default:
-    return 0;
+    return (0);
     break;
 }"))))
 
 (test return
   (is (equal
-       "return 0"
-       (c `(return 0)))))
+       "return (0)"
+       (c `(return 0))))
+  (is (equal
+       "return (((1) + (1)))"
+       (c `(return (+ 1 1)))))
+  )
 
 (test inline
   (is (equal
@@ -626,7 +631,7 @@ int main () {
   int (*(*foo)(void ))[3];
   const int (* volatile bar)[64];
   (double (^)(int , long long ))baz;
-  return 0;
+  return (0);
 }")
        (c `(defun (main :int) ()
              "int (*(*foo)(void ))[3]"

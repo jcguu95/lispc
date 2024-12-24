@@ -52,7 +52,8 @@
             (mapcar #'resolve-declaration arguments)
             (indent (c (cons 'progn-badname body))))))
 
-(def-cop ->  (form) (format nil "~{(~a)~^->~}"      (mapcar #'c form)))
+;; NOTE Do we need to use (~a) instead of ~a in ->?
+(def-cop ->  (form) (format nil "~{~a~^->~}"      (mapcar #'c form)))
 (def-cop ==  (form) (format nil "((~a) == (~a))"      (c (nth 0 form)) (c (nth 1 form))))
 (def-cop >   (form) (format nil "((~a) > (~a))"       (c (nth 0 form)) (c (nth 1 form))))
 (def-cop <   (form) (format nil "((~a) < (~a))"       (c (nth 0 form)) (c (nth 1 form))))
