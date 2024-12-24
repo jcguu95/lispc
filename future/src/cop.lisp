@@ -9,9 +9,9 @@
   (with-output-to-string (s)
     (loop :for subform :in form
           :for k :to (length form)
-          :do (format s "~a" (c subform))
+          :do (format s "~a;" (c subform))
           :do (when (< k (1- (length form)))
-                (format s "~%~%")))))
+                (format s "~%")))))
 
 (def-cop deftype (form)
   (let* ((type (nth 0 form))
@@ -33,26 +33,27 @@
   (let ((func-name (nth 0 form))
         (arguments (nth 1 form))
         (body (cddr form)))
-    (format nil "~a (~{~a~^, ~}) {~%~{  ~a;~%~}}"
+    (format nil
+            "~a (~{~a~^, ~}) {~%~a~%}"
             (resolve-declaration func-name)
             (mapcar #'resolve-declaration arguments)
-            (mapcar #'c body))))
+            (indent (c (cons 'progn-badname body))))))
 
-(def-cop ->  (form) (format nil "~{~a~^->~}" (mapcar #'c form)))
-(def-cop ==  (form) (format nil "(~a == ~a)" (c (nth 0 form)) (c (nth 1 form))))
-(def-cop >   (form) (format nil "(~a > ~a)"  (c (nth 0 form)) (c (nth 1 form))))
-(def-cop <   (form) (format nil "(~a < ~a)"  (c (nth 0 form)) (c (nth 1 form))))
+(def-cop ->  (form) (format nil "~{~a~^->~}"      (mapcar #'c form)))
+(def-cop ==  (form) (format nil "(~a == ~a)"      (c (nth 0 form)) (c (nth 1 form))))
+(def-cop >   (form) (format nil "(~a > ~a)"       (c (nth 0 form)) (c (nth 1 form))))
+(def-cop <   (form) (format nil "(~a < ~a)"       (c (nth 0 form)) (c (nth 1 form))))
 (def-cop +   (form) (format nil "(~{(~a)~^ + ~})" (mapcar #'c form)))
 (def-cop -   (form) (format nil "(~{(~a)~^ - ~})" (mapcar #'c form)))
 (def-cop *   (form) (format nil "(~{(~a)~^ * ~})" (mapcar #'c form)))
 (def-cop /   (form) (format nil "(~{(~a)~^ / ~})" (mapcar #'c form))) ; TODO Add test.
-(def-cop ++  (form) (format nil "(~a++)"     (c (nth 0 form))))
-(def-cop --  (form) (format nil "(~a--)"     (c (nth 0 form))))
-(def-cop or  (form) (format nil "(~a || ~a)" (c (nth 0 form)) (c (nth 1 form))))
-(def-cop and (form) (format nil "(~a && ~a)" (c (nth 0 form)) (c (nth 1 form))))
-(def-cop return (form) (format nil "return~a" (if (nth 0 form)
-                                                  (format nil " ~a" (c (nth 0 form)))
-                                                  "")))
+(def-cop ++  (form) (format nil "(~a++)"          (c (nth 0 form))))
+(def-cop --  (form) (format nil "(~a--)"          (c (nth 0 form))))
+(def-cop or  (form) (format nil "(~a || ~a)"      (c (nth 0 form)) (c (nth 1 form))))
+(def-cop and (form) (format nil "(~a && ~a)"      (c (nth 0 form)) (c (nth 1 form))))
+(def-cop return (form) (format nil "return~a"     (if (nth 0 form)
+                                                      (format nil " ~a" (c (nth 0 form)))
+                                                      "")))
 
 (def-cop str (form)
   (format nil "\"~a\"" (car form)))
@@ -86,21 +87,22 @@
 
 (def-cop cond (form)
   (with-output-to-string (stream)
-    (format stream "if ~a {~%    ~a~%}"
+    (format stream "if ~a {~%~a~%}"
             (c (nth 0 (car form)))
-            (c (nth 1 (car form))))
+            (indent (c (cons 'progn-badname (cdr (nth 0 form))))) ; NOTE progn-badname gives it semicolon..
+            )
     (loop :for subform :in (butlast (cdr form))
-          :do (format stream " else if ~a {~%    ~a~%}"
+          :do (format stream " else if ~a {~%~a~%}"
                       (c (nth 0 subform))
-                      (c (nth 1 subform))))
+                      (indent (c (cons 'progn-badname (cdr subform))))))
     (let ((last-form (car (last (cdr form)))))
       (when last-form
         (if (eq t (nth 0 last-form))
-            (format stream " else {~%    ~a~%}"
-                    (c (nth 1 last-form)))
-            (format stream " else if ~a {~%    ~a~%}"
+            (format stream " else {~%~a~%}"
+                    (indent (c (cons 'progn-badname (cdr last-form)))))
+            (format stream " else if ~a {~%~a~%}"
                     (c (nth 0 last-form))
-                    (c (nth 1 last-form))))))))
+                    (indent (c (cons 'progn-badname (cdr last-form))))))))))
 
 (def-cop case (form)
   (let ((result (format nil "switch (~a) {" (c (nth 0 form)))))
