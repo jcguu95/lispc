@@ -60,7 +60,7 @@
                                                       "")))
 
 (def-cop defmacro (form)
-  (format nil "#define ~a (~{~a~^,~}) \\~%~a"
+  (format nil "#define ~a(~{~a~^,~}) \\~%~a"
           (c (nth 0 form))
           (mapcar #'resolve-symbol (nth 1 form))
           ;; FIXME Need to add a #\\ before each #\newline.

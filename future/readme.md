@@ -29,7 +29,6 @@
   + [X] Implement control flow: block, label, goto.
   + [X] Lisp Interopts: The c-operator `lisp`.
   + [X] Remove extra parenthesis for expansion.
-  + [ ] Implement the c-operator `let` for C-macros (may better call it `c-macro`).
 
 + Workflow
 

@@ -119,7 +119,9 @@
              (format nil "struct ~a ~~a" (invert-case (symbol-name name))))))
       (:type-of
        (let ((name (nth 1 type)))
-         (format nil "typeof(~a)" name)))
+                 (if no-filler
+                     (format nil "typeof(~a)" (invert-case (symbol-name name)))
+                     (format nil "typeof(~a) ~~a" (invert-case (symbol-name name))))))
       (:array
        (let ((length (nth 1 type))
              (subtype (nth 2 type)))
