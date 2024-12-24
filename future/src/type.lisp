@@ -1,22 +1,10 @@
 (in-package :paren)
 
-;; TODO Redo for the type system: Basic types are represented as keywords,
-;; while composed types are represented as lists whose cars are of the
-;; following: :pointer, :function, :struct, :array.
-
-;; TODO The users can write instead :pointer, :function, :(), :{}, :[]
-;; respectively, but a normalizer will transform it into the canonical, longer
-;; forms. Write util functions to handle and inspect types. Allow users to
-;; define more type operators (e.g. :pointer :function as above).
-
-;; TODO Finally, write a printer, and integrate that with SET and DECLARE.
-;; Mention that the type system is by no means complete, yet the user can
-;; inline any C codes so that's not a problem.
-
 ;; TODO Change syntax from (:array () :int) to (:array :int)
 
 ;; TODO Support `volatile pointer`. (an example from https://cdecl.org/):
 ;; declare bar as volatile pointer to array 64 of const int
+;; (and other register-related keywords)?
 ;;
 ;; const int (* volatile bar)[64]
 

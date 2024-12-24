@@ -20,6 +20,7 @@
     :serial t
     :components ((:file "packages")
                  (:file "type")
+                 (:file "util")
                  (:file "paren")
                  (:file "cop")
                  (:file "compile")))))
