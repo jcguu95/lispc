@@ -1,6 +1,6 @@
-;; #define EQUAL?(a,b) ((a) == (b))
+;; #define EQUALP(a,b) ((a) == (b))
 ;;
-;; #undef EQUAL?
+;; #undef EQUALP
 ;;
 ;; #define SWAP(a,b) do \
 ;;   { typeof(a) temp = a; \
@@ -10,7 +10,7 @@
 ;;
 ;; #undef SWAP
 
-;; #define EQUAL?(a,b) ((a) == (b))
+;; #define EQUALP(a,b) ((a) == (b))
 ;; #define SWAP(a,b) do \
 ;;   { typeof(a) temp = a; \
 ;;     a = b; \
@@ -24,23 +24,24 @@
 ;;     return 0;
 ;; }
 ;;
-;; #undef EQUAL?
+;; #undef EQUALP
 ;; #undef SWAP
 
-(defmacro |equal?| (a b) (== a b))
+(include :system ("stdio.h"))
 
-(undefmacro |equal?|)
+(defmacro |equalp| (a b) (== a b))
+(undefmacro |equalp|)
 
 (defmacro |swap| (a b)
   (do-while 0
     (declare (temp (:type-of a)) a)
     (set a b)
     (set b temp)))
-
 (undefmacro |swap|)
 
+;;; Do everything again, with with-c-macro.
 (with-c-macro
-    ((|equal?| (a b) (== a b))
+    ((|equalp| (a b) (== a b))
      (|swap| (a b)
              (do-while 0
                (declare (temp (:type-of a)) a)

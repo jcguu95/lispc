@@ -262,6 +262,26 @@
 
 ") :space-count 4))))
 
+(test replace-newline-with-sequence     ; util
+  (is
+   (string=
+    (paren::replace-newline-with-sequence "a
+
+b")
+    "a \\
+ \\
+b"))
+  (is
+   (string=
+    (paren::replace-newline-with-sequence "a
+
+b
+")
+    "a \\
+ \\
+b \\
+")))
+
 (test invert-case                       ; util
   (is (string= "" (paren::invert-case "")))
   (is (string= "hello" (paren::invert-case "HELLO")))

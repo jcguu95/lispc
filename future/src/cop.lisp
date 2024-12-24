@@ -1,7 +1,6 @@
 (in-package :paren)
 
 (def-cop lisp (form)
-  ;; (log:debug `(progn ,@form))
   (eval `(progn ,@form)))
 
 ;; TODO Even `progn` is not a good name. Choose something better.
@@ -16,6 +15,16 @@
                 (format s ";"))
           :do (when (< k (length form))
                 (format s "~%")))))
+
+;; FIXME Exactly the same with progn-badname, but we use newline instead of semicolon here.
+;; This is bad code. Fix this later.
+(def-cop progn-badname/newline (form)
+  (with-output-to-string (s)
+    (loop :for subform :in form
+          :for k :from 1
+          :do (format s "~a" (c subform))
+          :do (when (< k (length form))
+                (format s "~%~%")))))
 
 (def-cop deftype (form)
   (let* ((type (nth 0 form))
@@ -60,11 +69,11 @@
                                                       "")))
 
 (def-cop defmacro (form)
-  (format nil "#define ~a(~{~a~^,~}) \\~%~a"
-          (c (nth 0 form))
-          (mapcar #'resolve-symbol (nth 1 form))
-          ;; FIXME Need to add a #\\ before each #\newline.
-          (c (cons 'progn-badname (cddr form)))))
+  (prefix-newline-with-backslash
+   (format nil "#define ~a(~{~a~^,~})~%~a"
+           (c (nth 0 form))
+           (mapcar #'resolve-symbol (nth 1 form))
+           (c (cons 'progn-badname/newline (cddr form))))))
 
 (def-cop undefmacro (form)
   (format nil "#undef ~a"
@@ -74,8 +83,7 @@
   (let ((macros (nth 0 form))
         (body (cdr form)))
     (concatenate 'list
-                 ;; FIXME  progn-badname wrongly gives semicolon instead of 2 newlines.
-                 '(progn-badname)
+                 '(progn-badname/newline)
                  (loop :for macro :in macros
                        :collect (cons 'defmacro macro))
                  body
