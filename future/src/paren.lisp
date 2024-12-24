@@ -39,15 +39,6 @@
         expanded-form
         (c expanded-form))))
 
-(defun resolve-symbol (symbol)
-  (invert-case (substitute #\_ #\- (symbol-name symbol))))
-
-(defun resolve-declaration (declaration)
-  (assert (= 2 (length declaration)))
-  (let* ((variable (resolve-symbol (nth 0 declaration)))
-         (type (nth 1 declaration)))
-    (format nil (fmt-string<-type type) variable)))
-
 (defmacro def-cop (name vars &body body)
   "Define a C operator."
   (assert (= 1 (length vars)))

@@ -66,3 +66,12 @@ case, leave the string unchanged."
     (when (and in-newline-sequence (not last-char-newline))
       (setq result (concatenate 'string result indentation)))
     result))
+
+(defun resolve-symbol (symbol)
+  (invert-case (substitute #\_ #\- (symbol-name symbol))))
+
+(defun resolve-declaration (declaration)
+  (assert (= 2 (length declaration)))
+  (let* ((variable (resolve-symbol (nth 0 declaration)))
+         (type (nth 1 declaration)))
+    (format nil (fmt-string<-type type) variable)))

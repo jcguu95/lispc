@@ -124,5 +124,6 @@
                (if no-filler
                    "~a"
                    "~a ~~a")
-               (invert-case (symbol-name kind)))))
+               (resolve-symbol kind))))
     ))
+

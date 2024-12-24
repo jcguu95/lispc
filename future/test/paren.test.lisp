@@ -8,8 +8,8 @@
 (test type?
   (is (paren::type? :int))
   (is (paren::type? '(:pointer (:array nil (:struct :X)) 3)))
-  (is (paren::type? '(:pointer :int)))        ; by default, this is a 1-pointer
-  (is (paren::type? '(:pointer :int 3)))      ; by default, this is a 3-pointer
+  (is (paren::type? '(:pointer :int)))   ; by default, this is a 1-pointer
+  (is (paren::type? '(:pointer :int 3))) ; by default, this is a 3-pointer
   (is (paren::type? '(:array () :int)))
   (is (paren::type? '(:array 1 :int)))
   (is (paren::type? '(:function :int (:int (:pointer (:array () :int) 1)))))
@@ -21,6 +21,8 @@
   ;; NOTE https://cdecl.org/
   (is (equal (paren::fmt-string<-type :int)
              "int ~a"))
+  (is (equal (paren::fmt-string<-type :size-t)
+             "size_t ~a"))
   (is (equal (paren::fmt-string<-type '(:array () :int))
              "int (~a)[]"))
   (is (equal (paren::fmt-string<-type '(:array 9 :int))
