@@ -30,7 +30,7 @@
                :for k :from 1
                :do (format stream "~a" (c form))
                :do (when (< k (length forms))
-                     (format stream "~%")))))
+                     (format stream "~%~%")))))
      out-stream
      )))
 

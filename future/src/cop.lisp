@@ -61,8 +61,8 @@
 (def-cop include (form)
   (concatenate
    'string
-   (format nil "~{#include <~a>~%~}" (getf form :system))
-   (format nil "~{#include \"~a\"~%~}" (getf form :local))))
+   (format nil "~{#include <~a>~^~%~}" (getf form :system))
+   (format nil "~{#include \"~a\"~^~%~}" (getf form :local))))
 
 (def-cop declare (form)
   (let ((value (nth 1 form)))
