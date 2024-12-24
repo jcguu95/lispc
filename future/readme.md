@@ -41,7 +41,7 @@
     
     + [X] Fix (nested) indentation.
     + [X] Fix semicolon and newline issue.
-    + [ ] Build comparison test workflow against example files.
+    + [X] Build comparison test workflow against example files.
     + [ ] Build integration test for the behavior of generated c code.
 
 + Documentations and Examples (as Programmatic Tests)

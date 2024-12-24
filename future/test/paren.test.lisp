@@ -647,3 +647,24 @@ int main () {
    (string=
     (c `(@printf (str "x = %d, y = %d \\n") x y))
     "printf(\"x = %d, y = %d \\n\", x, y)")))
+
+;;;
+
+(defun compilation-diff? (lsp-file-path)
+  ;; TODO Report where the first difference is (line number, which character).
+  (not
+   (string=
+    (with-output-to-string (s)
+      (paren::compile-lsp-forms (paren::read-file-into-list lsp-file-path)
+                                :stream s))
+    (paren::read-file-to-string (paren::c-path lsp-file-path)))))
+
+(test compilation-difference?
+  (is (not (compilation-diff? "./examples/hello-world.lsp")))
+  (is (not (compilation-diff? "./examples/switch.lsp")))
+  (is (not (compilation-diff? "./examples/cond.lsp")))
+  (is (not (compilation-diff? "./examples/control-flow.lsp")))
+  (is (not (compilation-diff? "./examples/macro-example.lsp")))
+  (is (not (compilation-diff? "./examples/type-struct-example.lsp")))
+  (is (not (compilation-diff? "./examples/higher-order-function.lsp")))
+  (is (not (compilation-diff? "./examples/c-macro.lsp"))))
