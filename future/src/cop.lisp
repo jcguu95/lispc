@@ -32,15 +32,18 @@
          (new-type (nth 1 form)))
     (case kind-of-type
       (:keyword
-       (format nil "typedef ~a ~a;" (c (nth 1 type)) (c new-type)))
+       (format nil "typedef ~a ~a;"
+               (c (nth 1 type)) (c new-type)))
       (:struct
-       (format nil "typedef struct ~a ~a;" (c (nth 1 type)) (c new-type))))))
+       (format nil "typedef struct ~a ~a;"
+               (c (nth 1 type)) (c new-type))))))
 
 (def-cop defstruct (form)
   (let ((struct-name (nth 0 form))
         (cells (nth 1 form)))
     (format nil "struct ~a {~%~{  ~a;~^~%~}~%};"
-            (c struct-name) (mapcar #'resolve-declaration cells))))
+            (c struct-name)
+            (mapcar #'resolve-declaration cells))))
 
 (def-cop defun (form)
   (let ((func-name (nth 0 form))
@@ -54,17 +57,17 @@
 
 ;; NOTE Do we need to use (~a) instead of ~a in ->?
 (def-cop ->  (form) (format nil "~{~a~^->~}"      (mapcar #'c form)))
-(def-cop ==  (form) (format nil "((~a) == (~a))"      (c (nth 0 form)) (c (nth 1 form))))
-(def-cop >   (form) (format nil "((~a) > (~a))"       (c (nth 0 form)) (c (nth 1 form))))
-(def-cop <   (form) (format nil "((~a) < (~a))"       (c (nth 0 form)) (c (nth 1 form))))
+(def-cop ==  (form) (format nil "((~a) == (~a))"  (c (nth 0 form)) (c (nth 1 form))))
+(def-cop >   (form) (format nil "((~a) > (~a))"   (c (nth 0 form)) (c (nth 1 form))))
+(def-cop <   (form) (format nil "((~a) < (~a))"   (c (nth 0 form)) (c (nth 1 form))))
 (def-cop +   (form) (format nil "(~{(~a)~^ + ~})" (mapcar #'c form)))
 (def-cop -   (form) (format nil "(~{(~a)~^ - ~})" (mapcar #'c form)))
 (def-cop *   (form) (format nil "(~{(~a)~^ * ~})" (mapcar #'c form)))
 (def-cop /   (form) (format nil "(~{(~a)~^ / ~})" (mapcar #'c form))) ; TODO Add test.
-(def-cop ++  (form) (format nil "((~a)++)"          (c (nth 0 form))))
-(def-cop --  (form) (format nil "((~a)--)"          (c (nth 0 form))))
-(def-cop or  (form) (format nil "((~a) || (~a))"      (c (nth 0 form)) (c (nth 1 form))))
-(def-cop and (form) (format nil "((~a) && (~a))"      (c (nth 0 form)) (c (nth 1 form))))
+(def-cop ++  (form) (format nil "((~a)++)"        (c (nth 0 form))))
+(def-cop --  (form) (format nil "((~a)--)"        (c (nth 0 form))))
+(def-cop or  (form) (format nil "((~a) || (~a))"  (c (nth 0 form)) (c (nth 1 form))))
+(def-cop and (form) (format nil "((~a) && (~a))"  (c (nth 0 form)) (c (nth 1 form))))
 (def-cop return (form) (format nil "return~a"     (if (nth 0 form)
                                                       (format nil " (~a)" (c (nth 0 form)))
                                                       "")))

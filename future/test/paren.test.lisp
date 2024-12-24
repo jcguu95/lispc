@@ -611,8 +611,7 @@ switch (day) {
        (c `(return 0))))
   (is (equal
        "return (((1) + (1)))"
-       (c `(return (+ 1 1)))))
-  )
+       (c `(return (+ 1 1))))))
 
 (test inline
   (is (equal
