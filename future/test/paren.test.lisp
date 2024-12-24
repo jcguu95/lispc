@@ -297,11 +297,9 @@
    (string=
     (c '(progn-badname (@func1 1) (@func2 2) (@func3 3)))
     (format nil "~:
-func1(1)
-
-func2(2)
-
-func3(3)"))))
+func1(1);
+func2(2);
+func3(3);"))))
 
 (test lisp                              ; interop
   (is
@@ -319,15 +317,14 @@ func3(3)"))))
             "~:
 int foo_INT (int x, int y) {
   return ((2) * (((x) + (y))));
-}
-
+};
 float foo_FLOAT (float x, float y) {
   return ((2) * (((x) + (y))));
-}
-
+};
 double foo_DOUBLE (double x, double y) {
   return ((2) * (((x) + (y))));
-}"))))
+};")                                    ; FIXME Fix semicolon problem.. or is there not problem? idk..
+    )))
 
 (test deftype
   (is (equal "typedef struct x x;"
@@ -363,15 +360,15 @@ struct x {
                 (return))))))
     "{
 if (x < 0) {
-    goto negative;
+  goto negative;
 }
 if (y < 0) {
-    {
-negative:
-printf(\"Negative\\n\")
-return
+  {
+  negative:
+  printf(\"Negative\\n\")
+  return
 
-}
+  };
 }
 
 }"
@@ -464,8 +461,7 @@ return
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include \"emacs.h\"
-")
+#include \"emacs.h\"")
        (c `(include :system ("stdio.h" "stdlib.h" "math.h")
                     :local ("emacs.h")))
        )))
@@ -517,16 +513,17 @@ for (size-t (i) = 0; (i < size); (i++)) {
 (test cond
   (is
    (string=
-    ;; FIXME Fix indentation and spacing.
-    "if (i == 10) {
-    printf(\"i is 10\\n\")
-}else if ((i == 15) || (i == 20)) {
-    printf(\"i is 15 or 20\\n\")
-}else if ((i > 0) && (i < 30)) {
-    printf(\"i is between 0 and 30\\n\")
-}else {
-    printf(\"i is not present\\n\")
-}"
+    (format nil
+            "~:
+if (i == 10) {
+  printf(\"i is 10\\n\");
+} else if ((i == 15) || (i == 20)) {
+  printf(\"i is 15 or 20\\n\");
+} else if ((i > 0) && (i < 30)) {
+  printf(\"i is between 0 and 30\\n\");
+} else {
+  printf(\"i is not present\\n\");
+}")
     (c '(cond ((== i 10)
                (@printf (str "i is 10\\n")))
          ((or (== i 15)

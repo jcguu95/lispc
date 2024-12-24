@@ -59,10 +59,14 @@
   (format nil "\"~a\"" (car form)))
 
 (def-cop include (form)
-  (concatenate
-   'string
-   (format nil "~{#include <~a>~^~%~}" (getf form :system))
-   (format nil "~{#include \"~a\"~^~%~}" (getf form :local))))
+  (let ((system-libs (getf form :system))
+        (local-libs (getf form :local)))
+    (concatenate
+     'string
+     (format nil "~{#include <~a>~^~%~}" system-libs)
+     (when (and system-libs local-libs)
+       (format nil "~%"))
+     (format nil "~{#include \"~a\"~^~%~}" local-libs))))
 
 (def-cop declare (form)
   (let ((value (nth 1 form)))

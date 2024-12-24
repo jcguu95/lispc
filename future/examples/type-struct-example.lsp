@@ -28,9 +28,9 @@
 ;;   return 0;
 ;; }
 (defun (main :int) ()
-  (declare (x1 :X*) (@malloc (@sizeof X)))
-  (declare (x2 :X*) (@malloc (@sizeof X)))
-  (declare (x3 :X*) (@malloc (@sizeof X)))
+  (declare (x1 :x*) (@malloc (@sizeof x)))
+  (declare (x2 :x*) (@malloc (@sizeof x)))
+  (declare (x3 :x*) (@malloc (@sizeof x)))
   (set (-> x1 value) 10)
   (set (-> x2 value) 20)
   (set (-> x3 value) 30)
