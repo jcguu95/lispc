@@ -9,7 +9,8 @@
   (with-output-to-string (s)
     (loop :for subform :in form
           :for k :from 1
-          :do (format s "~a;" (c subform))
+          :do (format s "~a" (c subform))
+          :do (unless (string= "LABEL" (symbol-name (car subform))) (format s ";"))
           :do (when (< k (length form))
                 (format s "~%")))))
 
@@ -137,10 +138,10 @@
     (format nil "~a[~a]" (c (nth 0 form)) (c (nth 1 form))))
 
 (def-cop goto (form)
-  (format nil "goto ~a;" (c (nth 0 form))))
+  (format nil "goto ~a" (c (nth 0 form))))
 
 (def-cop label (form)
   (format nil "~a:" (c (nth 0 form))))
 
 (def-cop block (form)
-  (format nil "{~%~{~a~%~}~%}" (mapcar #'c form)))
+  (format nil "{~%~a~%}" (indent (c (cons 'progn-badname form)))))

@@ -37,6 +37,7 @@
 (compile-lsp-file "./examples/hello-world.lsp")
 (compile-lsp-file "./examples/switch.lsp")
 (compile-lsp-file "./examples/cond.lsp")
+(compile-lsp-file "./examples/control-flow.lsp")
 (compile-lsp-file "./examples/macro-example.lsp")
 (compile-lsp-file "./examples/type-struct-example.lsp")
 (compile-lsp-file "./examples/higher-order-function.lsp")

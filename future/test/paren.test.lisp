@@ -355,22 +355,20 @@ struct x {
               (goto negative)))
        (cond ((< y 0)
               (block
-                  (label negative)
+                (label negative)
                 (@printf (str "Negative\\n"))
                 (return))))))
     "{
-if (x < 0) {
-  goto negative;
-}
-if (y < 0) {
-  {
-  negative:
-  printf(\"Negative\\n\")
-  return
-
+  if (x < 0) {
+    goto negative;
   };
-}
-
+  if (y < 0) {
+    {
+      negative:
+      printf(\"Negative\\n\");
+      return;
+    };
+  };
 }"
     ;; FIXME Fix indentation.
     )))
