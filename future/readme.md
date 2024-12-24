@@ -11,20 +11,17 @@
     + [X] Type Spec
     + [X] Type Formatter
     + [X] Hook into main code / main test
-  + [ ] Preprocessor Directives 
-  
-    (Need to finish indentation first.)
-        
+  + [ ] Preprocessor Directives
+    + [X] Newlines need to be separated by `\`.
     A list of preproc directives:
-    + `#define`: Defines macros.
-    + `#undef`: Undefines macros.
-    + `#include`: Includes external files.
-    + `#if, #ifdef, #ifndef`: Conditional compilation.
-    + `#else, #elif, #endif`: Provides alternatives in conditional compilation.
-    + `#pragma`: Compiler-specific instructions.
-    + `#error`: Causes a compilation error with a message.
-    + `#line`: Sets line numbers and filenames for error messages.
-    Note that newlines need to be separated by `\`.
+    + [X] `#define`: Defines macros.
+    + [X] `#undef`: Undefines macros.
+    + [X] `#include`: Includes external files.
+    + [ ] `#if, #ifdef, #ifndef`: Conditional compilation.
+    + [ ] `#else, #elif, #endif`: Provides alternatives in conditional compilation.
+    + [ ] `#pragma`: Compiler-specific instructions.
+    + [ ] `#error`: Causes a compilation error with a message.
+    + [ ] `#line`: Sets line numbers and filenames for error messages.
         
   + [X] Implement control flow: block, label, goto.
   + [X] Lisp Interopts: The c-operator `lisp`.
