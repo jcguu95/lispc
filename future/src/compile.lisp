@@ -25,8 +25,12 @@
      out-stream)
     (write-line
      (with-output-to-string (stream)
-       (loop :for form :in (read-file-into-list file-path)
-             :do (format stream "~a~%" (c form))))
+       (let ((forms (read-file-into-list file-path)))
+         (loop :for form :in forms
+               :for k :from 1
+               :do (format stream "~a" (c form))
+               :do (when (< k (length forms))
+                     (format stream "~%")))))
      out-stream
      )))
 

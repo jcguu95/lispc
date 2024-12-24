@@ -8,9 +8,9 @@
 (def-cop progn-badname (form)
   (with-output-to-string (s)
     (loop :for subform :in form
-          :for k :to (length form)
+          :for k :from 1
           :do (format s "~a;" (c subform))
-          :do (when (< k (1- (length form)))
+          :do (when (< k (length form))
                 (format s "~%")))))
 
 (def-cop deftype (form)
@@ -108,10 +108,15 @@
   (let ((result (format nil "switch (~a) {" (c (nth 0 form)))))
     (loop :for subform :in (cdr form)
           :do (if (eq t (car subform))
-                  (setf result (format nil "~a~%  default:~%    ~a;~%    break;"
-                                       result (c (nth 1 subform))))
-                  (setf result (format nil "~a~%  case ~a:~%    ~a;~%    break;"
-                                       result (c (nth 0 subform)) (c (nth 1 subform))))))
+                  (setf result (format nil "~a~%  default:~%~a~%~a"
+                                       result
+                                       (indent (c (cons 'progn-badname (cdr subform))) :space-count 4)
+                                       (indent "break;" :space-count 4)))
+                  (setf result (format nil "~a~%  case ~a:~%~a~%~a"
+                                       result
+                                       (c (nth 0 subform))
+                                       (indent (c (cons 'progn-badname (cdr subform))) :space-count 4)
+                                       (indent "break;" :space-count 4)))))
     (setf result (format nil "~a~%}" result))))
 
 (def-cop for (form)
