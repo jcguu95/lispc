@@ -43,21 +43,49 @@
             (mapcar #'resolve-declaration arguments)
             (indent (c (cons 'progn-badname body))))))
 
-(def-cop ->  (form) (format nil "~{~a~^->~}"      (mapcar #'c form)))
-(def-cop ==  (form) (format nil "(~a == ~a)"      (c (nth 0 form)) (c (nth 1 form))))
-(def-cop >   (form) (format nil "(~a > ~a)"       (c (nth 0 form)) (c (nth 1 form))))
-(def-cop <   (form) (format nil "(~a < ~a)"       (c (nth 0 form)) (c (nth 1 form))))
+(def-cop ->  (form) (format nil "~{(~a)~^->~}"      (mapcar #'c form)))
+(def-cop ==  (form) (format nil "((~a) == (~a))"      (c (nth 0 form)) (c (nth 1 form))))
+(def-cop >   (form) (format nil "((~a) > (~a))"       (c (nth 0 form)) (c (nth 1 form))))
+(def-cop <   (form) (format nil "((~a) < (~a))"       (c (nth 0 form)) (c (nth 1 form))))
 (def-cop +   (form) (format nil "(~{(~a)~^ + ~})" (mapcar #'c form)))
 (def-cop -   (form) (format nil "(~{(~a)~^ - ~})" (mapcar #'c form)))
 (def-cop *   (form) (format nil "(~{(~a)~^ * ~})" (mapcar #'c form)))
 (def-cop /   (form) (format nil "(~{(~a)~^ / ~})" (mapcar #'c form))) ; TODO Add test.
-(def-cop ++  (form) (format nil "(~a++)"          (c (nth 0 form))))
-(def-cop --  (form) (format nil "(~a--)"          (c (nth 0 form))))
-(def-cop or  (form) (format nil "(~a || ~a)"      (c (nth 0 form)) (c (nth 1 form))))
-(def-cop and (form) (format nil "(~a && ~a)"      (c (nth 0 form)) (c (nth 1 form))))
+(def-cop ++  (form) (format nil "((~a)++)"          (c (nth 0 form))))
+(def-cop --  (form) (format nil "((~a)--)"          (c (nth 0 form))))
+(def-cop or  (form) (format nil "((~a) || (~a))"      (c (nth 0 form)) (c (nth 1 form))))
+(def-cop and (form) (format nil "((~a) && (~a))"      (c (nth 0 form)) (c (nth 1 form))))
 (def-cop return (form) (format nil "return~a"     (if (nth 0 form)
-                                                      (format nil " ~a" (c (nth 0 form)))
+                                                      (format nil " (~a)" (c (nth 0 form)))
                                                       "")))
+
+(def-cop defmacro (form)
+  (format nil "#define ~a (~{~a~^,~}) \\~%~a"
+          (c (nth 0 form))
+          (mapcar #'resolve-symbol (nth 1 form))
+          ;; FIXME Need to add a #\\ before each #\newline.
+          (c (cons 'progn-badname (cddr form)))))
+
+(def-cop undefmacro (form)
+  (format nil "#undef ~a"
+          (c (nth 0 form))))
+
+(def-cop with-c-macro (form)
+  (let ((macros (nth 0 form))
+        (body (cdr form)))
+    (concatenate 'list
+                 ;; FIXME  progn-badname wrongly gives semicolon instead of 2 newlines.
+                 '(progn-badname)
+                 (loop :for macro :in macros
+                       :collect (cons 'defmacro macro))
+                 body
+                 (loop :for macro :in macros
+                       :collect (cons 'undefmacro macro)))))
+
+(def-cop do-while (form)
+  (format nil "do {~%~a~%} while (~a)"
+          (indent (c (cons 'progn-badname (cdr form))))
+          (c (nth 0 form))))
 
 (def-cop str (form)
   (format nil "\"~a\"" (car form)))

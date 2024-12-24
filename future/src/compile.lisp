@@ -45,7 +45,7 @@
 ;; NOTE TODO Need to first implement preprocessor directives, and then the cop
 ;; `let` in the file.
 ;;
-;; (compile-lsp-file "./examples/c-macro.lsp")
+(compile-lsp-file "./examples/c-macro.lsp")
 
 ;; NOTE TODO Need to implement lisp interopt first:
 ;; (compile-lsp-file "./examples/nested-loops.lsp")

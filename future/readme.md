@@ -43,15 +43,15 @@
     Under the `./examples/` directory, process all `*.lsp` files, compile them
     with `paren`, and compare the results with the corresponding `*.c` files.
     
-    + [ ] Fix (nested) indentation.
-    + [ ] Fix semicolon and newline issue.
+    + [X] Fix (nested) indentation.
+    + [X] Fix semicolon and newline issue.
     + [ ] Build comparison test workflow against example files.
     + [ ] Build integration test for the behavior of generated c code.
 
 + Documentations and Examples (as Programmatic Tests)
 
   + [ ] Transpile examples from Learn C the Hard Way.
-  + [ ] Transpile examples from part of Emacs's source code.
+  + [ ] Transpile examples from selected parts of Emacs's source code.
   + [ ] Give persuading example showing superiority of lisp macro.
   + [ ] After `Paren` is stable, use it to implement `BOCL`.
   + [ ] Package as docker container.
