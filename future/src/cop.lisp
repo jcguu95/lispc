@@ -10,7 +10,10 @@
     (loop :for subform :in form
           :for k :from 1
           :do (format s "~a" (c subform))
-          :do (unless (string= "LABEL" (symbol-name (car subform))) (format s ";"))
+          :do (unless
+                  (and (listp subform)  ; A subform may be a string, see "inline" in test for example.
+                       (string= "LABEL" (symbol-name (car subform))))
+                (format s ";"))
           :do (when (< k (length form))
                 (format s "~%")))))
 

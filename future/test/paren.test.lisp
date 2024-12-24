@@ -370,7 +370,6 @@ struct x {
     };
   };
 }"
-    ;; FIXME Fix indentation.
     )))
 
 (test funcall
@@ -592,17 +591,13 @@ switch (day) {
   (is (equal
        "42"
        (c 42)))
-
   (is (equal
        "42.0"
        (c 42.00)))
-
   (is (equal
        "any code; anywhere;!!"
        (c "any code; anywhere;!!")))
-
-  ;; NOTE Handy for users who just want to insert some code without learning
-  ;; this language paren.
+  ;; NOTE Handy for users who just want to insert some code without learning paren the language.
   (is (equal
        (format nil "~:
 int main () {
