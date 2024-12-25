@@ -668,3 +668,99 @@ int main () {
   (is (not (compilation-diff? "./examples/type-struct-example.lsp")))
   (is (not (compilation-diff? "./examples/higher-order-function.lsp")))
   (is (not (compilation-diff? "./examples/c-macro.lsp"))))
+
+;;;
+
+(defparameter *root-dir* "/tmp/paren/")
+
+(defun compile-c-file (c-file)
+  (ensure-directories-exist *root-dir*)
+  (let ((out-file
+          (format nil "~a"
+                  (merge-pathnames (format nil "~a.~a.o"
+                                           (pathname-name c-file)
+                                           (get-universal-time))
+                                   *root-dir*))))
+    ;; TODO Resolve c-file to absolute path so it's easier to report when there's error.
+    ;; NOTE This depends on sbcl.
+    (log:info "Compiling ~a to ~a .." c-file out-file)
+    (sb-ext:run-program "/usr/bin/gcc" `(,c-file "-o" ,out-file))
+    out-file))
+
+(defun run-program (command &key (input ""))
+  (let ((stdin (make-string-input-stream input))
+        (stdout (make-string-output-stream))
+        (stderr (make-string-output-stream)))
+    (log:info "Running command ~s with input ~s." command input)
+    ;; NOTE This depends on sbcl.
+    (sb-ext:run-program command nil
+                        :input stdin
+                        :output stdout
+                        :error stderr)
+    (cons (get-output-stream-string stdout)
+          (get-output-stream-string stderr))))
+
+(defun test-c-program (c-file &key (stdin "") (expected-stdout "") (expected-stderr ""))
+  (let* ((result (run-program (compile-c-file c-file) :input stdin))
+         (stdout (car result))
+         (stderr (cdr result))
+         (expected-stdout (format nil expected-stdout))
+         (expected-stderr (format nil expected-stderr)))
+    (unless (string= expected-stdout stdout)
+      (error "~:
+Error: Unmatched STDOUT.
+       c-file: ~a
+       stdin: ~a~%
+
+------Expect------
+~a
+------We Get------
+~a
+------------------ "
+             c-file stdin
+             expected-stdout stdout))
+    (unless (string= expected-stderr stderr)
+      (error "~:
+Error: Unmatched STDERR.
+       c-file: ~a
+       stdin: ~a~%
+
+------Expect------
+~a
+------We Get------
+~a
+------------------"
+             c-file stdin
+             expected-stderr stderr))
+    t))
+
+
+(test execution-test
+  (is
+   (test-c-program "./examples/switch.c"
+                   :stdin "1"
+                   :expected-stdout
+                   "Enter an integer for i: i = 1~%"
+                   :expected-stderr ""))
+
+  (is
+   (test-c-program "./examples/switch.c"
+                   :stdin "3\\n1"
+                   :expected-stdout
+                   "Enter an integer for i: i = 3~%Enter an integer for j: j = 1~%"
+                   :expected-stderr ""))
+
+  (is
+   (test-c-program "./examples/switch.c"
+                   :stdin "4"
+                   :expected-stdout
+                   "Enter an integer for i: Wrong guess. Aborting..~%"
+                   :expected-stderr ""))
+  ;; TODO The following test is destined to fail. Add it later.
+  ;; (is
+  ;;  (test-c-program "./examples/switch.c"
+  ;;                  :stdin "1"
+  ;;                  :expected-stdout
+  ;;                  "Enter an integer for i: Wrong guess. Aborting..~%"
+  ;;                  :expected-stderr ""))
+  )

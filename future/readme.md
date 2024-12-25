@@ -42,10 +42,12 @@
     + [X] Fix (nested) indentation.
     + [X] Fix semicolon and newline issue.
     + [X] Build comparison test workflow against example files.
-    + [ ] Build integration test for the behavior of generated c code.
+    + [X] Build integration test for the behavior of generated c code.
+    + [ ] Fix the code in `./examples/` and start running the tests.
 
 + Documentations and Examples (as Programmatic Tests)
 
+  + [ ] Transpile the C-implementation of MAL.
   + [ ] Transpile examples from Learn C the Hard Way.
   + [ ] Transpile examples from selected parts of Emacs's source code.
   + [ ] Give persuading example showing superiority of lisp macro.
