@@ -61,7 +61,6 @@
                   (nth 1 form))))
 
 (def-cop union (form)
-  (log:info (cdr form))
   (format nil "~:
 union ~a {~%~{  ~a;~%~}};"
           (nth 0 form)

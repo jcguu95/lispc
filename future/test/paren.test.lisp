@@ -827,6 +827,73 @@ Error: Unmatched STDERR.
 
 
 (test execution-test
+
+  (is
+   (test-c-program "./examples/control-flow.c"
+                   :stdin "1 1"
+                   :expected-stdout
+                   "~:
+Enter an integer for x:
+Enter an integer for y:
+You entered x = 1 and y = 1
+x is positive.
+"
+                   :expected-stderr ""))
+
+  (is
+   (test-c-program "./examples/control-flow.c"
+                   :stdin "1 -1"
+                   :expected-stdout
+                   "~:
+Enter an integer for x:
+Enter an integer for y:
+You entered x = 1 and y = -1
+x is positive.
+y is negative.
+"
+                   :expected-stderr ""))
+
+  (is
+   (test-c-program "./examples/control-flow.c"
+                   :stdin "-1 1"
+                   :expected-stdout
+                   "~:
+Enter an integer for x:
+Enter an integer for y:
+You entered x = -1 and y = 1
+x is negative.
+"
+                   :expected-stderr ""))
+
+  (is
+   (test-c-program "./examples/control-flow.c"
+                   :stdin "-1 -1"
+                   :expected-stdout
+                   "~:
+Enter an integer for x:
+Enter an integer for y:
+You entered x = -1 and y = -1
+x is negative.
+"
+                   :expected-stderr ""))
+  ;;
+
+  (is
+   (test-c-program "./examples/cond.c"
+                   :stdin ""
+                   :expected-stdout
+                   "Hello!~%i is 15 or 20~%"
+                   :expected-stderr ""))
+  ;;
+
+  (is
+   (test-c-program "./examples/c-macro.c"
+                   :stdin ""
+                   :expected-stdout
+                   "x = 10, y = 5~%"
+                   :expected-stderr ""))
+  ;;
+
   (is
    (test-c-program "./examples/switch.c"
                    :stdin "1"
@@ -847,6 +914,7 @@ Error: Unmatched STDERR.
                    :expected-stdout
                    "Enter an integer for i: Wrong guess. Aborting..~%"
                    :expected-stderr ""))
+
   ;; TODO The following test is destined to fail. Add it later.
   ;; (is
   ;;  (test-c-program "./examples/switch.c"
