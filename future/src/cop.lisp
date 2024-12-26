@@ -183,7 +183,7 @@ union ~a {~%~{  ~a;~%~}};"
   (with-output-to-string (stream)
     (format stream "for (~{~a~^; ~}) {~%" (mapcar #'c (nth 0 form)))
     (loop :for subform :in (cdr form)
-          :do (format stream "  ~a~%" (c subform)))
+          :do (format stream "~a;~%" (indent (c subform))))
     (format stream "}")))
 
 (def-cop cast (form)

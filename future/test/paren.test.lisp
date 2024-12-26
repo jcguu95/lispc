@@ -610,7 +610,38 @@ struct x {
 for (size-t (i) = 0; (i < size); (i++)) {
   printf(\"%d\", (result[((i)+(1))]))
   printf(\"%d\", (result[i]))
-}")))
+}"))
+
+  (is
+   (string=
+    (c '(lisp
+         (defun multi-for (bindings body)
+           (loop :for binding :in (reverse bindings)
+                 :do (setf body `((for ((declare (,(nth 0 binding) :int) 0)
+                                        (< ,(nth 0 binding) ,(nth 1 binding))
+                                        (++ ,(nth 0 binding)))
+                                   ,@body
+                                   (@printf (str "%d") ,(nth 0 binding))))))
+           (car body))
+         (multi-for '((i 3) (j 2) (k 2))
+          '((@printf (str "Hello, "))
+            (@printf (str "world!"))))))
+    ;; FIXME There shouldn't be a semicolon after the 'for' loop's closing
+    ;; brace. Even though this extra semicolon doesn't affect how the C code
+    ;; works, it's not correct syntax. Fixing this issue isn't
+    ;; straightforward, but we should address it in the future.
+    (format nil "~:
+for (int i = 0; ((i) < (3)); ((i)++)) {
+  for (int j = 0; ((j) < (2)); ((j)++)) {
+    for (int k = 0; ((k) < (2)); ((k)++)) {
+      printf(\"Hello, \");
+      printf(\"world!\");
+      printf(\"%d\", k);
+    };
+    printf(\"%d\", j);
+  };
+  printf(\"%d\", i);
+}"))))
 
 (test @
     (is (string=
@@ -757,7 +788,8 @@ int main () {
   (is (not (compilation-diff? "./examples/control-flow.lsp")))
   (is (not (compilation-diff? "./examples/macro-example.lsp")))
   (is (not (compilation-diff? "./examples/type-struct-example.lsp")))
-  (is (not (compilation-diff? "./examples/higher-order-function.lsp")))
+  ;; (is (not (compilation-diff? "./examples/higher-order-function.lsp"))) ; FIXME
+  (is (not (compilation-diff? "./examples/nested-loops.lsp")))
   (is (not (compilation-diff? "./examples/c-macro.lsp"))))
 
 ;;;
@@ -839,7 +871,25 @@ foo_DOUBLE(1.234, 4.567) = 11.602
                    :expected-stderr ""))
 
   ;; TODO higher-order-functions.c
-  ;; TODO nested-loops.c
+
+  (is
+   (test-c-program "./examples/nested-loops.c"
+                   :stdin ""
+                   :expected-stdout "~:
+0 0
+1 0
+1 0
+2 0
+1 1
+2 1
+2 1
+3 1
+2 2
+3 2
+3 2
+4 2
+"
+                   :expected-stderr ""))
 
   (is
    (test-c-program "./examples/control-flow.c"
