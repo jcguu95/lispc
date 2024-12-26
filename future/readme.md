@@ -7,13 +7,11 @@
 
 + Basic Functionalities
 
-  + [X] New Type System
-    + [X] Type Spec
-    + [X] Type Formatter
-    + [X] Hook into main code / main test
+  + [X] Type System
+  + [X] Implement control flow: block, label, goto.
+  + [X] Lisp Interopts: The c-operator `lisp`.
   + [ ] Preprocessor Directives
     + [X] Newlines need to be separated by `\`.
-    A list of preproc directives:
     + [X] `#define`: Defines macros.
     + [X] `#undef`: Undefines macros.
     + [X] `#include`: Includes external files.
@@ -22,28 +20,6 @@
     + [ ] `#pragma`: Compiler-specific instructions.
     + [ ] `#error`: Causes a compilation error with a message.
     + [ ] `#line`: Sets line numbers and filenames for error messages.
-        
-  + [X] Implement control flow: block, label, goto.
-  + [X] Lisp Interopts: The c-operator `lisp`.
-  + [X] Remove extra parenthesis for expansion.
-
-+ Workflow
-
-  + [X] compile-lsp-file 
-  
-    Add a function that directly executes a `*.lsp` file by compiling into
-    `C`. executing, and printing its output to repl.
-    
-  + [ ] Run automatic tests in `./examples/`.
-  
-    Under the `./examples/` directory, process all `*.lsp` files, compile them
-    with `paren`, and compare the results with the corresponding `*.c` files.
-    
-    + [X] Fix (nested) indentation.
-    + [X] Fix semicolon and newline issue.
-    + [X] Build comparison test workflow against example files.
-    + [X] Build integration test for the behavior of generated c code.
-    + [ ] Fix the code in `./examples/` and start running the tests.
 
 + Documentations and Examples (as Programmatic Tests)
 
