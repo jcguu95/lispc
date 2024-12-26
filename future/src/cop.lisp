@@ -187,7 +187,10 @@ union ~a {~%~{  ~a;~%~}};"
     (format stream "}")))
 
 (def-cop cast (form)
-  (format nil "(~a)(~a)" (fmt-string<-type (nth 0 form)) (c (nth 1 form))))
+  (format nil
+          "(~a)(~a)"
+          (fmt-string<-type (nth 0 form) t)
+          (c (nth 1 form))))
 
 (def-cop @ (form)
     (format nil "~a[~a]" (c (nth 0 form)) (c (nth 1 form))))

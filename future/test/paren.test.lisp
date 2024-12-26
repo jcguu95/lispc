@@ -497,7 +497,7 @@ struct x {
   (is
    (string=
     (c '(cast (:pointer :int) (@malloc (* size (@sizeof :int)))))
-    "(int *(~a))(malloc(((size) * (sizeof(int)))))")))
+    "(int *)(malloc(((size) * (sizeof(int)))))")))
 
 (test array
   (is (equal "{1, 2, 3}"
@@ -788,7 +788,7 @@ int main () {
   (is (not (compilation-diff? "./examples/control-flow.lsp")))
   (is (not (compilation-diff? "./examples/macro-example.lsp")))
   (is (not (compilation-diff? "./examples/type-struct-example.lsp")))
-  ;; (is (not (compilation-diff? "./examples/higher-order-function.lsp"))) ; FIXME
+  (is (not (compilation-diff? "./examples/higher-order-function.lsp")))
   (is (not (compilation-diff? "./examples/nested-loops.lsp")))
   (is (not (compilation-diff? "./examples/c-macro.lsp"))))
 
@@ -807,7 +807,8 @@ int main () {
     ;; TODO Resolve c-file to absolute path so it's easier to report when there's error.
     ;; NOTE This depends on sbcl.
     (log:info "Compiling ~a to ~a .." c-file out-file)
-    (sb-ext:run-program "/usr/bin/gcc" `(,c-file "-o" ,out-file))
+    ;; TODO If compilation fails, break here and throw an error already.
+    (sb-ext:run-program "/usr/bin/gcc" `(,c-file "-o" ,out-file) :output *standard-output* :error :output)
     out-file))
 
 (defun run-program (command &key (input ""))
@@ -870,7 +871,11 @@ foo_DOUBLE(1.234, 4.567) = 11.602
 "
                    :expected-stderr ""))
 
-  ;; TODO higher-order-functions.c
+  (is
+   (test-c-program "./examples/higher-order-function.c"
+                   :stdin ""
+                   :expected-stdout "1 4 9 16 25 36 49 64 81 100 "
+                   :expected-stderr ""))
 
   (is
    (test-c-program "./examples/nested-loops.c"
