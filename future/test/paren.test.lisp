@@ -829,6 +829,19 @@ Error: Unmatched STDERR.
 (test execution-test
 
   (is
+   (test-c-program "./examples/macro-example.c"
+                   :stdin ""
+                   :expected-stdout "~:
+foo_INT(5, 10) = 30
+foo_FLOAT(2.50, 3.50) = 12.00
+foo_DOUBLE(1.234, 4.567) = 11.602
+"
+                   :expected-stderr ""))
+
+  ;; TODO higher-order-functions.c
+  ;; TODO nested-loops.c
+
+  (is
    (test-c-program "./examples/control-flow.c"
                    :stdin "1 1"
                    :expected-stdout
@@ -884,6 +897,25 @@ x is negative.
                    :expected-stdout
                    "Hello!~%i is 15 or 20~%"
                    :expected-stderr ""))
+  ;;
+
+  (is
+   (test-c-program "./examples/hello-world.c"
+                   :stdin ""
+                   :expected-stdout "Hello, world!"
+                   :expected-stderr ""))
+  ;;
+
+  (is
+   (test-c-program "./examples/type-struct-example.c"
+                   :stdin ""
+                   :expected-stdout "~:
+x1->value             = 10
+x1->next->value       = 20
+x1->next->next->value = 30
+"
+                   :expected-stderr ""))
+
   ;;
 
   (is

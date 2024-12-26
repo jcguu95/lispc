@@ -111,6 +111,7 @@ union ~a {~%~{  ~a;~%~}};"
           (c (nth 0 form))))
 
 (def-cop str (form)
+  (assert (= 1 (length form)))
   (format nil "\"~a\"" (car form)))
 
 (def-cop include (form)

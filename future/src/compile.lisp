@@ -52,7 +52,5 @@
 ;; (compile-lsp-file "./examples/type-struct-example.lsp")
 ;; (compile-lsp-file "./examples/higher-order-function.lsp")
 ;; (compile-lsp-file "./examples/c-macro.lsp")
-
-;; NOTE TODO Need to implement lisp interopt first:
 ;; (compile-lsp-file "./examples/nested-loops.lsp")
 ;; (compile-lsp-file "./examples/macro-example.lsp")
