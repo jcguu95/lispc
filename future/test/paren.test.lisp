@@ -19,10 +19,22 @@
 
 (test fmt-string<-type
   ;; NOTE https://cdecl.org/
-  (is (equal (paren::fmt-string<-type :int)
-             "int ~a"))
-  (is (equal (paren::fmt-string<-type :size-t)
-             "size_t ~a"))
+  (is (equal (paren::fmt-string<-type :int) "int ~a"))
+  (is (equal (paren::fmt-string<-type :short) "short ~a"))
+  (is (equal (paren::fmt-string<-type :long) "long ~a"))
+  (is (equal (paren::fmt-string<-type :long2) "long long ~a"))
+  (is (equal (paren::fmt-string<-type :uint) "unsigned int ~a"))
+  (is (equal (paren::fmt-string<-type :ushort) "unsigned short ~a"))
+  (is (equal (paren::fmt-string<-type :ulong) "unsigned long ~a"))
+  (is (equal (paren::fmt-string<-type :ulong2) "unsigned long long ~a"))
+  (is (equal (paren::fmt-string<-type :char) "char ~a"))
+  (is (equal (paren::fmt-string<-type :schar) "signed char ~a"))
+  (is (equal (paren::fmt-string<-type :uchar) "unsigned char ~a"))
+  (is (equal (paren::fmt-string<-type :float) "float ~a"))
+  (is (equal (paren::fmt-string<-type :double) "double ~a"))
+  (is (equal (paren::fmt-string<-type :ldouble) "long double ~a"))
+  (is (equal (paren::fmt-string<-type :size-t) "size_t ~a"))
+
   (is (equal (paren::fmt-string<-type '(:array () :int))
              "int (~a)[]"))
   (is (equal (paren::fmt-string<-type '(:array 9 :int))
@@ -221,7 +233,86 @@
        "int (*((*(~a)) (void)))[3]"
        (paren::fmt-string<-type
         '(:pointer (:function (:pointer (:array 3 :int))
-                    (:void)))))))
+                    (:void))))))
+
+
+
+  ;; FIXME TODO Do I really want to use :c-int? Cuz then I still need to
+  ;; implement c-char, c-double.. etc. It's not composable.
+
+  ;; declare foo as const int
+  ;; const int foo
+  (is (equal "const int ~a"
+             (paren::fmt-string<-type :c-int)))
+
+  ;; declare foo as volatile int
+  ;; volatile int foo
+  (is (equal "volatile int ~a"
+             (paren::fmt-string<-type :v-int)))
+
+  ;; declare foo as const volatile int
+  ;; const volatile int foo
+  (is (equal "const volatile int ~a"
+             (paren::fmt-string<-type :cv-int)))
+
+  ;; declare foo as volatile pointer to const volatile int
+  ;; const volatile int (* volatile foo)
+  (is (equal "const volatile int *volatile (~a)"
+             (paren::fmt-string<-type '(:v-pointer :cv-int))))
+
+  ;; declare foo as volatile pointer to pointer to const volatile int
+  ;; const volatile int ** volatile foo
+  (is (equal "const volatile int *(*volatile (~a))"
+             (paren::fmt-string<-type '(:v-pointer (:pointer :cv-int)))))
+
+  ;; declare foo as volatile pointer to volatile pointer to const volatile int
+  ;; const volatile int (* volatile (* volatile foo))
+  (is (equal "const volatile int *volatile *volatile (~a)"
+             (paren::fmt-string<-type '(:v-pointer :cv-int 2))))
+
+  ;; declare foo as function returning volatile pointer to volatile pointer to const volatile int
+  ;; const volatile int (* volatile (* volatile (foo())))
+  (is (equal "const volatile int *volatile *volatile ((~a) ())"
+             (paren::fmt-string<-type '(:function (:v-pointer :cv-int 2) ()))))
+
+  ;; declare foo as volatile pointer to array 64 of const int
+  ;; const int ((* volatile foo)[64])
+  (is (equal "const int (*volatile (~a))[64]"
+             (paren::fmt-string<-type '(:v-pointer (:array 64 :c-int)))))
+
+  ;; declare foo as const volatile pointer to pointer to const volatile pointer to const volatile int
+  ;; const volatile int (* const volatile (** const volatile foo))
+  (is (equal "const volatile int *const volatile (*(*const volatile (~a)))"
+             (paren::fmt-string<-type '(:cv-pointer (:pointer (:cv-pointer :cv-int))))))
+
+  ;; declare foo as const volatile pointer to const int
+  (is (equal "const int *const volatile (~a)"
+             (paren::fmt-string<-type '(:cv-pointer :c-int))))
+
+  ;; declare foo as const pointer to pointer to pointer to const int
+  ;; const int (** (* const foo))
+  (is (equal "const int **(*const (~a))"
+             (paren::fmt-string<-type '(:c-pointer (:pointer :c-int 2)))))
+
+  ;; declare foo as const pointer to function returning int
+  ;; int ((* const foo)())
+  (is (equal "int (*const (~a)) ()"
+             (paren::fmt-string<-type '(:c-pointer (:function :int ()))))))
+
+(test enum
+  (is
+   (string=
+    "enum { sunday, monday, tuesday, wednesday, Thursday, FRiDAY, SATURDAY }"
+    (c '(enum |Day| (sunday monday tuesday wednesday |Thursday| "FRiDAY" |saturday|))))))
+
+(test union
+  (is (string= (c '(union |Data| (i :int) (f :float) (str (:array 20 :char))))
+               (format nil "~:
+union Data {
+  int i;
+  float f;
+  char (str)[20];
+};"))))
 
 (test indent
   (is
@@ -262,10 +353,10 @@
 
 ") :space-count 4))))
 
-(test replace-newline-with-sequence     ; util
+(test prefix-newline-with-backslash     ; util
   (is
    (string=
-    (paren::replace-newline-with-sequence "a
+    (paren::prefix-newline-with-backslash "a
 
 b")
     "a \\
@@ -273,7 +364,7 @@ b")
 b"))
   (is
    (string=
-    (paren::replace-newline-with-sequence "a
+    (paren::prefix-newline-with-backslash "a
 
 b
 ")

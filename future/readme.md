@@ -49,7 +49,8 @@
 
   + [ ] Transpile the C-implementation of MAL.
   + [ ] Transpile examples from Learn C the Hard Way.
-  + [ ] Transpile examples from selected parts of Emacs's source code.
+  + [ ] Transpile examples from selected parts of [Emacs's source code](https://github.com/emacs-mirror/emacs/blob/master/src/bytecode.c).
+  + [ ] Transpile [sectorlisp/lisp.c](https://github.com/jart/sectorlisp/blob/main/lisp.c).
   + [ ] Give persuading example showing superiority of lisp macro.
   + [ ] After `Paren` is stable, use it to implement `BOCL`.
   + [ ] Package as docker container.

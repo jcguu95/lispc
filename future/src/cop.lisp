@@ -55,6 +55,18 @@
             (mapcar #'resolve-declaration arguments)
             (indent (c (cons 'progn-badname body))))))
 
+(def-cop enum (form)
+  (format nil "enum { ~{~a~^, ~} }"
+          (mapcar (lambda (x) (if (symbolp x) (resolve-symbol x) x))
+                  (nth 1 form))))
+
+(def-cop union (form)
+  (log:info (cdr form))
+  (format nil "~:
+union ~a {~%~{  ~a;~%~}};"
+          (nth 0 form)
+          (mapcar #'resolve-declaration (cdr form))))
+
 ;; NOTE Do we need to use (~a) instead of ~a in ->?
 (def-cop ->  (form) (format nil "~{~a~^->~}"      (mapcar #'c form)))
 (def-cop ==  (form) (format nil "((~a) == (~a))"  (c (nth 0 form)) (c (nth 1 form))))
