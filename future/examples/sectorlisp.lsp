@@ -295,21 +295,35 @@
 ;; int Car(int x) {
 ;;   return M[x];
 ;; }
+(defun (car :int) ((x :int))
+  (return (@ |m| x)))
 
 ;; int Cdr(int x) {
 ;;   return M[x + 1];
 ;; }
+(defun (cdr :int) ((x :int))
+  (return (@ |m| (+ x 1))))
 
 ;; int Cons(car, cdr) {
 ;;   M[--cx] = cdr;
 ;;   M[--cx] = car;
 ;;   return cx;
 ;; }
+(defun (cons :int) ((car :int) (cdr :int))
+  (set (@ |m| (-- cx)) cdr)
+  (set (@ |m| (-- cx)) car)
+  (return cx))
 
 ;; int Gc(x, m, k) {
 ;;   return x < m ? Cons(Gc(Car(x), m, k),
 ;;                       Gc(Cdr(x), m, k)) + k : x;
 ;; }
+(defun (gc :int) ((x :int) (m :int) (k :int))
+  (cond ((< x m)
+         (return (+ (@cons (@gc (@car x) m k)
+                           (@gc (@cdr x) m k))
+                    k))))
+  (return x))
 
 ;; int Evlis(m, a) {
 ;;   if (m) {
@@ -319,17 +333,33 @@
 ;;     return 0;
 ;;   }
 ;; }
+(defun (evlis :int) ((m :int) (a :int))
+  (cond ((not m)
+         (return 0)))
+  (declare (x :int) (@eval (@car m) a))
+  (return (@cons x (@evlis (@cdr m) a))))
 
 ;; int Pairlis(x, y, a) {
 ;;   return x ? Cons(Cons(Car(x), Car(y)),
 ;;                   Pairlis(Cdr(x), Cdr(y), a)) : a;
 ;; }
+(defun (pairlis :int) ((x :int) (y :int) (a :int))
+  (cond ((not x)
+         (return a)))
+  (return (@cons (@cons (@car x) (@car y))
+                 (@pairlis (@cdr x) (@cdr y) a))))
 
 ;; int Assoc(x, y) {
 ;;   if (!y) return 0;
 ;;   if (x == Car(Car(y))) return Cdr(Car(y));
 ;;   return Assoc(x, Cdr(y));
 ;; }
+(defun (assoc :int) ((x :int) (y :int))
+  (cond ((not y)
+         (return 0))
+        ((== x (@car (@car y)))
+         (return (@cdr (@car y)))))
+  (return (@assoc x (@cdr y))))
 
 ;; int Evcon(c, a) {
 ;;   if (Eval(Car(Car(c)), a)) {
@@ -338,6 +368,11 @@
 ;;     return Evcon(Cdr(c), a);
 ;;   }
 ;; }
+(defun (evcon :int) ((c :int) (a :int))
+  (cond ((@eval (@car (@car c)) a)
+         (return (@eval (@car (@cdr (@car c))) a)))
+        (t
+         (return (@evcon (@cdr c) a)))))
 
 ;; int Apply(f, x, a) {
 ;;   if (f < 0)       return Eval(Car(Cdr(Cdr(f))), Pairlis(Car(Cdr(f)), x, a));
@@ -350,6 +385,33 @@
 ;;   if (f == kRead)  return Read();
 ;;   if (f == kPrint) return (x ? Print(Car(x)) : PrintNewLine()), 0;
 ;; }
+(defun (apply :int) ((f :int) (x :int) (a :int))
+  (cond ((< f 0)
+         (return (@eval (@car (@cdr (@cdr f)))
+                        (@pairlis (@car (@cdr f)) x a))))
+        ((> f kEq)
+         (return (@apply (@eval f a) x a)))
+        ((== f kEq)
+         (return (cond ((== (@car x) (@car (@cdr x)))
+                        kT)
+                       (t 0))))
+        ((== f kCons)
+         (return (@cons (@car x) (@car (@cdr x)))))
+        ((== f kAtom)
+         (return (cond ((< (@car x) 0)
+                        0)
+                       (t kT))))
+        ((== f kCar)
+         (return (@car (@car x))))
+        ((== f kCdr)
+         (return (@cdr (@car x))))
+        ((== f kRead)
+         (return (@read)))
+        ((== f kPrint)
+         (cond ((not x)
+                (@printnewline)))
+         (return (@print (@car x)))))
+  (return 0))
 
 ;; int Eval(int e, int a) {
 ;;   int A, B, C;
@@ -371,6 +433,28 @@
 ;;   cx = A;
 ;;   return e;
 ;; }
+(defun (eval :int) ((e :int) (a :int))
+  (declare (A :int))
+  (declare (B :int))
+  (declare (C :int))
+  (cond ((>= e 0)
+         (return (@assoc e a))))
+  (cond ((== (@car e) kQuote)
+         (return (@car (@cdr e)))))
+  (set A cx)
+  (cond ((== (@car e) kCond)
+         (set e (@evcon (@cdr e) a)))
+        (t
+         (set e (@apply (@car e)
+                        (@evlis (@cdr e) a)
+                        a))))
+  (set B cx)
+  (set e (@gc e A (- A B)))
+  (set C cx)
+  (while (< C B)
+         (set (@ |m| (-- A)) (@ |m| (-- B))))
+  (set cx A)
+  (return e))
 
 ;; /*───────────────────────────────────────────────────────────────────────────│─╗
 ;; │ The LISP Challenge § User Interface                                      ─╬─│┼
@@ -387,3 +471,12 @@
 ;;         PrintNewLine();
 ;;     }
 ;; }
+(defun (main :int) ()
+  (declare (i :int))
+  (@setlocale (str "LC_ALL") (str ""))
+  (for ((set i 0) (< i (@sizeof S)) (++ i))
+       (set (@ |m| i) (@ |s| i)))
+  (loop ()
+        (set cx 0)
+        (@print (@eval (@read) 0))
+        (@printnewline)))
