@@ -36,7 +36,7 @@
 ;; #define kEq         46
 ;; #define M (RAM + sizeof(RAM) / sizeof(RAM[0]) / 2)
 ;; #define S "NIL\0T\0QUOTE\0COND\0READ\0PRINT\0ATOM\0CAR\0CDR\0CONS\0EQ"
-(#define
+(define
   |kT| 4
   |kQuote| 6
   |kCond| 12
@@ -53,9 +53,10 @@
 ;; int cx; /* stores negative memory use */
 ;; int dx; /* stores lookahead character */
 ;; int RAM[0100000]; /* your own ibm7090 */
-(declare (cx :int)
-         (dx :int)
-         (|ram| (:array 0100000 :int)))
+(progn-badname                          ; FIXME This is merely for semicolons.
+ (declare (cx :int) ())
+ (declare (dx :int) ())
+ (declare (|ram| (:array 0100000 :int)) ()))
 
 ;; int AddList(int x);
 ;; int GetObject(int c);
@@ -64,13 +65,16 @@
 ;; int Cdr(int x);
 ;; int PrintObject(int x);
 ;; int Eval(int e, int a);
-(declare (addlist (:function :int ((:int x)))))
-(declare (getobject (:function :int ((:int c)))))
-(declare (cons (:function :int ((:int car) (:in cdr)))))
-(declare (car (:function :int ((:int x)))))
-(declare (cdr (:function :int ((:int x)))))
-(declare (printobject (:function :int ((:int x)))))
-(declare (eval (:function :int ((:int e) (:int a)))))
+; TODO Currently, DECLARE does not support writing variable names in it:
+;; (declare (addlist (:function :int ((:int x)))))
+(progn-badname                          ; FIXME This is merely for semicolons.
+ (declare (addlist (:function :int (:int))))
+ (declare (getobject (:function :int (:int))))
+ (declare (cons (:function :int (:int :int))))
+ (declare (car (:function :int (:int))))
+ (declare (cdr (:function :int (:int))))
+ (declare (printobject (:function :int (:int))))
+ (declare (eval (:function :int (:int :int)))))
 
 ;; int Intern() {
 ;;   int i, j, x;
@@ -89,9 +93,9 @@
 ;;   return x;
 ;; }
 (defun (intern :int) ()
-  (declare (i :int)
-           (j :int)
-           (x :int))
+  (declare (i :int))
+  (declare (j :int))
+  (declare (x :int))
   (for ((set i 0) (set x (@ |m| (++ i))) ())
        (for ((set j 0) () (++ j))
             (cond ((!= x (@ |ram| j))
@@ -121,14 +125,14 @@
 ;;     }
 ;;     return NULL;
 ;; }
-(defun (getline (:pointer :char)) ((prompt (:pointer :c-char)))
+(defun (|GetLine| (:pointer :char)) ((prompt (:pointer :c-char)))
   (declare (buffer (:array 1024 :s-char)))
-  (@printf (str "%s" prompt))
+  (@printf (str "%s") prompt)
   (@fflush stdout)
-  (cond ((@fgets (buffer (@sizeof buffer) stdin))
+  (cond ((@fgets buffer (@sizeof buffer) stdin)
          (declare (len :size-t) (@strlen buffer))
-         (cond ((&& (> len 0)
-                    (== (@ buffer (- len 1)) (str "\\n")))
+         (cond ((and (> len 0)
+                     (== (@ buffer (- len 1)) (str "\\n")))
                 (set (@ buffer (- len 1)) (str "\\0"))))
          (return buffer)))
   (return "NULL"))
@@ -163,7 +167,7 @@
   (declare (ptr  (:pointer :s-char)) "NULL")
   (cond ((or (not line)
              (not (* ptr)))
-         (set line (@getline (str "")))
+         (set line (@|GetLine| (str "")))
          (cond ((not line)
                 (exit 0)))
          (set ptr line)))
@@ -253,17 +257,17 @@
 ;;   PrintChar(')');
 ;; }
 (defun (printlist :int) ((x :int))
-  (@printchar (str "("))
+  (@printchar (char "("))
   (@printobject (@car x))
-  (while (set x (cdr x))
+  (while (set x (@cdr x))
          (cond ((< x 0)
-                (@printchar (@str " "))
+                (@printchar (char " "))
                 (@printobject (@car x)))
                (t
-                (@printchar "L'∙'")
+                (@printchar (wide-char "∙"))
                 (@printobject x)
                 (break))))
-  (@printchar (str ")")))
+  (@printchar (char ")")))
 
 ;; int PrintObject(int x) {
 ;;   if (x < 0) {
@@ -286,7 +290,7 @@
 ;;   PrintChar('\n');
 ;; }
 (defun (printnewline :int) ()
-  (@printchar (str "\\n")))
+  (@printchar (char "\\n")))
 
 ;; /*───────────────────────────────────────────────────────────────────────────│─╗
 ;; │ The LISP Challenge § Bootstrap John McCarthy's Metacircular Evaluator    ─╬─│┼
@@ -389,25 +393,25 @@
   (cond ((< f 0)
          (return (@eval (@car (@cdr (@cdr f)))
                         (@pairlis (@car (@cdr f)) x a))))
-        ((> f kEq)
+        ((> f |kEq|)
          (return (@apply (@eval f a) x a)))
-        ((== f kEq)
+        ((== f |kEq|)
          (return (cond ((== (@car x) (@car (@cdr x)))
                         kT)
                        (t 0))))
-        ((== f kCons)
+        ((== f |kCons|)
          (return (@cons (@car x) (@car (@cdr x)))))
-        ((== f kAtom)
+        ((== f |kAtom|)
          (return (cond ((< (@car x) 0)
                         0)
                        (t kT))))
-        ((== f kCar)
+        ((== f |kCar|)
          (return (@car (@car x))))
-        ((== f kCdr)
+        ((== f |kCdr|)
          (return (@cdr (@car x))))
-        ((== f kRead)
+        ((== f |kRead|)
          (return (@read)))
-        ((== f kPrint)
+        ((== f |kPrint|)
          (cond ((not x)
                 (@printnewline)))
          (return (@print (@car x)))))
@@ -434,26 +438,26 @@
 ;;   return e;
 ;; }
 (defun (eval :int) ((e :int) (a :int))
-  (declare (A :int))
-  (declare (B :int))
-  (declare (C :int))
+  (declare (|a| :int))
+  (declare (|b| :int))
+  (declare (|c| :int))
   (cond ((>= e 0)
          (return (@assoc e a))))
-  (cond ((== (@car e) kQuote)
+  (cond ((== (@car e) |kQuote|)
          (return (@car (@cdr e)))))
-  (set A cx)
-  (cond ((== (@car e) kCond)
+  (set |a| cx)
+  (cond ((== (@car e) |kCond|)
          (set e (@evcon (@cdr e) a)))
         (t
          (set e (@apply (@car e)
                         (@evlis (@cdr e) a)
                         a))))
-  (set B cx)
-  (set e (@gc e A (- A B)))
-  (set C cx)
-  (while (< C B)
-         (set (@ |m| (-- A)) (@ |m| (-- B))))
-  (set cx A)
+  (set |b| cx)
+  (set e (@gc e |a| (- |a| |b|)))
+  (set |c| cx)
+  (while (< |c| |b|)
+         (set (@ |m| (-- |a|)) (@ |m| (-- |b|))))
+  (set cx |a|)
   (return e))
 
 ;; /*───────────────────────────────────────────────────────────────────────────│─╗
@@ -473,10 +477,10 @@
 ;; }
 (defun (main :int) ()
   (declare (i :int))
-  (@setlocale (str "LC_ALL") (str ""))
-  (for ((set i 0) (< i (@sizeof S)) (++ i))
+  (@setlocale "LC_ALL" (str ""))
+  (for ((set i 0) (< i (@sizeof |s|)) (++ i))
        (set (@ |m| i) (@ |s| i)))
-  (loop ()
-        (set cx 0)
-        (@print (@eval (@read) 0))
-        (@printnewline)))
+  (for (() () ())
+       (set cx 0)
+       (@print (@eval (@read) 0))
+       (@printnewline)))
