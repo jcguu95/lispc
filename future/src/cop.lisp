@@ -69,6 +69,9 @@ union ~a {~%~{  ~a;~%~}};"
 ;; NOTE Do we need to use (~a) instead of ~a in ->?
 (def-cop ->  (form) (format nil "~{~a~^->~}"      (mapcar #'c form)))
 (def-cop ==  (form) (format nil "((~a) == (~a))"  (c (nth 0 form)) (c (nth 1 form))))
+(def-cop <=  (form) (format nil "((~a) <= (~a))"  (c (nth 0 form)) (c (nth 1 form))))
+(def-cop >=  (form) (format nil "((~a) >= (~a))"  (c (nth 0 form)) (c (nth 1 form))))
+(def-cop !=  (form) (format nil "((~a) != (~a))"  (c (nth 0 form)) (c (nth 1 form))))
 (def-cop >   (form) (format nil "((~a) > (~a))"   (c (nth 0 form)) (c (nth 1 form))))
 (def-cop <   (form) (format nil "((~a) < (~a))"   (c (nth 0 form)) (c (nth 1 form))))
 (def-cop +   (form) (format nil "(~{(~a)~^ + ~})" (mapcar #'c form)))
@@ -79,9 +82,16 @@ union ~a {~%~{  ~a;~%~}};"
 (def-cop --  (form) (format nil "((~a)--)"        (c (nth 0 form))))
 (def-cop or  (form) (format nil "((~a) || (~a))"  (c (nth 0 form)) (c (nth 1 form))))
 (def-cop and (form) (format nil "((~a) && (~a))"  (c (nth 0 form)) (c (nth 1 form))))
+(def-cop not (form) (format nil "(!(~a))"         (c (nth 0 form))))
 (def-cop return (form) (format nil "return~a"     (if (nth 0 form)
                                                       (format nil " (~a)" (c (nth 0 form)))
                                                       "")))
+
+(def-cop define (form)
+  (assert (evenp (length form)))
+  (with-output-to-string (s)
+    (loop :for i :from 0 :to (1- (length form)) :by 2
+          :do (format s "#define ~a ~a~%" (c (nth i form)) (c (nth (1+ i) form))))))
 
 (def-cop defmacro (form)
   (prefix-newline-with-backslash
@@ -105,6 +115,12 @@ union ~a {~%~{  ~a;~%~}};"
                  (loop :for macro :in macros
                        :collect (cons 'undefmacro macro)))))
 
+(def-cop while (form)
+  (with-output-to-string (s)
+    (format s "while (~a) {~%~a~%}"
+            (c (nth 0 form))
+            (indent (c (cons 'progn-badname (cdr form)))))))
+
 (def-cop do-while (form)
   (format nil "do {~%~a~%} while (~a)"
           (indent (c (cons 'progn-badname (cdr form))))
@@ -113,6 +129,15 @@ union ~a {~%~{  ~a;~%~}};"
 (def-cop str (form)
   (assert (= 1 (length form)))
   (format nil "\"~a\"" (car form)))
+
+(def-cop char (form)
+  (assert (= 1 (length form)))
+  (format nil "'~a'" (car form)))
+
+(def-cop wide-char (form)
+  (assert (= 1 (length form)))
+  ;; (car form) must be a character or a string of length 1.
+  (format nil "L'~a'" (car form)))
 
 (def-cop include (form)
   (let ((system-libs (getf form :system))
@@ -147,7 +172,7 @@ union ~a {~%~{  ~a;~%~}};"
 
 (def-cop cond (form)
   (with-output-to-string (stream)
-    (format stream "if ~a {~%~a~%}"
+    (format stream "if (~a) {~%~a~%}"
             (c (nth 0 (car form)))
             (indent (c (cons 'progn-badname (cdr (nth 0 form))))) ; NOTE progn-badname gives it semicolon..
             )
@@ -163,6 +188,14 @@ union ~a {~%~{  ~a;~%~}};"
             (format stream " else if ~a {~%~a~%}"
                     (c (nth 0 last-form))
                     (indent (c (cons 'progn-badname (cdr last-form))))))))))
+
+(def-cop break (form)
+  (assert (= 0 (length form)))
+  "break")
+
+;; TODO Add test for exit.
+(def-cop exit (form)
+  (format nil "break ~a" (c (nth 0 form))))
 
 (def-cop case (form)
   (let ((result (format nil "switch (~a) {" (c (nth 0 form)))))
@@ -181,7 +214,9 @@ union ~a {~%~{  ~a;~%~}};"
 
 (def-cop for (form)
   (with-output-to-string (stream)
-    (format stream "for (~{~a~^; ~}) {~%" (mapcar #'c (nth 0 form)))
+    (format stream "for (~{~a~^; ~}) {~%"
+            (mapcar #'c (loop :for x :in (nth 0 form)
+                              :collect (if (null x) "" x))))
     (loop :for subform :in (cdr form)
           :do (format stream "~a;~%" (indent (c subform))))
     (format stream "}")))

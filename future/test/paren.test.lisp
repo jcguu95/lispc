@@ -485,6 +485,14 @@ struct x {
 }"
     )))
 
+(test define
+  (is
+   (string=
+    (c '(define |kT| 4 |kQuote| 6))
+    "#define kT 4
+#define kQuote 6
+")))
+
 (test funcall
   (is (equal
        "printf(\"x = %d, y = %d \\n\", x, y)"
@@ -589,6 +597,25 @@ struct x {
   (is (equal
        "int *(x) = 42"
        (c '(declare (x (:pointer :int 1)) 42)))))
+
+(test while
+  (is
+   (string=
+    (c '(while x (set x (@ |m| (++ i)))))
+    "while (x) {
+  x = M[((i)++)];
+}")))
+
+;; FIXME TODO
+;; (test do-while)
+
+(test break
+  (is
+   (string=
+    (c '(cond ((== 1 1) (break))))
+    "if ((1) == (1)) {
+  break;
+}")))
 
 (test set
   (is (equal
@@ -1081,4 +1108,9 @@ x1->next->next->value = 30
                    ((EQ (CAR E) (QUOTE COND)) (EVCON (CDR E) A))
                    ((QUOTE T) (APPLY (CAR E) (EVLIS (CDR E) A) A))))
             ((QUOTE T) (APPLY (CAR E) (EVLIS (CDR E) A) A)))))) "
+                   :expected-stdout "A~%"))
+
+  (is
+   (test-c-program "./examples/sectorlisp.c"
+                   :stdin ""
                    :expected-stdout "A~%")))
