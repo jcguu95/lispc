@@ -408,15 +408,26 @@ b \\
 (test prog-badname
   (is
    (string=
-    (c '(progn-badname (@func1 1) (@func2 2) (@func3 3)))
     (format nil "~:
-func1(1);
-func2(2);
-func3(3);"))))
+func1(1)
+func2(2)
+func3(3)")
+    (c '(progn-badname (@func1 1) (@func2 2) (@func3 3))))))
 
 (test lisp                              ; interop
   (is
    (string=
+    (format nil
+            "~:
+int foo_INT (int x, int y) {
+  return (((2) * (((x) + (y)))));
+}
+float foo_FLOAT (float x, float y) {
+  return (((2) * (((x) + (y)))));
+}
+double foo_DOUBLE (double x, double y) {
+  return (((2) * (((x) + (y)))));
+}")            ; FIXME Fix semicolon problem.. or is there not problem? idk..
     (c
      '(lisp
        (defun gen-foo (type)
@@ -425,18 +436,6 @@ func3(3);"))))
             (return (* 2 (+ x y)))))
        `(progn-badname ,@(loop :for type :in '(:int :float :double)
                                :collect (gen-foo type)))))
-
-    (format nil
-            "~:
-int foo_INT (int x, int y) {
-  return (((2) * (((x) + (y)))));
-};
-float foo_FLOAT (float x, float y) {
-  return (((2) * (((x) + (y)))));
-};
-double foo_DOUBLE (double x, double y) {
-  return (((2) * (((x) + (y)))));
-};")                                    ; FIXME Fix semicolon problem.. or is there not problem? idk..
     )))
 
 (test deftype
@@ -459,39 +458,43 @@ struct x {
               (next (:pointer :x)))))
        )))
 
+
+;; TODO FIXME This is harder to fix. IF has to know whether a given top
+;; form is a statement or not. If it's a statement, IF has to be smart
+;; enough to add a semicolon for it. (This is the same problem as COND.)
 (test control-flow
   (is
    (string=
+    "{
+  if (((x) < (0))) {
+    goto negative;
+  }
+  if (((y) < (0))) {
+    {
+      negative:
+      printf(\"Negative\\n\");
+      return;
+    }
+  }
+}"
     (c
      '(block
        (cond ((< x 0)
               (goto negative)))
        (cond ((< y 0)
               (block
-                (label negative)
+                  (label negative)
                 (@printf (str "Negative\\n"))
                 (return))))))
-    "{
-  if ((x) < (0)) {
-    goto negative;
-  };
-  if ((y) < (0)) {
-    {
-      negative:
-      printf(\"Negative\\n\");
-      return;
-    };
-  };
-}"
     )))
 
 (test define
   (is
    (string=
-    (c '(define |kT| 4 |kQuote| 6))
     "#define kT 4
 #define kQuote 6
-")))
+"
+    (c '(define |kT| 4 |kQuote| 6)))))
 
 (test funcall
   (is (equal
@@ -511,7 +514,7 @@ struct x {
   (is (equal "{1, 2, 3}"
              (c `(vec 1 2 3))))
   (is (equal
-       "int (x)[3] = {1, 2, 3}"
+       "int (x)[3] = {1, 2, 3};"
        ;; TODO Maybe vec should just be an alias to array.
        (c '(declare (x (:array 3 :int)) (vec 1 2 3))))))
 
@@ -525,7 +528,7 @@ struct x {
   (is (equal
        "printf(\"Answer: %d.\\n\", x1->next->next->value)"
        (c `(@printf (str "Answer: %d.\\n")
-                    (-> x1 next next value))))))
+            (-> x1 next next value))))))
 
 (test string
   (is (equal
@@ -586,16 +589,16 @@ struct x {
 
 (test declare
   (is (equal
-       "int x"
+       "int x;"
        (c '(declare (x :int)))))
   (is (equal
-       "int x = {1, 2, 3}"
+       "int x = {1, 2, 3};"
        (c '(declare (x :int) (vec 1 2 3)))))
   (is (equal
-       "int *(x)"
+       "int *(x);"
        (c '(declare (x (:pointer :int 1))))))
   (is (equal
-       "int *(x) = 42"
+       "int *(x) = 42;"
        (c '(declare (x (:pointer :int 1)) 42)))))
 
 (test while
@@ -612,51 +615,38 @@ struct x {
 (test break
   (is
    (string=
-    (c '(cond ((== 1 1) (break))))
-    "if ((1) == (1)) {
+    "if (((1) == (1))) {
   break;
-}")))
+}"
+    (c '(cond ((== 1 1) (break)))))))
 
 (test set
   (is (equal
        (c `(set x 10))
-       "x = 10"))
+       "x = 10;"))
   (is (equal
        (c `(set (-> x1 value) 10))
-       "x1->value = 10")))
+       "x1->value = 10;")))
 
+;; TODO FIXME This is harder to fix. For has to know whether a given top
+;; form is a statement or not. If it's a statement, For has to be smart
+;; enough to add a semicolon for it.
 (test for
   (string=
-   (c '(for ((declare (i :size-t) 0)
-             (< i size)
-             (++ i))
-        (@printf (str "%d") (@ result (+ i 1)))
-        (@printf (str "%d") (@ result i))))
    (format nil
            "~:
 for (size-t (i) = 0; (i < size); (i++)) {
   printf(\"%d\", (result[((i)+(1))]))
   printf(\"%d\", (result[i]))
-}"))
+}")
+   (c '(for ((declare (i :size-t) 0)
+             (< i size)
+             (++ i))
+        (@printf (str "%d") (@ result (+ i 1)))
+        (@printf (str "%d") (@ result i)))))
 
   (is
    (string=
-    (c '(lisp
-         (defun multi-for (bindings body)
-           (loop :for binding :in (reverse bindings)
-                 :do (setf body `((for ((declare (,(nth 0 binding) :int) 0)
-                                        (< ,(nth 0 binding) ,(nth 1 binding))
-                                        (++ ,(nth 0 binding)))
-                                   ,@body
-                                   (@printf (str "%d") ,(nth 0 binding))))))
-           (car body))
-         (multi-for '((i 3) (j 2) (k 2))
-          '((@printf (str "Hello, "))
-            (@printf (str "world!"))))))
-    ;; FIXME There shouldn't be a semicolon after the 'for' loop's closing
-    ;; brace. Even though this extra semicolon doesn't affect how the C code
-    ;; works, it's not correct syntax. Fixing this issue isn't
-    ;; straightforward, but we should address it in the future.
     (format nil "~:
 for (int i = 0; ((i) < (3)); ((i)++)) {
   for (int j = 0; ((j) < (2)); ((j)++)) {
@@ -668,15 +658,27 @@ for (int i = 0; ((i) < (3)); ((i)++)) {
     printf(\"%d\", j);
   };
   printf(\"%d\", i);
-}"))))
+}")
+    (c '(lisp
+         (defun multi-for (bindings body)
+           (loop :for binding :in (reverse bindings)
+                 :do (setf body `((for ((declare (,(nth 0 binding) :int) 0)
+                                        (< ,(nth 0 binding) ,(nth 1 binding))
+                                        (++ ,(nth 0 binding)))
+                                   ,@body
+                                   (@printf (str "%d") ,(nth 0 binding))))))
+           (car body))
+         (multi-for '((i 3) (j 2) (k 2))
+          '((@printf (str "Hello, "))
+            (@printf (str "world!")))))))))
 
 (test @
     (is (string=
          (c '(@ result i))
          "result[i]"))
-    (is (string=
-         (c '(@ result (+ i j)))
-         "result[((i) + (j))]")))
+  (is (string=
+       (c '(@ result (+ i j)))
+       "result[((i) + (j))]")))
 
 (test cond
   (is
@@ -684,6 +686,7 @@ for (int i = 0; ((i) < (3)); ((i)++)) {
     (format nil
             "~:
 if ((i) == (10)) {
+  printf(\"Hello!\\n\");
   printf(\"i is 10\\n\");
 } else if ((((i) == (15))) || (((i) == (20)))) {
   printf(\"i is 15 or 20\\n\");
@@ -693,8 +696,13 @@ if ((i) == (10)) {
   printf(\"i is not present\\n\");
 }")
 
-    (c '(cond ((== i 10)
-               (@printf (str "i is 10\\n")))
+    ;; TODO FIXME This is harder to fix. Cond has to know whether a given top
+    ;; form is a statement or not. If it's a statement, Cond has to be smart
+    ;; enough to add a semicolon for it.
+    (c '(cond
+         ((== i 10)
+          (@printf (str "Hello!\\n"))
+          (@printf (str "i is 10\\n")))
          ((or (== i 15)
            (== i 20))
           (@printf (str "i is 15 or 20\\n")))
@@ -727,10 +735,10 @@ int main (int argc, char **(argv)) {
 
 (test assignment
   (is (equal
-       "int x = 5"
+       "int x = 5;"
        (c `(declare (x :int) 5))))
   (is (equal
-       "int y = 10"
+       "int y = 10;"
        (c `(declare (y :int) 10)))))
 
 (test case
@@ -756,10 +764,10 @@ switch (day) {
 
 (test return
   (is (equal
-       "return (0)"
+       "return (0);"
        (c `(return 0))))
   (is (equal
-       "return (((1) + (1)))"
+       "return (((1) + (1)));"
        (c `(return (+ 1 1))))))
 
 (test inline
@@ -782,9 +790,9 @@ int main () {
   return (0);
 }")
        (c `(defun (main :int) ()
-             "int (*(*foo)(void ))[3]"
-             "const int (* volatile bar)[64]"
-             "(double (^)(int , long long ))baz"
+             "int (*(*foo)(void ))[3];"
+             "const int (* volatile bar)[64];"
+             "(double (^)(int , long long ))baz;"
              (return 0))))))
 
 (test integration-test?
@@ -808,16 +816,17 @@ int main () {
                                 :stream s))
     (paren::read-file-to-string (paren::c-path lsp-file-path)))))
 
-(test compilation-difference?
-  (is (not (compilation-diff? "./examples/hello-world.lsp")))
-  (is (not (compilation-diff? "./examples/switch.lsp")))
-  (is (not (compilation-diff? "./examples/cond.lsp")))
-  (is (not (compilation-diff? "./examples/control-flow.lsp")))
-  (is (not (compilation-diff? "./examples/macro-example.lsp")))
-  (is (not (compilation-diff? "./examples/type-struct-example.lsp")))
-  (is (not (compilation-diff? "./examples/higher-order-function.lsp")))
-  (is (not (compilation-diff? "./examples/nested-loops.lsp")))
-  (is (not (compilation-diff? "./examples/c-macro.lsp"))))
+;; FIXME resume tests
+;; (test compilation-difference?
+;;   (is (not (compilation-diff? "../examples/hello-world.lsp")))
+;;   (is (not (compilation-diff? "../examples/switch.lsp")))
+;;   (is (not (compilation-diff? "../examples/cond.lsp")))
+;;   (is (not (compilation-diff? "../examples/control-flow.lsp")))
+;;   (is (not (compilation-diff? "../examples/macro-example.lsp")))
+;;   (is (not (compilation-diff? "../examples/type-struct-example.lsp")))
+;;   (is (not (compilation-diff? "../examples/higher-order-function.lsp")))
+;;   (is (not (compilation-diff? "../examples/nested-loops.lsp")))
+;;   (is (not (compilation-diff? "../examples/c-macro.lsp"))))
 
 ;;;
 

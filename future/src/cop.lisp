@@ -9,10 +9,12 @@
     (loop :for subform :in form
           :for k :from 1
           :do (format s "~a" (c subform))
-          :do (unless
-                  (and (listp subform)  ; A subform may be a string, see "inline" in test for example.
-                       (string= "LABEL" (symbol-name (car subform))))
-                (format s ";"))
+              ;; NOTE I decide to let each cop to decide whether they should get a semicolon or not.
+              ;;
+              ;; :do (unless
+              ;;         (and (listp subform)  ; A subform may be a string, see "inline" in test for example.
+              ;;              (string= "LABEL" (symbol-name (car subform))))
+              ;;       (format s ";"))
           :do (when (< k (length form))
                 (format s "~%")))))
 
@@ -83,7 +85,7 @@ union ~a {~%~{  ~a;~%~}};"
 (def-cop or  (form) (format nil "((~a) || (~a))"  (c (nth 0 form)) (c (nth 1 form))))
 (def-cop and (form) (format nil "((~a) && (~a))"  (c (nth 0 form)) (c (nth 1 form))))
 (def-cop not (form) (format nil "(!(~a))"         (c (nth 0 form))))
-(def-cop return (form) (format nil "return~a"     (if (nth 0 form)
+(def-cop return (form) (format nil "return~a;"    (if (nth 0 form)
                                                       (format nil " (~a)" (c (nth 0 form)))
                                                       "")))
 
