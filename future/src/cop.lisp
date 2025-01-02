@@ -87,6 +87,7 @@ union ~a {~%~{  ~a;~%~}};"
                                                       (format nil " (~a)" (c (nth 0 form)))
                                                       "")))
 
+;; TODO defmacro may be enough?
 (def-cop define (form)
   (assert (evenp (length form)))
   (with-output-to-string (s)
@@ -115,6 +116,16 @@ union ~a {~%~{  ~a;~%~}};"
                  (loop :for macro :in macros
                        :collect (cons 'undefmacro macro)))))
 
+(def-cop include (form)
+  (let ((system-libs (getf form :system))
+        (local-libs (getf form :local)))
+    (concatenate
+     'string
+     (format nil "~{#include <~a>~^~%~}" system-libs)
+     (when (and system-libs local-libs)
+       (format nil "~%"))
+     (format nil "~{#include \"~a\"~^~%~}" local-libs))))
+
 (def-cop while (form)
   (with-output-to-string (s)
     (format s "while (~a) {~%~a~%}"
@@ -134,42 +145,35 @@ union ~a {~%~{  ~a;~%~}};"
   (assert (= 1 (length form)))
   (format nil "'~a'" (car form)))
 
+;; TODO Are there any other variations like this that I missed?
 (def-cop wide-char (form)
   (assert (= 1 (length form)))
   ;; (car form) must be a character or a string of length 1.
   (format nil "L'~a'" (car form)))
 
-(def-cop include (form)
-  (let ((system-libs (getf form :system))
-        (local-libs (getf form :local)))
-    (concatenate
-     'string
-     (format nil "~{#include <~a>~^~%~}" system-libs)
-     (when (and system-libs local-libs)
-       (format nil "~%"))
-     (format nil "~{#include \"~a\"~^~%~}" local-libs))))
-
 (def-cop declare (form)
   (let ((value (nth 1 form)))
     (if value
-        (format nil "~a = ~a"
+        (format nil "~a = ~a;"
                 (resolve-declaration (nth 0 form))
                 (c value))
-        (format nil "~a"
+        (format nil "~a;"
                 (resolve-declaration (nth 0 form))))))
 
 (def-cop set (form)
   (assert (= (length form) 2))
-  (format nil "~a = ~a"
+  (format nil "~a = ~a;"
           (c (nth 0 form))
           (c (nth 1 form))))
 
 (def-cop vec (form)
   (format nil "{~{~a~^, ~}}" form))
 
+;; TODO May want to give a better name.. "at"?" "
 (def-cop & (form)
   (format nil "&~a" (c (nth 0 form))))
 
+;; TODO Define if, while, unless.
 (def-cop cond (form)
   (with-output-to-string (stream)
     (format stream "if (~a) {~%~a~%}"
@@ -191,11 +195,12 @@ union ~a {~%~{  ~a;~%~}};"
 
 (def-cop break (form)
   (assert (= 0 (length form)))
-  "break")
+  "break;")
 
 ;; TODO Add test for exit.
+;; TODO What's the difference with the cop "break"?
 (def-cop exit (form)
-  (format nil "break ~a" (c (nth 0 form))))
+  (format nil "break ~a;" (c (nth 0 form))))
 
 (def-cop case (form)
   (let ((result (format nil "switch (~a) {" (c (nth 0 form)))))
@@ -231,7 +236,7 @@ union ~a {~%~{  ~a;~%~}};"
     (format nil "~a[~a]" (c (nth 0 form)) (c (nth 1 form))))
 
 (def-cop goto (form)
-  (format nil "goto ~a" (c (nth 0 form))))
+  (format nil "goto ~a;" (c (nth 0 form))))
 
 (def-cop label (form)
   (format nil "~a:" (c (nth 0 form))))
