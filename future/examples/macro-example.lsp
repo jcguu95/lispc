@@ -17,8 +17,8 @@
    ;; paren code:
    `(defun (,(intern (format nil "foo-~a" type)) ,type) ((x ,type) (y ,type))
       (return (* 2 (+ x y)))))
- `(progn-badname ,@(loop :for type :in '(:int :float :double)
-                         :collect (gen-foo type))))
+ `(compile-each "" ,@(loop :for type :in '(:int :float :double)
+                           :collect (gen-foo type))))
 
 (defun (main :int) ()
   (declare (int-x :int) 5)

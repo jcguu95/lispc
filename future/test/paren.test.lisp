@@ -405,14 +405,14 @@ b \\
   (is (equal "abCde" (c '|abCde|)))
   (is (equal "ABCDE" (c '|abcde|))))
 
-(test prog-badname
+(test compile-each
   (is
    (string=
     (format nil "~:
 func1(1)
 func2(2)
 func3(3)")
-    (c '(progn-badname (@func1 1) (@func2 2) (@func3 3))))))
+    (c '(compile-each "" (@func1 1) (@func2 2) (@func3 3))))))
 
 (test lisp                              ; interop
   (is
@@ -434,8 +434,8 @@ double foo_DOUBLE (double x, double y) {
          ;; paren code:
          `(defun (,(intern (format nil "foo-~a" type)) ,type) ((x ,type) (y ,type))
             (return (* 2 (+ x y)))))
-       `(progn-badname ,@(loop :for type :in '(:int :float :double)
-                               :collect (gen-foo type)))))
+       `(compile-each "" ,@(loop :for type :in '(:int :float :double)
+                                 :collect (gen-foo type)))))
     )))
 
 (test deftype

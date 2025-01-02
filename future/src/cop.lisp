@@ -3,30 +3,15 @@
 (def-cop lisp (form)
   (eval `(progn ,@form)))
 
-;; TODO Even `progn` is not a good name. Choose something better.
-(def-cop progn-badname (form)
-  (with-output-to-string (s)
-    (loop :for subform :in form
-          :for k :from 1
-          :do (format s "~a" (c subform))
-              ;; NOTE I decide to let each cop to decide whether they should get a semicolon or not.
-              ;;
-              ;; :do (unless
-              ;;         (and (listp subform)  ; A subform may be a string, see "inline" in test for example.
-              ;;              (string= "LABEL" (symbol-name (car subform))))
-              ;;       (format s ";"))
-          :do (when (< k (length form))
-                (format s "~%")))))
-
-;; FIXME Exactly the same with progn-badname, but we use newline instead of semicolon here.
-;; This is bad code. Fix this later.
-(def-cop progn-badname/newline (form)
-  (with-output-to-string (s)
-    (loop :for subform :in form
-          :for k :from 1
-          :do (format s "~a" (c subform))
-          :do (when (< k (length form))
-                (format s "~%~%")))))
+(def-cop compile-each (form)
+  (let ((delimiter (car form))          ; default should be ""
+        (form (cdr form)))
+    (with-output-to-string (s)
+      (loop :for subform :in form
+            :for k :from 1
+            :do (format s "~a" (c subform))
+            :do (when (< k (length form))
+                  (format s "~%~a" delimiter))))))
 
 (def-cop deftype (form)
   (let* ((type (nth 0 form))
@@ -55,7 +40,7 @@
             "~a (~{~a~^, ~}) {~%~a~%}"
             (resolve-declaration func-name)
             (mapcar #'resolve-declaration arguments)
-            (indent (c (cons 'progn-badname body))))))
+            (indent (c `(compile-each "" ,body))))))
 
 (def-cop enum (form)
   (format nil "enum { ~{~a~^, ~} }"
@@ -101,7 +86,7 @@ union ~a {~%~{  ~a;~%~}};"
    (format nil "#define ~a(~{~a~^,~})~%~a"
            (c (nth 0 form))
            (mapcar #'resolve-symbol (nth 1 form))
-           (c (cons 'progn-badname/newline (cddr form))))))
+           (c `(compile-each #\Newline ,(cddr form))))))
 
 (def-cop undefmacro (form)
   (format nil "#undef ~a"
@@ -110,13 +95,12 @@ union ~a {~%~{  ~a;~%~}};"
 (def-cop with-c-macro (form)
   (let ((macros (nth 0 form))
         (body (cdr form)))
-    (concatenate 'list
-                 '(progn-badname/newline)
-                 (loop :for macro :in macros
-                       :collect (cons 'defmacro macro))
-                 body
-                 (loop :for macro :in macros
-                       :collect (cons 'undefmacro macro)))))
+    `(compile-each #\Newline
+      ,@(loop :for macro :in macros
+              :collect (cons 'defmacro macro))
+      ,@body
+      ,(loop :for macro :in macros
+             :collect (cons 'undefmacro macro)))))
 
 (def-cop include (form)
   (let ((system-libs (getf form :system))
@@ -132,11 +116,11 @@ union ~a {~%~{  ~a;~%~}};"
   (with-output-to-string (s)
     (format s "while (~a) {~%~a~%}"
             (c (nth 0 form))
-            (indent (c (cons 'progn-badname (cdr form)))))))
+            (indent (c `(compile-each "" ,(cdr form)))))))
 
 (def-cop do-while (form)
   (format nil "do {~%~a~%} while (~a)"
-          (indent (c (cons 'progn-badname (cdr form))))
+          (indent (c `(compile-each "" ,(cdr form))))
           (c (nth 0 form))))
 
 (def-cop str (form)
@@ -180,20 +164,20 @@ union ~a {~%~{  ~a;~%~}};"
   (with-output-to-string (stream)
     (format stream "if (~a) {~%~a~%}"
             (c (nth 0 (car form)))
-            (indent (c (cons 'progn-badname (cdr (nth 0 form))))) ; NOTE progn-badname gives it semicolon..
+            (indent (c `(compile-each "" ,(cdr (nth 0 form)))))
             )
     (loop :for subform :in (butlast (cdr form))
           :do (format stream " else if ~a {~%~a~%}"
                       (c (nth 0 subform))
-                      (indent (c (cons 'progn-badname (cdr subform))))))
+                      (indent (c `(compile-each "" ,(cdr subform))))))
     (let ((last-form (car (last (cdr form)))))
       (when last-form
         (if (eq t (nth 0 last-form))
             (format stream " else {~%~a~%}"
-                    (indent (c (cons 'progn-badname (cdr last-form)))))
+                    (indent (c `(compile-each "" ,(cdr last-form)))))
             (format stream " else if ~a {~%~a~%}"
                     (c (nth 0 last-form))
-                    (indent (c (cons 'progn-badname (cdr last-form))))))))))
+                    (indent (c `(compile-each "" ,(cdr last-form))))))))))
 
 (def-cop break (form)
   (assert (= 0 (length form)))
@@ -210,12 +194,12 @@ union ~a {~%~{  ~a;~%~}};"
           :do (if (eq t (car subform))
                   (setf result (format nil "~a~%  default:~%~a~%~a"
                                        result
-                                       (indent (c (cons 'progn-badname (cdr subform))) :space-count 4)
+                                       (indent (c `(compile-each "" ,(cdr subform))) :space-count 4)
                                        (indent "break;" :space-count 4)))
                   (setf result (format nil "~a~%  case ~a:~%~a~%~a"
                                        result
                                        (c (nth 0 subform))
-                                       (indent (c (cons 'progn-badname (cdr subform))) :space-count 4)
+                                       (indent (c `(compile-each "" ,(cdr subform))) :space-count 4)
                                        (indent "break;" :space-count 4)))))
     (setf result (format nil "~a~%}" result))))
 
@@ -244,4 +228,4 @@ union ~a {~%~{  ~a;~%~}};"
   (format nil "~a:" (c (nth 0 form))))
 
 (def-cop block (form)
-  (format nil "{~%~a~%}" (indent (c (cons 'progn-badname form)))))
+  (format nil "{~%~a~%}" (indent (c `(compile-each "" ,form)))))

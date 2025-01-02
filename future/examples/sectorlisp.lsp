@@ -53,7 +53,7 @@
 ;; int cx; /* stores negative memory use */
 ;; int dx; /* stores lookahead character */
 ;; int RAM[0100000]; /* your own ibm7090 */
-(progn-badname                          ; FIXME This is merely for semicolons.
+(compile-each ""
  (declare (cx :int) ())
  (declare (dx :int) ())
  (declare (|ram| (:array 0100000 :int)) ()))
@@ -67,7 +67,7 @@
 ;; int Eval(int e, int a);
 ; TODO Currently, DECLARE does not support writing variable names in it:
 ;; (declare (addlist (:function :int ((:int x)))))
-(progn-badname                          ; FIXME This is merely for semicolons.
+(compile-each ""
  (declare (addlist (:function :int (:int))))
  (declare (getobject (:function :int (:int))))
  (declare (cons (:function :int (:int :int))))
