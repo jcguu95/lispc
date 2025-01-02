@@ -27,9 +27,8 @@
 ;;     if (!str) { MAL_GC_FREE(line); }
 ;;     return ast;
 ;; }
-(defun |read| (:pointer |MalVal|)
-  ((prompt (:array :char))
-   (str (:pointer :char)))
+(defun |read| (:pointer |MalVal|) ((prompt (:array :char))
+                                   (str (:pointer :char)))
   (declare (line (:pointer :char)))
   (declare (ast (:pointer :|MalVal|)))
   (cond (str
@@ -51,9 +50,8 @@
 ;;     const MalVal * const a0 = _first(ast);
 ;;     return (a0->type & MAL_SYMBOL) && ! strcmp(sym, a0->val.string);
 ;; }
-(defun starts-with :int
-  ((ast (:pointer |MalVal|))
-   (sym (:constant (:pointer :char))))
+(defun starts-with :int ((ast (:pointer |MalVal|))
+                         (sym (:constant (:pointer :char))))
   (cond ((not (== (-> ast type)
                   |mal-list|))
          (return 0)))
