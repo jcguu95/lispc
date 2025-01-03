@@ -10,6 +10,9 @@
       (loop :for subform :in form
             :for k :from 1
             :do (format s "~a" (c subform))
+            :do (when (and (consp subform)
+                           (expression? (car subform)))
+                  (format s ";"))
             :do (when (< k (length form))
                   (format s "~%~a" delimiter))))))
 
@@ -40,7 +43,7 @@
             "~a (~{~a~^, ~}) {~%~a~%}"
             (resolve-declaration func-name)
             (mapcar #'resolve-declaration arguments)
-            (indent (c `(compile-each "" ,body))))))
+            (indent (c `(compile-each "" ,@body))))))
 
 (def-cop enum (form)
   (format nil "enum { ~{~a~^, ~} }"
@@ -54,25 +57,43 @@ union ~a {~%~{  ~a;~%~}};"
           (mapcar #'resolve-declaration (cdr form))))
 
 ;; NOTE Do we need to use (~a) instead of ~a in ->?
-(def-cop ->  (form) (format nil "~{~a~^->~}"      (mapcar #'c form)))
-(def-cop ==  (form) (format nil "((~a) == (~a))"  (c (nth 0 form)) (c (nth 1 form))))
-(def-cop <=  (form) (format nil "((~a) <= (~a))"  (c (nth 0 form)) (c (nth 1 form))))
-(def-cop >=  (form) (format nil "((~a) >= (~a))"  (c (nth 0 form)) (c (nth 1 form))))
-(def-cop !=  (form) (format nil "((~a) != (~a))"  (c (nth 0 form)) (c (nth 1 form))))
-(def-cop >   (form) (format nil "((~a) > (~a))"   (c (nth 0 form)) (c (nth 1 form))))
-(def-cop <   (form) (format nil "((~a) < (~a))"   (c (nth 0 form)) (c (nth 1 form))))
-(def-cop +   (form) (format nil "(~{(~a)~^ + ~})" (mapcar #'c form)))
-(def-cop -   (form) (format nil "(~{(~a)~^ - ~})" (mapcar #'c form)))
-(def-cop *   (form) (format nil "(~{(~a)~^ * ~})" (mapcar #'c form)))
-(def-cop /   (form) (format nil "(~{(~a)~^ / ~})" (mapcar #'c form))) ; TODO Add test.
-(def-cop ++  (form) (format nil "((~a)++)"        (c (nth 0 form))))
-(def-cop --  (form) (format nil "((~a)--)"        (c (nth 0 form))))
-(def-cop or  (form) (format nil "((~a) || (~a))"  (c (nth 0 form)) (c (nth 1 form))))
-(def-cop and (form) (format nil "((~a) && (~a))"  (c (nth 0 form)) (c (nth 1 form))))
-(def-cop not (form) (format nil "(!(~a))"         (c (nth 0 form))))
-(def-cop return (form) (format nil "return~a;"    (if (nth 0 form)
-                                                      (format nil " (~a)" (c (nth 0 form)))
-                                                      "")))
+(def-cop ->  (form) :expression
+  (format nil "~{~a~^->~}"      (mapcar #'c form)))
+(def-cop ==  (form) :expression
+  (format nil "((~a) == (~a))"  (c (nth 0 form)) (c (nth 1 form))))
+(def-cop <=  (form) :expression
+  (format nil "((~a) <= (~a))"  (c (nth 0 form)) (c (nth 1 form))))
+(def-cop >=  (form) :expression
+  (format nil "((~a) >= (~a))"  (c (nth 0 form)) (c (nth 1 form))))
+(def-cop !=  (form) :expression
+  (format nil "((~a) != (~a))"  (c (nth 0 form)) (c (nth 1 form))))
+(def-cop >   (form) :expression
+  (format nil "((~a) > (~a))"   (c (nth 0 form)) (c (nth 1 form))))
+(def-cop <   (form) :expression
+  (format nil "((~a) < (~a))"   (c (nth 0 form)) (c (nth 1 form))))
+(def-cop +   (form) :expression
+  (format nil "(~{(~a)~^ + ~})" (mapcar #'c form)))
+(def-cop -   (form) :expression
+  (format nil "(~{(~a)~^ - ~})" (mapcar #'c form)))
+(def-cop *   (form) :expression
+  (format nil "(~{(~a)~^ * ~})" (mapcar #'c form)))
+(def-cop /   (form) :expression
+  (format nil "(~{(~a)~^ / ~})" (mapcar #'c form))) ; TODO Add test.
+(def-cop ++  (form) :expression
+  (format nil "((~a)++)"        (c (nth 0 form))))
+(def-cop --  (form) :expression
+  (format nil "((~a)--)"        (c (nth 0 form))))
+(def-cop or  (form) :expression
+  (format nil "((~a) || (~a))"  (c (nth 0 form)) (c (nth 1 form))))
+(def-cop and (form) :expression
+  (format nil "((~a) && (~a))"  (c (nth 0 form)) (c (nth 1 form))))
+(def-cop not (form) :expression
+  (format nil "(!(~a))"         (c (nth 0 form))))
+
+(def-cop return (form)
+  (format nil "return~a;"    (if (nth 0 form)
+                                 (format nil " (~a)" (c (nth 0 form)))
+                                 "")))
 
 ;; TODO defmacro may be enough?
 (def-cop define (form)
@@ -86,7 +107,7 @@ union ~a {~%~{  ~a;~%~}};"
    (format nil "#define ~a(~{~a~^,~})~%~a"
            (c (nth 0 form))
            (mapcar #'resolve-symbol (nth 1 form))
-           (c `(compile-each #\Newline ,(cddr form))))))
+           (c `(compile-each #\Newline ,@(cddr form))))))
 
 (def-cop undefmacro (form)
   (format nil "#undef ~a"
@@ -116,11 +137,11 @@ union ~a {~%~{  ~a;~%~}};"
   (with-output-to-string (s)
     (format s "while (~a) {~%~a~%}"
             (c (nth 0 form))
-            (indent (c `(compile-each "" ,(cdr form)))))))
+            (indent (c `(compile-each "" ,@(cdr form)))))))
 
 (def-cop do-while (form)
   (format nil "do {~%~a~%} while (~a)"
-          (indent (c `(compile-each "" ,(cdr form))))
+          (indent (c `(compile-each "" ,@(cdr form))))
           (c (nth 0 form))))
 
 (def-cop str (form)
@@ -159,25 +180,42 @@ union ~a {~%~{  ~a;~%~}};"
 (def-cop & (form)
   (format nil "&~a" (c (nth 0 form))))
 
-;; TODO Define if, while, unless.
+(def-cop if (form)
+  (assert (<= 2 (length form) 3))
+  (case (length form)
+    (2 `(cond (,(nth 0 form)
+               ,(nth 1 form))))
+    (3 `(cond (,(nth 0 form)
+               ,(nth 1 form))
+              (t
+               ,(nth 2 form))))
+    (t (error "Length of form must be 2 or 3. form: ~a" form))))
+
+;; TODO Provide docstring for each def-cop form.
+
+(def-cop when (form)
+  `(cond (,@form)))
+
+(def-cop unless (form)
+  `(cond ((not ,(nth 0 form)) ,@(cdr form))))
+
 (def-cop cond (form)
   (with-output-to-string (stream)
     (format stream "if (~a) {~%~a~%}"
             (c (nth 0 (car form)))
-            (indent (c `(compile-each "" ,(cdr (nth 0 form)))))
-            )
+            (indent (c `(compile-each "" ,@(cdr (car form))))))
     (loop :for subform :in (butlast (cdr form))
           :do (format stream " else if ~a {~%~a~%}"
                       (c (nth 0 subform))
-                      (indent (c `(compile-each "" ,(cdr subform))))))
+                      (indent (c `(compile-each "" ,@(cdr subform))))))
     (let ((last-form (car (last (cdr form)))))
       (when last-form
         (if (eq t (nth 0 last-form))
             (format stream " else {~%~a~%}"
-                    (indent (c `(compile-each "" ,(cdr last-form)))))
+                    (indent (c `(compile-each "" ,@(cdr last-form)))))
             (format stream " else if ~a {~%~a~%}"
                     (c (nth 0 last-form))
-                    (indent (c `(compile-each "" ,(cdr last-form))))))))))
+                    (indent (c `(compile-each "" ,@(cdr last-form))))))))))
 
 (def-cop break (form)
   (assert (= 0 (length form)))
@@ -194,20 +232,24 @@ union ~a {~%~{  ~a;~%~}};"
           :do (if (eq t (car subform))
                   (setf result (format nil "~a~%  default:~%~a~%~a"
                                        result
-                                       (indent (c `(compile-each "" ,(cdr subform))) :space-count 4)
+                                       (indent (c `(compile-each "" ,@(cdr subform))) :space-count 4)
                                        (indent "break;" :space-count 4)))
                   (setf result (format nil "~a~%  case ~a:~%~a~%~a"
                                        result
                                        (c (nth 0 subform))
-                                       (indent (c `(compile-each "" ,(cdr subform))) :space-count 4)
+                                       (indent (c `(compile-each "" ,@(cdr subform))) :space-count 4)
                                        (indent "break;" :space-count 4)))))
     (setf result (format nil "~a~%}" result))))
 
 (def-cop for (form)
   (with-output-to-string (stream)
-    (format stream "for (~{~a~^; ~}) {~%"
-            (mapcar #'c (loop :for x :in (nth 0 form)
-                              :collect (if (null x) "" x))))
+    (format stream "for (~a ~a; ~a) {~%"
+            (c (or (nth 0 (nth 0 form)) ";"))
+            (c (or (nth 1 (nth 0 form)) ""))
+            (c (or (nth 2 (nth 0 form)) ""))
+            ;; (mapcar #'c (loop :for x :in (nth 0 form)
+            ;;                   :collect (if (null x) "" x)))
+            )
     (loop :for subform :in (cdr form)
           :do (format stream "~a;~%" (indent (c subform))))
     (format stream "}")))
@@ -228,4 +270,4 @@ union ~a {~%~{  ~a;~%~}};"
   (format nil "~a:" (c (nth 0 form))))
 
 (def-cop block (form)
-  (format nil "{~%~a~%}" (indent (c `(compile-each "" ,form)))))
+  (format nil "{~%~a~%}" (indent (c `(compile-each "" ,@form)))))

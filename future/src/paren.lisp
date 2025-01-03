@@ -1,10 +1,15 @@
 (in-package :paren)
 
 (defparameter *functions* (make-hash-table :test #'equal))
+(defparameter *expressions* (make-hash-table :test #'equal))
 
 (defun op-name (operator)
   (check-type operator symbol)
   (symbol-name operator))
+
+(defun function-operator? (op-name)
+  (and (> (length op-name) 1)
+       (eq #\@ (char op-name 0))))
 
 (defun c-expand-1 (form)
   ;; (log:debug form)
@@ -17,9 +22,7 @@
         ((listp form)
          (let* ((operator (car form))
                 (op-name (op-name operator)))
-           (if (and
-                (> (length op-name) 1)
-                (eq #\@ (char op-name 0)))
+           (if (function-operator? op-name)
                ;; funcall
                (let ((function-name (subseq op-name 1)))
                  (format nil "~a(~{~a~^, ~})"
@@ -39,8 +42,22 @@
         expanded-form
         (c expanded-form))))
 
+(defun set-expression (operator)
+  "Recognize OPERATOR as a C operator denoting a C expression."
+  ;; NOTE We need this because our compiler by default does not write
+  ;; semicolons for expressions. But sometimes when it's standalone, an extra
+  ;; semicolon has to be emit.
+  (setf (gethash operator *expressions*) t))
+
+(defun expression? (operator)
+  (or (gethash operator *expressions*)
+      (function-operator? (op-name operator))))
+
 (defmacro def-cop (name vars &body body)
   "Define a C operator."
   (assert (= 1 (length vars)))
-  `(setf (gethash (op-name ',name) *functions*)
-         (lambda (,(car vars)) ,@body)))
+  `(progn
+     ,(when (eq :expression (car body))
+        (set-expression name))
+     (setf (gethash (op-name ',name) *functions*)
+           (lambda (,(car vars)) ,@body))))
