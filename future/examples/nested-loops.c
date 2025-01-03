@@ -6,8 +6,8 @@ int main () {
       for (int k = 0; ((k) < (2)); ((k)++)) {
         printf("%d ", ((i) + (j) + (k)));
         printf("%d\n", i);
-      };
-    };
-  };
+      }
+    }
+  }
   return (0);
 }

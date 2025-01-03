@@ -9,20 +9,20 @@ int main () {
   scanf("%d", &y);
   printf("You entered x = %d and y = %d\n", x, y);
   {
-    if ((x) < (0)) {
+    if (((x) < (0))) {
       goto negative;
     } else {
       printf("x is positive.\n");
-    };
-    if ((y) < (0)) {
+    }
+    if (((y) < (0))) {
       printf("y is negative.\n");
       {
         negative:
-        if ((x) < (0)) {
+        if (((x) < (0))) {
           printf("x is negative.\n");
-        };
-      };
+        }
+      }
       return (0);
-    };
-  };
+    }
+  }
 }

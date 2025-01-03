@@ -120,8 +120,8 @@ union ~a {~%~{  ~a;~%~}};"
       ,@(loop :for macro :in macros
               :collect (cons 'defmacro macro))
       ,@body
-      ,(loop :for macro :in macros
-             :collect (cons 'undefmacro macro)))))
+      ,@(loop :for macro :in macros
+              :collect (cons 'undefmacro macro)))))
 
 (def-cop include (form)
   (let ((system-libs (getf form :system))
@@ -241,17 +241,21 @@ union ~a {~%~{  ~a;~%~}};"
                                        (indent "break;" :space-count 4)))))
     (setf result (format nil "~a~%}" result))))
 
+
 (def-cop for (form)
   (with-output-to-string (stream)
-    (format stream "for (~a ~a; ~a) {~%"
-            (c (or (nth 0 (nth 0 form)) ";"))
-            (c (or (nth 1 (nth 0 form)) ""))
-            (c (or (nth 2 (nth 0 form)) ""))
-            ;; (mapcar #'c (loop :for x :in (nth 0 form)
-            ;;                   :collect (if (null x) "" x)))
-            )
-    (loop :for subform :in (cdr form)
-          :do (format stream "~a;~%" (indent (c subform))))
+    (flet ((remove-trailing-semicolon (input-string)
+             "Removes the last character of INPUT-STRING if it is a semicolon."
+             (if (and (not (zerop (length input-string))) ; Ensure the string is not empty
+                      (char= (char input-string (1- (length input-string))) #\;)) ; Check last character
+                 (subseq input-string 0 (1- (length input-string))) ; Return string without last char
+                 input-string)))
+      (format stream "for (~a ~a; ~a) {~%"
+              (c (or (nth 0 (nth 0 form)) ";"))
+              (c (or (nth 1 (nth 0 form)) ""))
+              (remove-trailing-semicolon
+               (c (or (nth 2 (nth 0 form)) "")))))
+    (format stream "~a~%" (indent (c `(compile-each "" ,@(cdr form)))))
     (format stream "}")))
 
 (def-cop cast (form)

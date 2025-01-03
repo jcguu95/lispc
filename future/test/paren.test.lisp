@@ -650,9 +650,9 @@ for (int i = 0; ((i) < (3)); ((i)++)) {
       printf(\"Hello, \");
       printf(\"world!\");
       printf(\"%d\", k);
-    };
+    }
     printf(\"%d\", j);
-  };
+  }
   printf(\"%d\", i);
 }")
     (c '(lisp
@@ -1186,3 +1186,4 @@ x1->next->next->value = 30
   ;;                  :stdin ""
   ;;                  :expected-stdout "A~%"))
   )
+

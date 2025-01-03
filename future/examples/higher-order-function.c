@@ -9,7 +9,7 @@ int *(map) (int (f) (int), int *(arr), size_t size) {
   int *(result) = (int *)(malloc(((size) * (sizeof(int)))));
   for (size_t i = 0; ((i) < (size)); ((i)++)) {
     result[i] = f(arr[i]);
-  };
+  }
   return (result);
 }
 
@@ -20,6 +20,6 @@ int main () {
   for (size_t i = 0; ((i) < (size)); i = ((i) + (2))) {
     printf("%d ", result[i]);
     printf("%d ", result[((i) + (1))]);
-  };
+  }
   return (0);
 }

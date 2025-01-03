@@ -23,11 +23,11 @@ int main () {
         default:
           printf("Wrong guess. Aborting..\n");
           break;
-      };
+      }
       break;
     default:
       printf("Wrong guess. Aborting..\n");
       break;
-  };
+  }
   return (0);
 }
