@@ -609,8 +609,16 @@ struct x {
   x = M[((i)++)];
 }")))
 
-;; FIXME TODO
-;; (test do-while)
+(test do-while
+  (is
+   (string=
+    "do {
+  printf(\"Hello\");
+  printf(\"World\");
+} while (((x) > (y)))"
+    (c '(do-while (> x y)
+         (@printf (str "Hello"))
+         (@printf (str "World")))))))
 
 (test break
   (is
