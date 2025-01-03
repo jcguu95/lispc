@@ -864,17 +864,16 @@ int main () {
                                 :stream s))
     (paren::read-file-to-string (paren::c-path lsp-file-path)))))
 
-;; FIXME resume tests
-;; (test compilation-difference?
-;;   (is (not (compilation-diff? "../examples/hello-world.lsp")))
-;;   (is (not (compilation-diff? "../examples/switch.lsp")))
-;;   (is (not (compilation-diff? "../examples/cond.lsp")))
-;;   (is (not (compilation-diff? "../examples/control-flow.lsp")))
-;;   (is (not (compilation-diff? "../examples/macro-example.lsp")))
-;;   (is (not (compilation-diff? "../examples/type-struct-example.lsp")))
-;;   (is (not (compilation-diff? "../examples/higher-order-function.lsp")))
-;;   (is (not (compilation-diff? "../examples/nested-loops.lsp")))
-;;   (is (not (compilation-diff? "../examples/c-macro.lsp"))))
+(test compilation-difference?
+  (is (not (compilation-diff? "../examples/hello-world.lsp")))
+  (is (not (compilation-diff? "../examples/switch.lsp")))
+  (is (not (compilation-diff? "../examples/cond.lsp")))
+  (is (not (compilation-diff? "../examples/control-flow.lsp")))
+  (is (not (compilation-diff? "../examples/macro-example.lsp")))
+  (is (not (compilation-diff? "../examples/type-struct-example.lsp")))
+  (is (not (compilation-diff? "../examples/higher-order-function.lsp")))
+  (is (not (compilation-diff? "../examples/nested-loops.lsp")))
+  (is (not (compilation-diff? "../examples/c-macro.lsp"))))
 
 ;;;
 
