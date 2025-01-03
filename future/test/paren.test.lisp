@@ -235,11 +235,6 @@
         '(:pointer (:function (:pointer (:array 3 :int))
                     (:void))))))
 
-
-
-  ;; FIXME TODO Do I really want to use :c-int? Cuz then I still need to
-  ;; implement c-char, c-double.. etc. It's not composable.
-
   ;; declare foo as const int
   ;; const int foo
   (is (equal "const int ~a"
@@ -427,7 +422,7 @@ float foo_FLOAT (float x, float y) {
 }
 double foo_DOUBLE (double x, double y) {
   return (((2) * (((x) + (y)))));
-}")            ; FIXME Fix semicolon problem.. or is there not problem? idk..
+}")
     (c
      '(lisp
        (defun gen-foo (type)
@@ -458,10 +453,6 @@ struct x {
               (next (:pointer :x)))))
        )))
 
-
-;; TODO FIXME This is harder to fix. IF has to know whether a given top
-;; form is a statement or not. If it's a statement, IF has to be smart
-;; enough to add a semicolon for it. (This is the same problem as COND.)
 (test control-flow
   (is
    (string=
@@ -636,9 +627,6 @@ struct x {
        (c `(set (-> x1 value) 10))
        "x1->value = 10;")))
 
-;; TODO FIXME This is harder to fix. For has to know whether a given top
-;; form is a statement or not. If it's a statement, For has to be smart
-;; enough to add a semicolon for it.
 (test for
   (string=
    (format nil
@@ -757,10 +745,6 @@ if (((i) == (10))) {
 } else {
   printf(\"i is not present\\n\");
 }")
-
-    ;; TODO FIXME This is harder to fix. Cond has to know whether a given top
-    ;; form is a statement or not. If it's a statement, Cond has to be smart
-    ;; enough to add a semicolon for it.
     (c '(cond
          ((== i 10)
           (@printf (str "Hello!\\n"))
@@ -898,24 +882,34 @@ int main () {
 
 (defun compile-c-file (c-file)
   (ensure-directories-exist *root-dir*)
-  (let ((out-file
+  (let ((c-file-absolute (truename c-file))
+        (out-file
           (format nil "~a"
                   (merge-pathnames (format nil "~a.~a.o"
                                            (pathname-name c-file)
                                            (get-universal-time))
                                    *root-dir*))))
-    ;; TODO Resolve c-file to absolute path so it's easier to report when there's error.
+    (log:debug "Compiling ~a to ~a ..~%  c-file-absolute: ~a" c-file out-file c-file-absolute)
     ;; NOTE This depends on sbcl.
-    (log:info "Compiling ~a to ~a .." c-file out-file)
-    ;; TODO If compilation fails, break here and throw an error already.
-    (sb-ext:run-program "/usr/bin/gcc" `(,c-file "-o" ,out-file) :output *standard-output* :error :output)
+    (let* ((exit-code)
+           (stdout/err
+             (with-output-to-string (s)
+               (setf exit-code
+                     (sb-ext:process-exit-code
+                      (sb-ext:run-program "/usr/bin/gcc" `(,c-file "-o" ,out-file)
+                                          :output s :error s))))))
+      (unless (= 0 exit-code)
+        (error "~%GCC compilation process failed. STDOUT/ERR:~%~a" stdout/err)))
     out-file))
+
+(sb-ext:process-exit-code
+ (sb-ext:run-program "/bin/echo" `()))
 
 (defun run-program (command &key (input ""))
   (let ((stdin (make-string-input-stream input))
         (stdout (make-string-output-stream))
         (stderr (make-string-output-stream)))
-    (log:info "Running command ~s with input ~s." command input)
+    (log:debug "Running command ~s with input ~s." command input)
     ;; NOTE This depends on sbcl.
     (sb-ext:run-program command nil
                         :input stdin
@@ -936,9 +930,9 @@ Error: Unmatched STDOUT.
        c-file: ~a
        stdin: ~a~%
 
-------Expect------
+-----Expected-----
 ~a
-------We Get------
+------We Got------
 ~a
 ------------------ "
              c-file stdin
@@ -949,9 +943,9 @@ Error: Unmatched STDERR.
        c-file: ~a
        stdin: ~a~%
 
-------Expect------
+-----Expected-----
 ~a
-------We Get------
+------We Got------
 ~a
 ------------------"
              c-file stdin
@@ -959,231 +953,236 @@ Error: Unmatched STDERR.
     t))
 
 
-;; (test execution-test
+(test execution-test
 
-;;   (is
-;;    (test-c-program "./examples/macro-example.c"
-;;                    :stdin ""
-;;                    :expected-stdout "~:
-;; foo_INT(5, 10) = 30
-;; foo_FLOAT(2.50, 3.50) = 12.00
-;; foo_DOUBLE(1.234, 4.567) = 11.602
-;; "
-;;                    :expected-stderr ""))
+  (is
+   (test-c-program "../examples/macro-example.c"
+                   :stdin ""
+                   :expected-stdout "~:
+foo_INT(5, 10) = 30
+foo_FLOAT(2.50, 3.50) = 12.00
+foo_DOUBLE(1.234, 4.567) = 11.602
+"
+                   :expected-stderr ""))
 
-;;   (is
-;;    (test-c-program "./examples/higher-order-function.c"
-;;                    :stdin ""
-;;                    :expected-stdout "1 4 9 16 25 36 49 64 81 100 "
-;;                    :expected-stderr ""))
+  (is
+   (test-c-program "../examples/higher-order-function.c"
+                   :stdin ""
+                   :expected-stdout "1 4 9 16 25 36 49 64 81 100 "
+                   :expected-stderr ""))
 
-;;   (is
-;;    (test-c-program "./examples/nested-loops.c"
-;;                    :stdin ""
-;;                    :expected-stdout "~:
-;; 0 0
-;; 1 0
-;; 1 0
-;; 2 0
-;; 1 1
-;; 2 1
-;; 2 1
-;; 3 1
-;; 2 2
-;; 3 2
-;; 3 2
-;; 4 2
-;; "
-;;                    :expected-stderr ""))
+  (is
+   (test-c-program "../examples/nested-loops.c"
+                   :stdin ""
+                   :expected-stdout "~:
+0 0
+1 0
+1 0
+2 0
+1 1
+2 1
+2 1
+3 1
+2 2
+3 2
+3 2
+4 2
+"
+                   :expected-stderr ""))
 
-;;   (is
-;;    (test-c-program "./examples/control-flow.c"
-;;                    :stdin "1 1"
-;;                    :expected-stdout
-;;                    "~:
-;; Enter an integer for x:
-;; Enter an integer for y:
-;; You entered x = 1 and y = 1
-;; x is positive.
-;; "
-;;                    :expected-stderr ""))
+  (is
+   (test-c-program "../examples/control-flow.c"
+                   :stdin "1 1"
+                   :expected-stdout
+                   "~:
+Enter an integer for x:
+Enter an integer for y:
+You entered x = 1 and y = 1
+x is positive.
+"
+                   :expected-stderr ""))
 
-;;   (is
-;;    (test-c-program "./examples/control-flow.c"
-;;                    :stdin "1 -1"
-;;                    :expected-stdout
-;;                    "~:
-;; Enter an integer for x:
-;; Enter an integer for y:
-;; You entered x = 1 and y = -1
-;; x is positive.
-;; y is negative.
-;; "
-;;                    :expected-stderr ""))
+  (is
+   (test-c-program "../examples/control-flow.c"
+                   :stdin "1 -1"
+                   :expected-stdout
+                   "~:
+Enter an integer for x:
+Enter an integer for y:
+You entered x = 1 and y = -1
+x is positive.
+y is negative.
+"
+                   :expected-stderr ""))
 
-;;   (is
-;;    (test-c-program "./examples/control-flow.c"
-;;                    :stdin "-1 1"
-;;                    :expected-stdout
-;;                    "~:
-;; Enter an integer for x:
-;; Enter an integer for y:
-;; You entered x = -1 and y = 1
-;; x is negative.
-;; "
-;;                    :expected-stderr ""))
+  (is
+   (test-c-program "../examples/control-flow.c"
+                   :stdin "-1 1"
+                   :expected-stdout
+                   "~:
+Enter an integer for x:
+Enter an integer for y:
+You entered x = -1 and y = 1
+x is negative.
+"
+                   :expected-stderr ""))
 
-;;   (is
-;;    (test-c-program "./examples/control-flow.c"
-;;                    :stdin "-1 -1"
-;;                    :expected-stdout
-;;                    "~:
-;; Enter an integer for x:
-;; Enter an integer for y:
-;; You entered x = -1 and y = -1
-;; x is negative.
-;; "
-;;                    :expected-stderr ""))
-;;   ;;
+  (is
+   (test-c-program "../examples/control-flow.c"
+                   :stdin "-1 -1"
+                   :expected-stdout
+                   "~:
+Enter an integer for x:
+Enter an integer for y:
+You entered x = -1 and y = -1
+x is negative.
+"
+                   :expected-stderr ""))
+  ;;
 
-;;   (is
-;;    (test-c-program "./examples/cond.c"
-;;                    :stdin ""
-;;                    :expected-stdout
-;;                    "Hello!~%i is 15 or 20~%"
-;;                    :expected-stderr ""))
-;;   ;;
+  (is
+   (test-c-program "../examples/cond.c"
+                   :stdin ""
+                   :expected-stdout
+                   "Hello!~%i is 15 or 20~%"
+                   :expected-stderr ""))
+  ;;
 
-;;   (is
-;;    (test-c-program "./examples/hello-world.c"
-;;                    :stdin ""
-;;                    :expected-stdout "Hello, world!"
-;;                    :expected-stderr ""))
-;;   ;;
+  (is
+   (test-c-program "../examples/hello-world.c"
+                   :stdin ""
+                   :expected-stdout "Hello, world!"
+                   :expected-stderr ""))
+  ;;
 
-;;   (is
-;;    (test-c-program "./examples/type-struct-example.c"
-;;                    :stdin ""
-;;                    :expected-stdout "~:
-;; x1->value             = 10
-;; x1->next->value       = 20
-;; x1->next->next->value = 30
-;; "
-;;                    :expected-stderr ""))
+  (is
+   (test-c-program "../examples/type-struct-example.c"
+                   :stdin ""
+                   :expected-stdout "~:
+x1->value             = 10
+x1->next->value       = 20
+x1->next->next->value = 30
+"
+                   :expected-stderr ""))
 
-;;   ;;
+  ;;
 
-;;   (is
-;;    (test-c-program "./examples/c-macro.c"
-;;                    :stdin ""
-;;                    :expected-stdout
-;;                    "x = 10, y = 5~%"
-;;                    :expected-stderr ""))
-;;   ;;
+  (is
+   (test-c-program "../examples/c-macro.c"
+                   :stdin ""
+                   :expected-stdout
+                   "x = 10, y = 5~%"
+                   :expected-stderr ""))
+  ;;
 
-;;   (is
-;;    (test-c-program "./examples/switch.c"
-;;                    :stdin "1"
-;;                    :expected-stdout
-;;                    "Enter an integer for i: i = 1~%"
-;;                    :expected-stderr ""))
+  (is
+   (test-c-program "../examples/switch.c"
+                   :stdin "1"
+                   :expected-stdout
+                   "Enter an integer for i: i = 1~%"
+                   :expected-stderr ""))
 
-;;   (is
-;;    (test-c-program "./examples/switch.c"
-;;                    :stdin "3\\n1"
-;;                    :expected-stdout
-;;                    "Enter an integer for i: i = 3~%Enter an integer for j: j = 1~%"
-;;                    :expected-stderr ""))
+  (is
+   (test-c-program "../examples/switch.c"
+                   :stdin "3 1"
+                   :expected-stdout
+                   "Enter an integer for i: i = 3~%Enter an integer for j: j = 1~%"
+                   :expected-stderr ""))
 
-;;   (is
-;;    (test-c-program "./examples/switch.c"
-;;                    :stdin "4"
-;;                    :expected-stdout
-;;                    "Enter an integer for i: Wrong guess. Aborting..~%"
-;;                    :expected-stderr ""))
+  (is
+   (test-c-program "../examples/switch.c"
+                   :stdin "4"
+                   :expected-stdout
+                   "Enter an integer for i: Wrong guess. Aborting..~%"
+                   :expected-stderr ""))
 
-;;   ;; TODO The following test is destined to fail. Add it later.
-;;   ;; (is
-;;   ;;  (test-c-program "./examples/switch.c"
-;;   ;;                  :stdin "1"
-;;   ;;                  :expected-stdout
-;;   ;;                  "Enter an integer for i: Wrong guess. Aborting..~%"
-;;   ;;                  :expected-stderr ""))
+  ;; TODO The following test is destined to fail. Add it later.
+  ;; (is
+  ;;  (test-c-program "../examples/switch.c"
+  ;;                  :stdin "1"
+  ;;                  :expected-stdout
+  ;;                  "Enter an integer for i: Wrong guess. Aborting..~%"
+  ;;                  :expected-stderr ""))
 
+  ;; FIXME Currently, lisp.c does not compile correctly because it is written
+  ;; in a different style of C. We need to either fix the gcc compilation
+  ;; command for it, or we go fix it.
 
+  ;;   (is
+  ;;    (test-c-program "../examples/sectorlisp/lisp.c"
+  ;;                    :stdin "(EQ (QUOTE T) (QUOTE F)) "
+  ;;                    :expected-stdout "NIL~%"))
+  ;;   (is
+  ;;    (test-c-program "../examples/sectorlisp/lisp.c"
+  ;;                    :stdin "
+  ;; (EQ (QUOTE T) (QUOTE F))
+  ;; (EQ (QUOTE A) (QUOTE A)) "
+  ;;                    :expected-stdout "NIL~%T~%"))
 
-;;   (is
-;;    (test-c-program "./examples/sectorlisp/lisp.c"
-;;                    :stdin "(EQ (QUOTE T) (QUOTE F)) "
-;;                    :expected-stdout "NIL~%"))
-;;   (is
-;;    (test-c-program "./examples/sectorlisp/lisp.c"
-;;                    :stdin "
-;; (EQ (QUOTE T) (QUOTE F))
-;; (EQ (QUOTE A) (QUOTE A)) "
-;;                    :expected-stdout "NIL~%T~%"))
+  ;;   (is
+  ;;    (test-c-program "../examples/sectorlisp/lisp.c"
+  ;;                    :stdin "
+  ;; ((LAMBDA (FF X) (FF X))
+  ;;  (QUOTE (LAMBDA (X)
+  ;;           (COND ((ATOM X) X)
+  ;;                 ((QUOTE T) (FF (CAR X))))))
+  ;;  (QUOTE ((A) B C))) "
+  ;;                    :expected-stdout "A~%"))
 
-;;   (is
-;;    (test-c-program "./examples/sectorlisp/lisp.c"
-;;                    :stdin "
-;; ((LAMBDA (FF X) (FF X))
-;;  (QUOTE (LAMBDA (X)
-;;           (COND ((ATOM X) X)
-;;                 ((QUOTE T) (FF (CAR X))))))
-;;  (QUOTE ((A) B C))) "
-;;                    :expected-stdout "A~%"))
+  ;;   (is
+  ;;    (test-c-program "../examples/sectorlisp/lisp.c"
+  ;;                    :stdin "
+  ;; ((LAMBDA (ASSOC EVCON PAIRLIS EVLIS APPLY EVAL)
+  ;;    (EVAL (QUOTE ((LAMBDA (FF X) (FF X))
+  ;;                  (QUOTE (LAMBDA (X)
+  ;;                           (COND ((ATOM X) X)
+  ;;                                 ((QUOTE T) (FF (CAR X))))))
+  ;;                  (QUOTE ((A) B C))))
+  ;;          ()))
+  ;;  (QUOTE (LAMBDA (X Y)
+  ;;           (COND ((EQ Y ()) ())
+  ;;                 ((EQ X (CAR (CAR Y)))
+  ;;                        (CDR (CAR Y)))
+  ;;                 ((QUOTE T)
+  ;;                  (ASSOC X (CDR Y))))))
+  ;;  (QUOTE (LAMBDA (C A)
+  ;;           (COND ((EVAL (CAR (CAR C)) A)
+  ;;                  (EVAL (CAR (CDR (CAR C))) A))
+  ;;                 ((QUOTE T) (EVCON (CDR C) A)))))
+  ;;  (QUOTE (LAMBDA (X Y A)
+  ;;           (COND ((EQ X ()) A)
+  ;;                 ((QUOTE T) (CONS (CONS (CAR X) (CAR Y))
+  ;;                                  (PAIRLIS (CDR X) (CDR Y) A))))))
+  ;;  (QUOTE (LAMBDA (M A)
+  ;;           (COND ((EQ M ()) ())
+  ;;                 ((QUOTE T) (CONS (EVAL (CAR M) A)
+  ;;                                  (EVLIS (CDR M) A))))))
+  ;;  (QUOTE (LAMBDA (FN X A)
+  ;;           (COND
+  ;;             ((ATOM FN)
+  ;;              (COND ((EQ FN (QUOTE CAR))  (CAR  (CAR X)))
+  ;;                    ((EQ FN (QUOTE CDR))  (CDR  (CAR X)))
+  ;;                    ((EQ FN (QUOTE ATOM)) (ATOM (CAR X)))
+  ;;                    ((EQ FN (QUOTE CONS)) (CONS (CAR X) (CAR (CDR X))))
+  ;;                    ((EQ FN (QUOTE EQ))   (EQ   (CAR X) (CAR (CDR X))))
+  ;;                    ((QUOTE T)            (APPLY (EVAL FN A) X A))))
+  ;;             ((EQ (CAR FN) (QUOTE LAMBDA))
+  ;;              (EVAL (CAR (CDR (CDR FN)))
+  ;;                    (PAIRLIS (CAR (CDR FN)) X A))))))
+  ;;  (QUOTE (LAMBDA (E A)
+  ;;           (COND
+  ;;             ((ATOM E) (ASSOC E A))
+  ;;             ((ATOM (CAR E))
+  ;;              (COND ((EQ (CAR E) (QUOTE QUOTE)) (CAR (CDR E)))
+  ;;                    ((EQ (CAR E) (QUOTE COND)) (EVCON (CDR E) A))
+  ;;                    ((QUOTE T) (APPLY (CAR E) (EVLIS (CDR E) A) A))))
+  ;;             ((QUOTE T) (APPLY (CAR E) (EVLIS (CDR E) A) A)))))) "
+  ;;                    :expected-stdout "A~%"))
 
-;;   (is
-;;    (test-c-program "./examples/sectorlisp/lisp.c"
-;;                    :stdin "
-;; ((LAMBDA (ASSOC EVCON PAIRLIS EVLIS APPLY EVAL)
-;;    (EVAL (QUOTE ((LAMBDA (FF X) (FF X))
-;;                  (QUOTE (LAMBDA (X)
-;;                           (COND ((ATOM X) X)
-;;                                 ((QUOTE T) (FF (CAR X))))))
-;;                  (QUOTE ((A) B C))))
-;;          ()))
-;;  (QUOTE (LAMBDA (X Y)
-;;           (COND ((EQ Y ()) ())
-;;                 ((EQ X (CAR (CAR Y)))
-;;                        (CDR (CAR Y)))
-;;                 ((QUOTE T)
-;;                  (ASSOC X (CDR Y))))))
-;;  (QUOTE (LAMBDA (C A)
-;;           (COND ((EVAL (CAR (CAR C)) A)
-;;                  (EVAL (CAR (CDR (CAR C))) A))
-;;                 ((QUOTE T) (EVCON (CDR C) A)))))
-;;  (QUOTE (LAMBDA (X Y A)
-;;           (COND ((EQ X ()) A)
-;;                 ((QUOTE T) (CONS (CONS (CAR X) (CAR Y))
-;;                                  (PAIRLIS (CDR X) (CDR Y) A))))))
-;;  (QUOTE (LAMBDA (M A)
-;;           (COND ((EQ M ()) ())
-;;                 ((QUOTE T) (CONS (EVAL (CAR M) A)
-;;                                  (EVLIS (CDR M) A))))))
-;;  (QUOTE (LAMBDA (FN X A)
-;;           (COND
-;;             ((ATOM FN)
-;;              (COND ((EQ FN (QUOTE CAR))  (CAR  (CAR X)))
-;;                    ((EQ FN (QUOTE CDR))  (CDR  (CAR X)))
-;;                    ((EQ FN (QUOTE ATOM)) (ATOM (CAR X)))
-;;                    ((EQ FN (QUOTE CONS)) (CONS (CAR X) (CAR (CDR X))))
-;;                    ((EQ FN (QUOTE EQ))   (EQ   (CAR X) (CAR (CDR X))))
-;;                    ((QUOTE T)            (APPLY (EVAL FN A) X A))))
-;;             ((EQ (CAR FN) (QUOTE LAMBDA))
-;;              (EVAL (CAR (CDR (CDR FN)))
-;;                    (PAIRLIS (CAR (CDR FN)) X A))))))
-;;  (QUOTE (LAMBDA (E A)
-;;           (COND
-;;             ((ATOM E) (ASSOC E A))
-;;             ((ATOM (CAR E))
-;;              (COND ((EQ (CAR E) (QUOTE QUOTE)) (CAR (CDR E)))
-;;                    ((EQ (CAR E) (QUOTE COND)) (EVCON (CDR E) A))
-;;                    ((QUOTE T) (APPLY (CAR E) (EVLIS (CDR E) A) A))))
-;;             ((QUOTE T) (APPLY (CAR E) (EVLIS (CDR E) A) A)))))) "
-;;                    :expected-stdout "A~%"))
-
-;;   (is
-;;    (test-c-program "./examples/sectorlisp.c"
-;;                    :stdin ""
-;;                    :expected-stdout "A~%")))
+  ;; FIXME We are working on sectorlisp.c.
+  ;;
+  ;; (is
+  ;;  (test-c-program "../examples/sectorlisp.c"
+  ;;                  :stdin ""
+  ;;                  :expected-stdout "A~%"))
+  )
