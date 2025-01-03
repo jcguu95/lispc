@@ -1082,6 +1082,16 @@ x1->next->next->value = 30
                    :expected-stderr ""))
 
   (is
+   (eq :error
+       (handler-case
+           (test-c-program "../examples/switch.c"
+                           :stdin "1"
+                           :expected-stdout
+                           "Some randomly written stdout."
+                           :expected-stderr "")
+         (error (e) (declare (ignore e)) :error))))
+
+  (is
    (test-c-program "../examples/switch.c"
                    :stdin "3 1"
                    :expected-stdout
@@ -1094,14 +1104,6 @@ x1->next->next->value = 30
                    :expected-stdout
                    "Enter an integer for i: Wrong guess. Aborting..~%"
                    :expected-stderr ""))
-
-  ;; TODO The following test is destined to fail. Add it later.
-  ;; (is
-  ;;  (test-c-program "../examples/switch.c"
-  ;;                  :stdin "1"
-  ;;                  :expected-stdout
-  ;;                  "Enter an integer for i: Wrong guess. Aborting..~%"
-  ;;                  :expected-stderr ""))
 
   ;; FIXME Currently, lisp.c does not compile correctly because it is written
   ;; in a different style of C. We need to either fix the gcc compilation
