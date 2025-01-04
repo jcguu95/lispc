@@ -5,7 +5,7 @@
   (lisp
    (defun multi-for (bindings body)
      (loop :for binding :in (reverse bindings)
-           :do (setf body `((for ((declare (,(nth 0 binding) :int) 0)
+           :do (setf body `((for ((declare () (,(nth 0 binding) :int) 0)
                                   (< ,(nth 0 binding) ,(nth 1 binding))
                                   (++ ,(nth 0 binding)))
                              ,@body))))
@@ -17,9 +17,9 @@
 
 ;;; Stage 1
 ;;
-;; (FOR ((DECLARE (I :INT) 0) (< I 3) (++ I))
-;;  (FOR ((DECLARE (J :INT) 0) (< J 2) (++ J))
-;;   (FOR ((DECLARE (K :INT) 0) (< K 2) (++ K))
+;; (FOR ((DECLARE () (I :INT) 0) (< I 3) (++ I))
+;;  (FOR ((DECLARE () (J :INT) 0) (< J 2) (++ J))
+;;   (FOR ((DECLARE () (K :INT) 0) (< K 2) (++ K))
 ;;        (@PRINTF (STR "%d ") (+ I J K))
 ;;        (@PRINTF (STR "%d\\n") I))))
 

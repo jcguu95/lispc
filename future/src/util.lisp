@@ -82,6 +82,7 @@ case, leave the string unchanged."
 (defun resolve-symbol (symbol)
   (invert-case (substitute #\_ #\- (symbol-name symbol))))
 
+;; TODO I always find this weird.. isn't this just used in the cop DECLARE? If so, merge it.
 (defun resolve-declaration (declaration)
   (assert (= 2 (length declaration)))
   (let* ((variable (resolve-symbol (nth 0 declaration)))

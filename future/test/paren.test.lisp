@@ -507,7 +507,7 @@ struct x {
   (is (equal
        "int (x)[3] = {1, 2, 3};"
        ;; TODO Maybe vec should just be an alias to array.
-       (c '(declare (x (:array 3 :int)) (vec 1 2 3))))))
+       (c '(declare () (x (:array 3 :int)) (vec 1 2 3))))))
 
 (test ->
   (is (equal
@@ -548,6 +548,14 @@ struct x {
     "((i) - (j) - (2) - (k) - (1))"))
   (is
    (string=
+    (c '(* i j 2 k 1))
+    "((i) * (j) * (2) * (k) * (1))"))
+  (is
+   (string=
+    (c '(/ i j 2 k 1))
+    "((i) / (j) / (2) / (k) / (1))"))
+  (is
+   (string=
     (c '(++ i))
     "((i)++)"))
   (is
@@ -581,16 +589,64 @@ struct x {
 (test declare
   (is (equal
        "int x;"
-       (c '(declare (x :int)))))
+       (c '(declare () (x :int)))))
   (is (equal
        "int x = {1, 2, 3};"
-       (c '(declare (x :int) (vec 1 2 3)))))
+       (c '(declare () (x :int) (vec 1 2 3)))))
   (is (equal
        "int *(x);"
-       (c '(declare (x (:pointer :int 1))))))
+       (c '(declare () (x (:pointer :int 1))))))
   (is (equal
        "int *(x) = 42;"
-       (c '(declare (x (:pointer :int 1)) 42)))))
+       (c '(declare () (x (:pointer :int 1)) 42)))))
+
+(test declare/multiple
+  (is
+   (string=
+    "int x = 1;
+int y = 2;
+int z = 3;"
+    (c '(declare () (x :int) 1 (y :int) 2 (z :int) 3))))
+  (is
+   (string=
+    "register int x = 1;
+register int y = 2;
+register int z = 3;"
+    (c '(declare :register (x :int) 1 (y :int) 2 (z :int) 3))))
+  (is
+   (equal
+    (paren::c-expand-1 '(declare :register (x :int) 1 (y :int) 2 (z :int) 3))
+    '(paren::compile-each ""
+      (declare :register (x :int) 1)
+      (declare :register (y :int) 2)
+      (declare :register (z :int) 3))))
+  (is
+   (equal
+    (paren::c-expand-1 '(declare () (x :int) 1 (y :int) 2 (z :int) 3))
+    '(paren::compile-each ""
+      (declare :auto (x :int) 1)
+      (declare :auto (y :int) 2)
+      (declare :auto (z :int) 3)))))
+
+(test declare/storage-class
+  (is (equal
+       "int x;"
+       (c '(declare () (x :int)))))
+  (is (equal
+       "int x;"
+       (c '(declare :auto (x :int)))))
+  (is (equal
+       "register int x;"
+       (c '(declare :register (x :int)))))
+  (is (equal
+       "static int x;"
+       (c '(declare :static (x :int)))))
+  (is (equal
+       "extern int x;"
+       (c '(declare :extern (x :int)))))
+  (is (equal
+       "static int *((x)[9]) = 42;"
+       (c '(declare :static (x (:array 9 (:pointer :int 1))) 42)))))
 
 (test while
   (is
@@ -635,7 +691,7 @@ for (size-t (i) = 0; (i < size); (i++)) {
   printf(\"%d\", (result[((i)+(1))]))
   printf(\"%d\", (result[i]))
 }")
-   (c '(for ((declare (i :size-t) 0)
+   (c '(for ((declare () (i :size-t) 0)
              (< i size)
              (++ i))
         (@printf (str "%d") (@ result (+ i 1)))
@@ -658,7 +714,7 @@ for (int i = 0; ((i) < (3)); ((i)++)) {
     (c '(lisp
          (defun multi-for (bindings body)
            (loop :for binding :in (reverse bindings)
-                 :do (setf body `((for ((declare (,(nth 0 binding) :int) 0)
+                 :do (setf body `((for ((declare () (,(nth 0 binding) :int) 0)
                                         (< ,(nth 0 binding) ,(nth 1 binding))
                                         (++ ,(nth 0 binding)))
                                    ,@body
@@ -759,6 +815,7 @@ if (((i) == (10))) {
           (@printf (str "i is not present\\n"))))))
    ))
 
+;; TODO Need defun-with-specified-storage. I don't want to clutter the interface of defun anymore.
 (test defun
   (is (equal
        (format nil "~:
@@ -768,8 +825,8 @@ int main () {
   return (0);
 }")
        (c `(defun (main :int) ()
-             (declare (x :int) 5)
-             (declare (y :int) 10)
+             (declare () (x :int) 5)
+             (declare () (y :int) 10)
              (return 0)))))
 
   (is (equal
@@ -783,10 +840,10 @@ int main (int argc, char **(argv)) {
 (test assignment
   (is (equal
        "int x = 5;"
-       (c `(declare (x :int) 5))))
+       (c `(declare () (x :int) 5))))
   (is (equal
        "int y = 10;"
-       (c `(declare (y :int) 10)))))
+       (c `(declare () (y :int) 10)))))
 
 (test case
   (is

@@ -1,8 +1,9 @@
 (include :system ("stdio.h"))
 
 (defun (main :int) ()
-  (declare (i :int) 20)
-  (declare (j :int) 30)
+  (declare ()
+           (i :int) 20
+           (j :int) 30)
   (cond ((== i 10)
          (@printf (str "Hello!\\n"))
          (@printf (str "i is 10\\n")))

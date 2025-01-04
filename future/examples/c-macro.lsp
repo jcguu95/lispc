@@ -34,7 +34,7 @@
 
 (defmacro |swap| (a b)
   (do-while 0
-    (declare (temp (:type-of a)) a)
+    (declare () (temp (:type-of a)) a)
     (set a b)
     (set b temp)))
 (undefmacro |swap|)
@@ -44,12 +44,12 @@
     ((|equalp| (a b) (== a b))
      (|swap| (a b)
              (do-while 0
-               (declare (temp (:type-of a)) a)
+               (declare () (temp (:type-of a)) a)
                (set a b)
                (set b temp))))
   (defun (main :int) ()
-    (declare (x :int) 5)
-    (declare (y :int) 10)
+    (declare () (x :int) 5)
+    (declare () (y :int) 10)
     (|@swap| x y)
     (@printf (str "x = %d, y = %d\\n") x y)
     (return 0)))

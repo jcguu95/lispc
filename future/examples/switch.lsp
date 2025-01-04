@@ -1,8 +1,8 @@
 (include :system ("stdio.h"))
 
 (defun (main :int) ()
-  (declare (i :int))
-  (declare (j :int))                    ; TODO Can I make multiple declarations in one line?
+  (declare () (i :int))
+  (declare () (j :int))                    ; TODO Can I make multiple declarations in one line?
   (@printf (str "Enter an integer for i: "))
   (@scanf (str "%d") (& i))
   (case i

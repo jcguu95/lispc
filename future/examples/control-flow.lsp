@@ -1,8 +1,8 @@
 (include :system ("stdio.h"))
 
 (defun (main :int) ()
-  (declare (x :int))
-  (declare (y :int))
+  (declare () (x :int))
+  (declare () (y :int))
   (@printf (str "Enter an integer for x:\\n"))
   (@scanf (str "%d") (& x))
   (@printf (str "Enter an integer for y:\\n"))

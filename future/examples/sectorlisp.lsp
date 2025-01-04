@@ -54,9 +54,9 @@
 ;; int dx; /* stores lookahead character */
 ;; int RAM[0100000]; /* your own ibm7090 */
 (compile-each ""
- (declare (cx :int) ())
- (declare (dx :int) ())
- (declare (|ram| (:array 0100000 :int)) ()))
+ (declare () (cx :int) ())
+ (declare () (dx :int) ())
+ (declare () (|ram| (:array 0100000 :int)) ()))
 
 ;; int AddList(int x);
 ;; int GetObject(int c);
@@ -66,15 +66,15 @@
 ;; int PrintObject(int x);
 ;; int Eval(int e, int a);
 ; TODO Currently, DECLARE does not support writing variable names in it:
-;; (declare (addlist (:function :int ((:int x)))))
+;; (declare () (addlist (:function :int ((:int x)))))
 (compile-each ""
- (declare (addlist (:function :int (:int))))
- (declare (getobject (:function :int (:int))))
- (declare (cons (:function :int (:int :int))))
- (declare (car (:function :int (:int))))
- (declare (cdr (:function :int (:int))))
- (declare (printobject (:function :int (:int))))
- (declare (eval (:function :int (:int :int)))))
+ (declare () (addlist (:function :int (:int))))
+ (declare () (getobject (:function :int (:int))))
+ (declare () (cons (:function :int (:int :int))))
+ (declare () (car (:function :int (:int))))
+ (declare () (cdr (:function :int (:int))))
+ (declare () (printobject (:function :int (:int))))
+ (declare () (eval (:function :int (:int :int)))))
 
 ;; int Intern() {
 ;;   int i, j, x;
@@ -93,9 +93,9 @@
 ;;   return x;
 ;; }
 (defun (intern :int) ()
-  (declare (i :int))
-  (declare (j :int))
-  (declare (x :int))
+  (declare () (i :int))
+  (declare () (j :int))
+  (declare () (x :int))
   (for ((set i 0) (set x (@ |m| (++ i))) ())
        (for ((set j 0) () (++ j))
             (cond ((!= x (@ |ram| j))
@@ -126,11 +126,11 @@
 ;;     return NULL;
 ;; }
 (defun (|GetLine| (:pointer :char)) ((prompt (:pointer :c-char)))
-  (declare (buffer (:array 1024 :s-char)))
+  (declare () (buffer (:array 1024 :s-char)))
   (@printf (str "%s") prompt)
   (@fflush stdout)
   (cond ((@fgets buffer (@sizeof buffer) stdin)
-         (declare (len :size-t) (@strlen buffer))
+         (declare () (len :size-t) (@strlen buffer))
          (cond ((and (> len 0)
                      (== (@ buffer (- len 1)) (str "\\n")))
                 (set (@ buffer (- len 1)) (str "\\0"))))
@@ -163,16 +163,16 @@
 ;;     return t;
 ;; }
 (defun (getchar :int) ()
-  (declare (line (:pointer :s-char)) "NULL")
-  (declare (ptr  (:pointer :s-char)) "NULL")
+  (declare () (line (:pointer :s-char)) "NULL")
+  (declare () (ptr  (:pointer :s-char)) "NULL")
   (cond ((or (not line)
              (not (* ptr)))
          (set line (@|GetLine| (str "")))
          (cond ((not line)
                 (exit 0)))
          (set ptr line)))
-  (declare (c :int) (* (++ ptr)))
-  (declare (t :int) dx)
+  (declare () (c :int) (* (++ ptr)))
+  (declare () (t :int) dx)
   (set dx c)
   (return t))
 
@@ -184,8 +184,8 @@
 ;;   return c;
 ;; }
 (defun (gettoken :int) ()
-  (declare (c :int))
-  (declare (i :int) 0)
+  (declare () (c :int))
+  (declare () (i :int) 0)
   (do-while (and (or (<= c (str " "))
                      (>  c (str ")")))
                  (> dx ")"))
@@ -201,7 +201,7 @@
 ;;   return AddList(GetObject(c));
 ;; }
 (defun (getlist :int) ()
-  (declare (c :int) (@gettoken))
+  (declare () (c :int) (@gettoken))
   (cond ((== c (str ")"))
          (return 0)))
   (return (@addlist (@getobject c))))
@@ -235,7 +235,7 @@
 ;;   }
 ;; }
 (defun (printatom :int) ((x :int))
-  (declare (c :int))
+  (declare () (c :int))
   (for (() () ())
        (cond ((not (set c (@ |m| (++ x))))
               (break)))
@@ -340,7 +340,7 @@
 (defun (evlis :int) ((m :int) (a :int))
   (cond ((not m)
          (return 0)))
-  (declare (x :int) (@eval (@car m) a))
+  (declare () (x :int) (@eval (@car m) a))
   (return (@cons x (@evlis (@cdr m) a))))
 
 ;; int Pairlis(x, y, a) {
@@ -438,9 +438,9 @@
 ;;   return e;
 ;; }
 (defun (eval :int) ((e :int) (a :int))
-  (declare (|a| :int))
-  (declare (|b| :int))
-  (declare (|c| :int))
+  (declare () (|a| :int))
+  (declare () (|b| :int))
+  (declare () (|c| :int))
   (cond ((>= e 0)
          (return (@assoc e a))))
   (cond ((== (@car e) |kQuote|)
@@ -476,7 +476,7 @@
 ;;     }
 ;; }
 (defun (main :int) ()
-  (declare (i :int))
+  (declare () (i :int))
   (@setlocale "LC_ALL" (str ""))
   (for ((set i 0) (< i (@sizeof |s|)) (++ i))
        (set (@ |m| i) (@ |s| i)))

@@ -1,14 +1,14 @@
 (include :system ("stdlib.h" "stdio.h" "string.h" "unistd.h")
          :local ("types.h" "readline.h" "reader.h" "core.h" "interop.h"))
 
-(declare (|eval|
-          (:function (:pointer |MalVal|)
-                     ((ast (:pointer |MalVal|))
-                      (env (:pointer |Env|))))))
+(declare () (|eval|
+             (:function (:pointer |MalVal|)
+                        ((ast (:pointer |MalVal|))
+                         (env (:pointer |Env|))))))
 
-(declare (|quasiquote|
-          (:function (:pointer |MalVal|)
-                     ((ast (:pointer |MalVal|))))))
+(declare () (|quasiquote|
+             (:function (:pointer |MalVal|)
+                        ((ast (:pointer |MalVal|))))))
 
 ;; // read
 ;; MalVal *READ(char prompt[], char *str) {
@@ -29,8 +29,8 @@
 ;; }
 (defun |read| (:pointer |MalVal|) ((prompt (:array :char))
                                    (str (:pointer :char)))
-  (declare (line (:pointer :char)))
-  (declare (ast (:pointer :|MalVal|)))
+  (declare () (line (:pointer :char)))
+  (declare () (ast (:pointer :|MalVal|)))
   (cond (str
          (set line str))
         (t
@@ -55,7 +55,7 @@
   (cond ((not (== (-> ast type)
                   |mal-list|))
          (return 0)))
-  (declare (a0 (:constant (:pointer (:constant :|MalVal|))))
+  (declare () (a0 (:constant (:pointer (:constant :|MalVal|))))
            (@-first ast))
   (return (&& (& (-> a0 type)
                  |mal-symbol|)
@@ -75,13 +75,13 @@
 ;;     return acc;
 ;; }
 (defun qq-iter (:pointer :|MalVal|) ((xs (:pointer :|GArray|)))
-  (declare (acc (:pointer :|MalVal|))
+  (declare () (acc (:pointer :|MalVal|))
            (@-|listX| 0))
-  (declare (i :int))
+  (declare () (i :int))
   (for ((set i (- (-> xs len) 1))
         (<= 0 i)
         (-- i))
-       (declare (elt (:const (:pointer :|MalVal|)))
+       (declare () (elt (:const (:pointer :|MalVal|)))
                 (@g-array-index xs "MalVal*" i)) ; NOTE What is this MalVal*?
        (cond ((@starts-with elt (str "splice-unquote"))
               (set acc (|@-listX| 3

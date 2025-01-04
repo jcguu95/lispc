@@ -1,5 +1,7 @@
 (in-package :paren)
 
+;; TODO Provide docstring for each def-cop form.
+
 (def-cop lisp (form)
   (eval `(progn ,@form)))
 
@@ -56,37 +58,52 @@ union ~a {~%~{  ~a;~%~}};"
           (nth 0 form)
           (mapcar #'resolve-declaration (cdr form))))
 
-;; NOTE Do we need to use (~a) instead of ~a in ->?
 (def-cop ->  (form) :expression
+  ;; TODO Do we need to use (~a) instead of ~a in ->?
   (format nil "~{~a~^->~}"      (mapcar #'c form)))
+
 (def-cop ==  (form) :expression
   (format nil "((~a) == (~a))"  (c (nth 0 form)) (c (nth 1 form))))
+
 (def-cop <=  (form) :expression
   (format nil "((~a) <= (~a))"  (c (nth 0 form)) (c (nth 1 form))))
+
 (def-cop >=  (form) :expression
   (format nil "((~a) >= (~a))"  (c (nth 0 form)) (c (nth 1 form))))
+
 (def-cop !=  (form) :expression
   (format nil "((~a) != (~a))"  (c (nth 0 form)) (c (nth 1 form))))
+
 (def-cop >   (form) :expression
   (format nil "((~a) > (~a))"   (c (nth 0 form)) (c (nth 1 form))))
+
 (def-cop <   (form) :expression
   (format nil "((~a) < (~a))"   (c (nth 0 form)) (c (nth 1 form))))
+
 (def-cop +   (form) :expression
   (format nil "(~{(~a)~^ + ~})" (mapcar #'c form)))
+
 (def-cop -   (form) :expression
   (format nil "(~{(~a)~^ - ~})" (mapcar #'c form)))
+
 (def-cop *   (form) :expression
   (format nil "(~{(~a)~^ * ~})" (mapcar #'c form)))
+
 (def-cop /   (form) :expression
-  (format nil "(~{(~a)~^ / ~})" (mapcar #'c form))) ; TODO Add test.
+  (format nil "(~{(~a)~^ / ~})" (mapcar #'c form)))
+
 (def-cop ++  (form) :expression
   (format nil "((~a)++)"        (c (nth 0 form))))
+
 (def-cop --  (form) :expression
   (format nil "((~a)--)"        (c (nth 0 form))))
+
 (def-cop or  (form) :expression
   (format nil "((~a) || (~a))"  (c (nth 0 form)) (c (nth 1 form))))
+
 (def-cop and (form) :expression
   (format nil "((~a) && (~a))"  (c (nth 0 form)) (c (nth 1 form))))
+
 (def-cop not (form) :expression
   (format nil "(!(~a))"         (c (nth 0 form))))
 
@@ -152,20 +169,35 @@ union ~a {~%~{  ~a;~%~}};"
   (assert (= 1 (length form)))
   (format nil "'~a'" (car form)))
 
-;; TODO Are there any other variations like this that I missed?
+;; NOTE Are there any other variations like this that I missed?
+;; + char8_t, char16_t, char32_t (C11 and later)
+;; + int8_t, uint8_t: Exact 8-bit integers.
+;; + int16_t, uint16_t, etc., for 16-bit, 32-bit, and 64-bit integers.
+;; + intmax_t and uintmax_t: Maximum-width integers.
+;; + intptr_t and uintptr_t: Integers guaranteed to hold a pointer.
 (def-cop wide-char (form)
   (assert (= 1 (length form)))
   ;; (car form) must be a character or a string of length 1.
   (format nil "L'~a'" (car form)))
 
 (def-cop declare (form)
-  (let ((value (nth 1 form)))
-    (if value
-        (format nil "~a = ~a;"
-                (resolve-declaration (nth 0 form))
-                (c value))
-        (format nil "~a;"
-                (resolve-declaration (nth 0 form))))))
+  (if (<= (length form) 3)
+      (let ((storage-class (or (nth 0 form) :auto)) ; storage class is default to auto
+            (var (nth 1 form))
+            (value (nth 2 form)))
+        (assert (keywordp storage-class))
+        (format nil "~a~a~a;"
+                (if (eq :auto storage-class)
+                    ""
+                    (format nil "~a " (resolve-symbol storage-class)))
+                (resolve-declaration var)
+                (if value (format nil " = ~a" (c value)) "")))
+      `(compile-each ""
+        ,@(let ((storage-class (or (nth 0 form) :auto)))
+            (loop :for index :from 1 :to (1- (length form)) :by 2
+                  :collect `(declare ,storage-class
+                                     ,(nth index form)
+                                     ,(nth (1+ index) form)))))))
 
 (def-cop set (form)
   (assert (= (length form) 2))
@@ -190,8 +222,6 @@ union ~a {~%~{  ~a;~%~}};"
               (t
                ,(nth 2 form))))
     (t (error "Length of form must be 2 or 3. form: ~a" form))))
-
-;; TODO Provide docstring for each def-cop form.
 
 (def-cop when (form)
   `(cond (,@form)))
