@@ -53,10 +53,10 @@
 ;; int cx; /* stores negative memory use */
 ;; int dx; /* stores lookahead character */
 ;; int RAM[0100000]; /* your own ibm7090 */
-(compile-each ""
- (declare () (cx :int) ())
- (declare () (dx :int) ())
- (declare () (|ram| (:array 0100000 :int)) ()))
+(declare ()
+         (cx :int) ()
+         (dx :int) ()
+         (|ram| (:array 0100000 :int)) ())
 
 ;; int AddList(int x);
 ;; int GetObject(int c);
@@ -65,16 +65,15 @@
 ;; int Cdr(int x);
 ;; int PrintObject(int x);
 ;; int Eval(int e, int a);
-; TODO Currently, DECLARE does not support writing variable names in it:
-;; (declare () (addlist (:function :int ((:int x)))))
-(compile-each ""
- (declare () (addlist (:function :int (:int))))
- (declare () (getobject (:function :int (:int))))
- (declare () (cons (:function :int (:int :int))))
- (declare () (car (:function :int (:int))))
- (declare () (cdr (:function :int (:int))))
- (declare () (printobject (:function :int (:int))))
- (declare () (eval (:function :int (:int :int)))))
+
+ (declare ()
+          (addlist (:function :int (:int))) ()
+          (getobject (:function :int (:int))) ()
+          (cons (:function :int (:int :int))) ()
+          (car (:function :int (:int))) ()
+          (cdr (:function :int (:int))) ()
+          (printobject (:function :int (:int))) ()
+          (eval (:function :int (:int :int))) ())
 
 ;; int Intern() {
 ;;   int i, j, x;
@@ -93,10 +92,13 @@
 ;;   return x;
 ;; }
 (defun (intern :int) ()
-  (declare () (i :int))
-  (declare () (j :int))
-  (declare () (x :int))
-  (for ((set i 0) (set x (@ |m| (++ i))) ())
+  (declare ()
+           (i :int) ()
+           (j :int) ()
+           (x :int) ())
+  (for ((set i 0)
+        (set x (@ |m| (++ i)))
+        ())
        (for ((set j 0) () (++ j))
             (cond ((!= x (@ |ram| j))
                    (break)))
@@ -126,14 +128,14 @@
 ;;     return NULL;
 ;; }
 (defun (|GetLine| (:pointer :char)) ((prompt (:pointer :c-char)))
-  (declare () (buffer (:array 1024 :s-char)))
+  (declare :static (buffer (:array 1024 :char)))
   (@printf (str "%s") prompt)
   (@fflush stdout)
   (cond ((@fgets buffer (@sizeof buffer) stdin)
          (declare () (len :size-t) (@strlen buffer))
          (cond ((and (> len 0)
-                     (== (@ buffer (- len 1)) (str "\\n")))
-                (set (@ buffer (- len 1)) (str "\\0"))))
+                     (== (@ buffer (- len 1)) (char "\\n")))
+                (set (@ buffer (- len 1)) (char "\\0"))))
          (return buffer)))
   (return "NULL"))
 
@@ -163,16 +165,18 @@
 ;;     return t;
 ;; }
 (defun (getchar :int) ()
-  (declare () (line (:pointer :s-char)) "NULL")
-  (declare () (ptr  (:pointer :s-char)) "NULL")
+  (declare :static
+           (line (:pointer :char)) "NULL"
+           (ptr  (:pointer :char)) "NULL")
   (cond ((or (not line)
              (not (* ptr)))
          (set line (@|GetLine| (str "")))
          (cond ((not line)
                 (exit 0)))
          (set ptr line)))
-  (declare () (c :int) (* (++ ptr)))
-  (declare () (t :int) dx)
+  (declare ()
+           (c :int) (deref (++ ptr))
+           (t :int) dx)
   (set dx c)
   (return t))
 
@@ -184,14 +188,15 @@
 ;;   return c;
 ;; }
 (defun (gettoken :int) ()
-  (declare () (c :int))
-  (declare () (i :int) 0)
-  (do-while (and (or (<= c (str " "))
-                     (>  c (str ")")))
-                 (> dx ")"))
+  (declare ()
+           (c :int) ()
+           (i :int) 0)
+  (do-while (and (or (<= c (char " "))
+                     (>  c (char ")")))
+                 (> dx (char ")")))
     (cond ((> (set c (@getchar))
-              (str " "))
-           (set (@ ram (++ i)) c))))
+              (char " "))
+           (set (@ |ram| (++ i)) c))))
   (set (@ |ram| i) 0)
   (return c))
 
@@ -202,7 +207,7 @@
 ;; }
 (defun (getlist :int) ()
   (declare () (c :int) (@gettoken))
-  (cond ((== c (str ")"))
+  (cond ((== c (char ")"))
          (return 0)))
   (return (@addlist (@getobject c))))
 
@@ -211,7 +216,7 @@
 ;;   return Intern();
 ;; }
 (defun (getobject :int) ((c :int))
-  (cond ((== c (str "("))
+  (cond ((== c (char "("))
          (return (@getlist))))
   (return (@intern)))
 
@@ -396,15 +401,15 @@
         ((> f |kEq|)
          (return (@apply (@eval f a) x a)))
         ((== f |kEq|)
-         (return (cond ((== (@car x) (@car (@cdr x)))
-                        kT)
-                       (t 0))))
+         (return (? (== (@car x) (@car (@cdr x)))
+                    |kT|
+                    0)))
         ((== f |kCons|)
          (return (@cons (@car x) (@car (@cdr x)))))
         ((== f |kAtom|)
-         (return (cond ((< (@car x) 0)
-                        0)
-                       (t kT))))
+         (return (? (< (@car x) 0)
+                    0
+                    |kT|)))
         ((== f |kCar|)
          (return (@car (@car x))))
         ((== f |kCdr|)
