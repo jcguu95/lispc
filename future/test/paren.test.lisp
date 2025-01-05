@@ -399,8 +399,36 @@ b \\
   (is (equal "struct xX window"
              (paren::resolve-declaration '(window (:struct :|xX|))))))
 
+;; A util macro for testing.
+(defmacro with-expected-warning (&body body)
+  "Evaluate BODY, expecting a WARNING to be signaled during execution.
+If no WARNING is signaled, an error is raised. The function
+execution continues as normal, and the result of BODY is returned.
+
+This macro ensures that:
+1. At least one WARNING is signaled during BODY's execution.
+2. Warnings are muffled, so they don't propagate beyond the macro.
+
+Example usage:
+  (with-expected-warning
+    (warn \"This is a test warning.\")
+    42) ; => 42
+
+Signals an error if no warning occurs."
+  `(let ((warning-signaled-p nil))
+     (flet ((handler (c)
+              (setf warning-signaled-p t)
+              (muffle-warning c)))
+       (handler-bind ((warning #'handler))
+         (let ((result (progn ,@body)))
+           (unless warning-signaled-p
+             (error "A warning was expected, but none was signaled."))
+           result)))))
+
 (test symbols
-  (is (equal ""      (c 'a b)))       ; TODO FIXME Catch the warning message.
+  (is (equal ""
+             (with-expected-warning
+               (c 'a b))))
   (is (equal "abcde" (c 'abcde)))
   (is (equal "abCde" (c '|abCde|)))
   (is (equal "ABCDE" (c '|abcde|))))
