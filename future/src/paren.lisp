@@ -1,7 +1,7 @@
 (in-package :paren)
 
-(defparameter *functions* (make-hash-table :test #'equal))
-(defparameter *expressions* (make-hash-table :test #'equal))
+(defvar *functions* (make-hash-table :test #'equal))
+(defvar *expression-operators* (make-hash-table :test #'equal))
 
 (defun op-name (operator)
   (check-type operator symbol)
@@ -47,10 +47,13 @@
   ;; NOTE We need this because our compiler by default does not write
   ;; semicolons for expressions. But sometimes when it's standalone, an extra
   ;; semicolon has to be emit.
-  (setf (gethash operator *expressions*) t))
+  ;;
+  ;; NOTE We store strings just in case that the operators are parsed as
+  ;; symbols in a difference package.
+  (setf (gethash (string-downcase (op-name operator)) *expression-operators*) t))
 
 (defun expression? (operator)
-  (or (gethash operator *expressions*)
+  (or (gethash (string-downcase (op-name operator)) *expression-operators*)
       (function-operator? (op-name operator))))
 
 (defmacro def-cop (name vars &body body)

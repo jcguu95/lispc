@@ -294,6 +294,10 @@
   (is (equal "int (*const (~a)) ()"
              (paren::fmt-string<-type '(:c-pointer (:function :int ()))))))
 
+;; (test empty
+;;   (c '())                               ;FIXME this has to emit an error ; TODO
+;;   )
+
 (test enum
   (is
    (string=
@@ -396,6 +400,7 @@ b \\
              (paren::resolve-declaration '(window (:struct :|xX|))))))
 
 (test symbols
+  (is (equal ""      (c 'a b)))       ; TODO FIXME Catch the warning message.
   (is (equal "abcde" (c 'abcde)))
   (is (equal "abCde" (c '|abCde|)))
   (is (equal "ABCDE" (c '|abcde|))))
@@ -407,7 +412,17 @@ b \\
 func1(1);
 func2(2);
 func3(3);")
-    (c '(compile-each "" (@func1 1) (@func2 2) (@func3 3))))))
+    (c '(compile-each "" (@func1 1) (@func2 2) (@func3 3)))))
+
+  ;; compile-each should add trailing semicolon when there's an expression.
+  (is
+   (string=
+    "0;
+1;
+2;
+3;
+((4) + (5));"
+    (c '(compile-each "" 0 1 2 3 (+ 4 5))))))
 
 (test lisp                              ; interop
   (is
@@ -662,10 +677,35 @@ register int z = 3;"
     "do {
   printf(\"Hello\");
   printf(\"World\");
-} while (((x) > (y)))"
+} while (((x) > (y)));"
     (c '(do-while (> x y)
          (@printf (str "Hello"))
          (@printf (str "World")))))))
+
+(test ref/deref
+  (is
+   (string=
+    "&a"
+    (c '(& a))))
+  (is
+   (string=
+    "*ptr"
+    (c '(deref ptr))))
+  (is
+   (string=
+    "*((ptr)++)"
+    (c '(deref (++ ptr)))))
+  )
+
+(test exit
+  (is
+   (string=
+    "exit(0);"
+    (c '(exit 0))))
+  (is
+   (string=
+    "exit(((1) + (1)));"
+    (c '(exit (+ 1 1))))))
 
 (test break
   (is
@@ -678,24 +718,25 @@ register int z = 3;"
 (test set
   (is (equal
        (c `(set x 10))
-       "x = 10;"))
+       "x = 10"))
   (is (equal
        (c `(set (-> x1 value) 10))
-       "x1->value = 10;")))
+       "x1->value = 10")))
 
 (test for
-  (string=
-   (format nil
-           "~:
-for (size-t (i) = 0; (i < size); (i++)) {
-  printf(\"%d\", (result[((i)+(1))]))
-  printf(\"%d\", (result[i]))
+  (is
+   (string=
+    (format nil
+            "~:
+for (size_t i = 0; ((i) < (size)); ((i)++)) {
+  printf(\"%d\", result[((i) + (1))]);
+  printf(\"%d\", result[i]);
 }")
-   (c '(for ((declare () (i :size-t) 0)
-             (< i size)
-             (++ i))
-        (@printf (str "%d") (@ result (+ i 1)))
-        (@printf (str "%d") (@ result i)))))
+    (c '(for ((declare () (i :size-t) 0)
+              (< i size)
+              (++ i))
+         (@printf (str "%d") (@ result (+ i 1)))
+         (@printf (str "%d") (@ result i))))))
 
   (is
    (string=
@@ -722,7 +763,23 @@ for (int i = 0; ((i) < (3)); ((i)++)) {
            (car body))
          (multi-for '((i 3) (j 2) (k 2))
           '((@printf (str "Hello, "))
-            (@printf (str "world!")))))))))
+            (@printf (str "world!"))))))))
+  (is
+   (string=
+    "for (i = 0; x = M[((i)++)]; ) {
+
+}"
+    (c '(for ((set i 0) (set x (@ |m| (++ i))) ())))))
+
+  (is
+   (string=
+    "for (size_t i = 0; ((i) < (size)); ((i)++)) {
+  result[i] = f(arr[i]);
+}"
+    (c '(for ((declare () (i :size-t) 0)
+              (< i size)
+              (++ i))
+         (set (@ result i) (@f (@ arr i))))))))
 
 (test @
     (is (string=
@@ -768,10 +825,10 @@ for (int i = 0; ((i) < (3)); ((i)++)) {
   (is
    (string=
     "if ((!(1))) {
-  2
-  3
-  4
-  5
+  2;
+  3;
+  4;
+  5;
 }"
     (c '(unless 1 2 3 4 5)))))
 
@@ -779,12 +836,24 @@ for (int i = 0; ((i) < (3)); ((i)++)) {
   (is
    (string=
     "if (1) {
-  2
-  3
-  4
-  5
+  2;
+  3;
+  4;
+  5;
 }"
     (c '(when 1 2 3 4 5)))))
+
+(test ?
+  (is
+   (string=
+    "((0) ? (1) : (2))"
+    (c '(? 0 1 2))))
+  (is
+   (string=
+    "return (((((car(x)) < (0))) ? (0) : (kT)));"
+    (c '(return (? (< (@car x) 0)
+                 0
+                 |kT|))))))
 
 (test cond
   (is
@@ -910,16 +979,50 @@ int main () {
     (c `(@printf (str "x = %d, y = %d \\n") x y))
     "printf(\"x = %d, y = %d \\n\", x, y)")))
 
+
+
 ;;;
 
+;; util for the following tests
+(defun string-diff (str1 str2)
+  "Compares two strings character by character, tracking line and column.
+   Returns (:line LINE :char CHAR :char1 CHAR1 :char2 CHAR2) for the first
+   differing character, or NIL if they are identical."
+  (let ((line 1)
+        (char 1))
+    (loop :for c1 :across str1
+          :for c2 :across str2
+          :do (cond
+                ;; If characters differ, return the report
+                ((not (char= c1 c2))
+                 (return `(:line ,line :char ,char :char-1 ,c1 :char-2 ,c2)))
+                ;; Update line and char counters
+                ((char= c1 #\Newline)
+                 (incf line)
+                 (setf char 0)))
+          :do (incf char))))
+
+;; TODO Make these tests.
+(string-diff "a" "a")
+(string-diff "ab" "ac")
+(string-diff (format nil "a~%~%b")
+             (format nil "a~%b"))
+(string-diff (format nil "a~%b ~%c")
+             (format nil "a~%b~%c"))
+
 (defun compilation-diff? (lsp-file-path)
-  ;; TODO Report where the first difference is (line number, which character).
-  (not
-   (string=
-    (with-output-to-string (s)
-      (paren::compile-lsp-forms (paren::read-file-into-list lsp-file-path)
-                                :stream s))
-    (paren::read-file-to-string (paren::c-path lsp-file-path)))))
+  (let ((diff (string-diff
+               (with-output-to-string (s)
+                 (paren::compile-lsp-forms
+                  (paren::read-file-into-list
+                   lsp-file-path)
+                  :stream s))
+               (paren::read-file-to-string
+                (paren::c-path lsp-file-path)))))
+    (when diff (log:info diff
+                         lsp-file-path
+                         (paren::c-path lsp-file-path)))
+    diff))
 
 (test compilation-difference?
   (is (not (compilation-diff? "../examples/hello-world.lsp")))
@@ -1244,4 +1347,3 @@ x1->next->next->value = 30
   ;;                  :stdin ""
   ;;                  :expected-stdout "A~%"))
   )
-

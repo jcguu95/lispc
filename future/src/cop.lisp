@@ -12,8 +12,9 @@
       (loop :for subform :in form
             :for k :from 1
             :do (format s "~a" (c subform))
-            :do (when (and (consp subform)
-                           (expression? (car subform)))
+            :do (when (or (numberp subform)
+                          (and (consp subform)
+                               (expression? (car subform))))
                   (format s ";"))
             :do (when (< k (length form))
                   (format s "~%~a" delimiter))))))
@@ -157,7 +158,7 @@ union ~a {~%~{  ~a;~%~}};"
             (indent (c `(compile-each "" ,@(cdr form)))))))
 
 (def-cop do-while (form)
-  (format nil "do {~%~a~%} while (~a)"
+  (format nil "do {~%~a~%} while (~a);"
           (indent (c `(compile-each "" ,@(cdr form))))
           (c (nth 0 form))))
 
@@ -199,9 +200,16 @@ union ~a {~%~{  ~a;~%~}};"
                                      ,(nth index form)
                                      ,(nth (1+ index) form)))))))
 
-(def-cop set (form)
+(def-cop ? (form) :expression
+  (assert (= 3 (length form)))          ; each of the term must a C expression
+  (format nil "((~a) ? (~a) : (~a))"
+          (c (nth 0 form))
+          (c (nth 1 form))
+          (c (nth 2 form))))
+
+(def-cop set (form) :expression
   (assert (= (length form) 2))
-  (format nil "~a = ~a;"
+  (format nil "~a = ~a"
           (c (nth 0 form))
           (c (nth 1 form))))
 
@@ -209,8 +217,15 @@ union ~a {~%~{  ~a;~%~}};"
   (format nil "{~{~a~^, ~}}" form))
 
 ;; TODO May want to give a better name.. "at"?" "
+;; TODO Is & an expression?
+;; TODO Do we want extra parenthesis to protect it?
 (def-cop & (form)
   (format nil "&~a" (c (nth 0 form))))
+
+;; TODO Do we want extra parenthesis to protect it?
+;; TODO Is deref an expression?
+(def-cop deref (form)
+  (format nil "*~a" (c (nth 0 form))))
 
 (def-cop if (form)
   (assert (<= 2 (length form) 3))
@@ -251,10 +266,8 @@ union ~a {~%~{  ~a;~%~}};"
   (assert (= 0 (length form)))
   "break;")
 
-;; TODO Add test for exit.
-;; TODO What's the difference with the cop "break"?
 (def-cop exit (form)
-  (format nil "break ~a;" (c (nth 0 form))))
+  (format nil "exit(~a);" (c (nth 0 form))))
 
 (def-cop case (form)
   (let ((result (format nil "switch (~a) {" (c (nth 0 form)))))
@@ -280,9 +293,11 @@ union ~a {~%~{  ~a;~%~}};"
                       (char= (char input-string (1- (length input-string))) #\;)) ; Check last character
                  (subseq input-string 0 (1- (length input-string))) ; Return string without last char
                  input-string)))
-      (format stream "for (~a ~a; ~a) {~%"
-              (c (or (nth 0 (nth 0 form)) ";"))
-              (c (or (nth 1 (nth 0 form)) ""))
+      (format stream "for (~a; ~a; ~a) {~%"
+              (remove-trailing-semicolon
+               (c (or (nth 0 (nth 0 form)) "")))
+              (remove-trailing-semicolon
+               (c (or (nth 1 (nth 0 form)) "")))
               (remove-trailing-semicolon
                (c (or (nth 2 (nth 0 form)) "")))))
     (format stream "~a~%" (indent (c `(compile-each "" ,@(cdr form)))))

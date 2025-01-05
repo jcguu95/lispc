@@ -80,7 +80,11 @@ case, leave the string unchanged."
                  (write-char char out-stream)))))
 
 (defun resolve-symbol (symbol)
-  (invert-case (substitute #\_ #\- (symbol-name symbol))))
+  (let ((name (symbol-name symbol)))
+    ;; Check if the character is less than space (non-printable)
+    (if (some (lambda (ch) (char< ch #\Space)) name)
+        (progn (warn "A symbol has a non-printable character: ~a~%" symbol) "")
+        (invert-case (substitute #\_ #\- name)))))
 
 ;; TODO I always find this weird.. isn't this just used in the cop DECLARE? If so, merge it.
 (defun resolve-declaration (declaration)

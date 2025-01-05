@@ -39,35 +39,35 @@ int intern () {
     for (j = 0; ; ((j)++)) {
       if (((x) != (RAM[j]))) {
         break;
-      };
+      }
       if ((!(x))) {
         return (((i) - (j) - (1)));
-      };
+      }
       x = M[((i)++)];
-    };
+    }
     while (x) {
       x = M[((i)++)];
-    };
-  };
+    }
+  }
   j = 0;
   x = ((i)--);
   while (M[((i)++)] = RAM[((j)++)]) {
 
-  };
+  }
   return (x);
 }
 
 char *(GetLine) (const char *(prompt)) {
-  s_char (buffer)[1024];
+  static char (buffer)[1024];
   printf("%s", prompt);
   fflush(stdout);
   if (fgets(buffer, sizeof(buffer), stdin)) {
     size_t len = strlen(buffer);
-    if (((((len) > (0))) && (((buffer[((len) - (1))]) == ("\n"))))) {
-      buffer[((len) - (1))] = "\0";
-    };
+    if (((((len) > (0))) && (((buffer[((len) - (1))]) == ('\n'))))) {
+      buffer[((len) - (1))] = '\0';
+    }
     return (buffer);
-  };
+  }
   return (NULL);
 }
 
@@ -76,16 +76,16 @@ void printchar (int b) {
 }
 
 int getchar () {
-  s_char *(line) = NULL;
-  s_char *(ptr) = NULL;
+  static char *(line) = NULL;
+  static char *(ptr) = NULL;
   if ((((!(line))) || ((!(((ptr))))))) {
     line = GetLine("");
     if ((!(line))) {
-      break 0;
-    };
+      exit(0);
+    }
     ptr = line;
-  };
-  int c = ((((ptr)++)));
+  }
+  int c = *((ptr)++);
   int t = dx;
   dx = c;
   return (t);
@@ -95,26 +95,26 @@ int gettoken () {
   int c;
   int i = 0;
   do {
-    if (((c = getchar()) > (" "))) {
-      ram[((i)++)] = c;
-    };
-  } while (((((((c) <= (" "))) || (((c) > (")"))))) && (((dx) > ())))));
+    if (((c = getchar()) > (' '))) {
+      RAM[((i)++)] = c;
+    }
+  } while (((((((c) <= (' '))) || (((c) > (')'))))) && (((dx) > (')')))));
   RAM[i] = 0;
   return (c);
 }
 
 int getlist () {
   int c = gettoken();
-  if (((c) == (")"))) {
+  if (((c) == (')'))) {
     return (0);
-  };
+  }
   return (addlist(getobject(c)));
 }
 
 int getobject (int c) {
-  if (((c) == ("("))) {
+  if (((c) == ('('))) {
     return (getlist());
-  };
+  }
   return (intern());
 }
 
@@ -131,9 +131,9 @@ int printatom (int x) {
   for (; ; ) {
     if ((!(c = M[((x)++)]))) {
       break;
-    };
+    }
     printchar(c);
-  };
+  }
 }
 
 int printlist (int x) {
@@ -147,8 +147,8 @@ int printlist (int x) {
       printchar(L'∙');
       printobject(x);
       break;
-    };
-  };
+    }
+  }
   printchar(')');
 }
 
@@ -157,7 +157,7 @@ int printobject (int x) {
     printlist(x);
   } else {
     printatom(x);
-  };
+  }
 }
 
 int print (int e) {
@@ -185,14 +185,14 @@ int cons (int car, int cdr) {
 int gc (int x, int m, int k) {
   if (((x) < (m))) {
     return (((cons(gc(car(x), m, k), gc(cdr(x), m, k))) + (k)));
-  };
+  }
   return (x);
 }
 
 int evlis (int m, int a) {
   if ((!(m))) {
     return (0);
-  };
+  }
   int x = eval(car(m), a);
   return (cons(x, evlis(cdr(m), a)));
 }
@@ -200,7 +200,7 @@ int evlis (int m, int a) {
 int pairlis (int x, int y, int a) {
   if ((!(x))) {
     return (a);
-  };
+  }
   return (cons(cons(car(x), car(y)), pairlis(cdr(x), cdr(y), a)));
 }
 
@@ -209,7 +209,7 @@ int assoc (int x, int y) {
     return (0);
   } else if ((x) == (car(car(y)))) {
     return (cdr(car(y)));
-  };
+  }
   return (assoc(x, cdr(y)));
 }
 
@@ -218,7 +218,7 @@ int evcon (int c, int a) {
     return (eval(car(cdr(car(c))), a));
   } else {
     return (evcon(cdr(c), a));
-  };
+  }
 }
 
 int apply (int f, int x, int a) {
@@ -227,19 +227,11 @@ int apply (int f, int x, int a) {
   } else if ((f) > (kEq)) {
     return (apply(eval(f, a), x, a));
   } else if ((f) == (kEq)) {
-    return (if (((car(x)) == (car(cdr(x))))) {
-      kt;
-    } else {
-      0;
-    });
+    return (((((car(x)) == (car(cdr(x))))) ? (kT) : (0)));
   } else if ((f) == (kCons)) {
     return (cons(car(x), car(cdr(x))));
   } else if ((f) == (kAtom)) {
-    return (if (((car(x)) < (0))) {
-      0;
-    } else {
-      kt;
-    });
+    return (((((car(x)) < (0))) ? (0) : (kT)));
   } else if ((f) == (kCar)) {
     return (car(car(x)));
   } else if ((f) == (kCdr)) {
@@ -249,9 +241,9 @@ int apply (int f, int x, int a) {
   } else if ((f) == (kPrint)) {
     if ((!(x))) {
       printnewline();
-    };
+    }
     return (print(car(x)));
-  };
+  }
   return (0);
 }
 
@@ -261,22 +253,22 @@ int eval (int e, int a) {
   int C;
   if (((e) >= (0))) {
     return (assoc(e, a));
-  };
+  }
   if (((car(e)) == (kQuote))) {
     return (car(cdr(e)));
-  };
+  }
   A = cx;
   if (((car(e)) == (kCond))) {
     e = evcon(cdr(e), a);
   } else {
     e = apply(car(e), evlis(cdr(e), a), a);
-  };
+  }
   B = cx;
   e = gc(e, A, ((A) - (B)));
   C = cx;
   while (((C) < (B))) {
     M[((A)--)] = M[((B)--)];
-  };
+  }
   cx = A;
   return (e);
 }
@@ -286,11 +278,12 @@ int main () {
   setlocale(LC_ALL, "");
   for (i = 0; ((i) < (sizeof(S))); ((i)++)) {
     M[i] = S[i];
-  };
+  }
   for (; ; ) {
     cx = 0;
     print(eval(read(), 0));
     printnewline();
-  };
+  }
 }
+
 

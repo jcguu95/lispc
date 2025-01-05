@@ -55,5 +55,5 @@
 ;;   (compile-lsp-file "../examples/c-macro.lsp")
 ;;   (compile-lsp-file "../examples/nested-loops.lsp")
 ;;   (compile-lsp-file "../examples/macro-example.lsp")
-;;   ;; (compile-lsp-file "../examples/sectorlisp.lsp")
+;;   (compile-lsp-file "../examples/sectorlisp.lsp")
 ;;   )
