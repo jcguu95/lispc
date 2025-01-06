@@ -1,6 +1,6 @@
 ``` common-lisp
-(asdf:load-system "paren")
-(asdf:test-system "paren")
+(asdf:load-system "paren" :force t)
+(asdf:test-system "paren" :force t)
 ```
 
 ### TODOs

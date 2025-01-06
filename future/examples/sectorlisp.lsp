@@ -56,7 +56,7 @@
 (declare ()
          (cx :int) ()
          (dx :int) ()
-         (|ram| (:array 0100000 :int)) ())
+         (|ram| (:array (octal-int 100000) :int)) ())
 
 ;; int AddList(int x);
 ;; int GetObject(int c);
@@ -66,14 +66,14 @@
 ;; int PrintObject(int x);
 ;; int Eval(int e, int a);
 
- (declare ()
-          (addlist (:function :int (:int))) ()
-          (getobject (:function :int (:int))) ()
-          (cons (:function :int (:int :int))) ()
-          (car (:function :int (:int))) ()
-          (cdr (:function :int (:int))) ()
-          (printobject (:function :int (:int))) ()
-          (eval (:function :int (:int :int))) ())
+(declare ()
+         (addlist- (:function :int (:int))) ()
+         (getobject- (:function :int (:int))) ()
+         (cons- (:function :int (:int :int))) ()
+         (car- (:function :int (:int))) ()
+         (cdr- (:function :int (:int))) ()
+         (printobject- (:function :int (:int))) ()
+         (eval- (:function :int (:int :int))) ())
 
 ;; int Intern() {
 ;;   int i, j, x;
@@ -91,7 +91,7 @@
 ;;   while ((M[i++] = RAM[j++]));
 ;;   return x;
 ;; }
-(defun (intern :int) ()
+(defun (intern- :int) ()
   (declare ()
            (i :int) ()
            (j :int) ()
@@ -99,7 +99,7 @@
   (for ((set i 0)
         (set x (@ |m| (++ i)))
         ())
-       (for ((set j 0) () (++ j))
+       (for ((set j 0) () (++ j :pre))
             (cond ((!= x (@ |ram| j))
                    (break)))
             (cond ((not x)
@@ -108,7 +108,7 @@
        (while x
               (set x (@ |m| (++ i)))))
   (set j 0)
-  (set x (-- i))
+  (set x (-- i :pre))
   (while (set (@ |m| (++ i))
               (@ |ram| (++ j))))
   (return x))
@@ -127,7 +127,7 @@
 ;;     }
 ;;     return NULL;
 ;; }
-(defun (|GetLine| (:pointer :char)) ((prompt (:pointer :c-char)))
+(defun (getline- (:pointer :char)) ((prompt (:pointer :c-char)))
   (declare :static (buffer (:array 1024 :char)))
   (@printf (str "%s") prompt)
   (@fflush stdout)
@@ -142,7 +142,7 @@
 ;; void PrintChar(int b) {
 ;;     fputc(b, stdout);
 ;; }
-(defun (printchar :void) ((b :int))
+(defun (printchar- :void) ((b :int))
   (@fputc b stdout))
 
 ;; int GetChar() {
@@ -164,13 +164,13 @@
 ;;     dx = c;
 ;;     return t;
 ;; }
-(defun (getchar :int) ()
+(defun (getchar- :int) ()
   (declare :static
            (line (:pointer :char)) "NULL"
            (ptr  (:pointer :char)) "NULL")
   (cond ((or (not line)
-             (not (* ptr)))
-         (set line (@|GetLine| (str "")))
+             (not (deref ptr)))
+         (set line (@getline- (str "")))
          (cond ((not line)
                 (exit 0)))
          (set ptr line)))
@@ -187,14 +187,14 @@
 ;;   RAM[i] = 0;
 ;;   return c;
 ;; }
-(defun (gettoken :int) ()
+(defun (gettoken- :int) ()
   (declare ()
            (c :int) ()
            (i :int) 0)
   (do-while (and (or (<= c (char " "))
                      (>  c (char ")")))
                  (> dx (char ")")))
-    (cond ((> (set c (@getchar))
+    (cond ((> (set c (@getchar-))
               (char " "))
            (set (@ |ram| (++ i)) c))))
   (set (@ |ram| i) 0)
@@ -205,32 +205,32 @@
 ;;   if (c == ')') return 0;
 ;;   return AddList(GetObject(c));
 ;; }
-(defun (getlist :int) ()
-  (declare () (c :int) (@gettoken))
+(defun (getlist- :int) ()
+  (declare () (c :int) (@gettoken-))
   (cond ((== c (char ")"))
          (return 0)))
-  (return (@addlist (@getobject c))))
+  (return (@addlist- (@getobject- c))))
 
 ;; int GetObject(c) {
 ;;   if (c == '(') return GetList();
 ;;   return Intern();
 ;; }
-(defun (getobject :int) ((c :int))
+(defun (getobject- :int) ((c :int))
   (cond ((== c (char "("))
-         (return (@getlist))))
-  (return (@intern)))
+         (return (@getlist-))))
+  (return (@intern-)))
 
 ;; int AddList(x) {
 ;;   return Cons(x, GetList());
 ;; }
-(defun (addlist :int) ((x :int))
-  (return (@cons x (@getlist))))
+(defun (addlist- :int) ((x :int))
+  (return (@cons- x (@getlist-))))
 
 ;; int Read() {
 ;;   return GetObject(GetToken());
 ;; }
-(defun (read :int) ()
-  (return (@getobject (@gettoken))))
+(defun (read- :int) ()
+  (return (@getobject- (@gettoken-))))
 
 ;; int PrintAtom(x) {
 ;;   int c;
@@ -239,12 +239,12 @@
 ;;     PrintChar(c);
 ;;   }
 ;; }
-(defun (printatom :int) ((x :int))
+(defun (printatom- :int) ((x :int))
   (declare () (c :int))
   (for (() () ())
        (cond ((not (set c (@ |m| (++ x))))
               (break)))
-       (@printchar c)))
+       (@printchar- c)))
 
 ;; int PrintList(x) {
 ;;   PrintChar('(');
@@ -261,18 +261,18 @@
 ;;   }
 ;;   PrintChar(')');
 ;; }
-(defun (printlist :int) ((x :int))
-  (@printchar (char "("))
-  (@printobject (@car x))
-  (while (set x (@cdr x))
+(defun (printlist- :int) ((x :int))
+  (@printchar- (char "("))
+  (@printobject- (@car- x))
+  (while (set x (@cdr- x))
          (cond ((< x 0)
-                (@printchar (char " "))
-                (@printobject (@car x)))
+                (@printchar- (char " "))
+                (@printobject- (@car- x)))
                (t
-                (@printchar (wide-char "∙"))
-                (@printobject x)
+                (@printchar- (wide-char "∙"))
+                (@printobject- x)
                 (break))))
-  (@printchar (char ")")))
+  (@printchar- (char ")")))
 
 ;; int PrintObject(int x) {
 ;;   if (x < 0) {
@@ -281,21 +281,21 @@
 ;;     PrintAtom(x);
 ;;   }
 ;; }
-(defun (printobject :int) ((x :int))
-  (cond ((< x 0) (@printlist x))
-        (t (@printatom x))))
+(defun (printobject- :int) ((x :int))
+  (cond ((< x 0) (@printlist- x))
+        (t (@printatom- x))))
 
 ;; int Print(e) {
 ;;   PrintObject(e);
 ;; }
-(defun (print :int) ((e :int))
-  (@printobject e))
+(defun (print- :int) ((e :int))
+  (@printobject- e))
 
 ;; int PrintNewLine() {
 ;;   PrintChar('\n');
 ;; }
-(defun (printnewline :int) ()
-  (@printchar (char "\\n")))
+(defun (printnewline- :int) ()
+  (@printchar- (char "\\n")))
 
 ;; /*───────────────────────────────────────────────────────────────────────────│─╗
 ;; │ The LISP Challenge § Bootstrap John McCarthy's Metacircular Evaluator    ─╬─│┼
@@ -304,13 +304,13 @@
 ;; int Car(int x) {
 ;;   return M[x];
 ;; }
-(defun (car :int) ((x :int))
+(defun (car- :int) ((x :int))
   (return (@ |m| x)))
 
 ;; int Cdr(int x) {
 ;;   return M[x + 1];
 ;; }
-(defun (cdr :int) ((x :int))
+(defun (cdr- :int) ((x :int))
   (return (@ |m| (+ x 1))))
 
 ;; int Cons(car, cdr) {
@@ -318,19 +318,19 @@
 ;;   M[--cx] = car;
 ;;   return cx;
 ;; }
-(defun (cons :int) ((car :int) (cdr :int))
-  (set (@ |m| (-- cx)) cdr)
-  (set (@ |m| (-- cx)) car)
+(defun (cons- :int) ((car :int) (cdr :int))
+  (set (@ |m| (-- cx :pre)) cdr)
+  (set (@ |m| (-- cx :pre)) car)
   (return cx))
 
 ;; int Gc(x, m, k) {
 ;;   return x < m ? Cons(Gc(Car(x), m, k),
 ;;                       Gc(Cdr(x), m, k)) + k : x;
 ;; }
-(defun (gc :int) ((x :int) (m :int) (k :int))
+(defun (gc- :int) ((x :int) (m :int) (k :int))
   (cond ((< x m)
-         (return (+ (@cons (@gc (@car x) m k)
-                           (@gc (@cdr x) m k))
+         (return (+ (@cons- (@gc- (@car- x) m k)
+                           (@gc- (@cdr- x) m k))
                     k))))
   (return x))
 
@@ -342,33 +342,33 @@
 ;;     return 0;
 ;;   }
 ;; }
-(defun (evlis :int) ((m :int) (a :int))
+(defun (evlis- :int) ((m :int) (a :int))
   (cond ((not m)
          (return 0)))
-  (declare () (x :int) (@eval (@car m) a))
-  (return (@cons x (@evlis (@cdr m) a))))
+  (declare () (x :int) (@eval- (@car- m) a))
+  (return (@cons- x (@evlis- (@cdr- m) a))))
 
 ;; int Pairlis(x, y, a) {
 ;;   return x ? Cons(Cons(Car(x), Car(y)),
 ;;                   Pairlis(Cdr(x), Cdr(y), a)) : a;
 ;; }
-(defun (pairlis :int) ((x :int) (y :int) (a :int))
+(defun (pairlis- :int) ((x :int) (y :int) (a :int))
   (cond ((not x)
          (return a)))
-  (return (@cons (@cons (@car x) (@car y))
-                 (@pairlis (@cdr x) (@cdr y) a))))
+  (return (@cons- (@cons- (@car- x) (@car- y))
+                 (@pairlis- (@cdr- x) (@cdr- y) a))))
 
 ;; int Assoc(x, y) {
 ;;   if (!y) return 0;
 ;;   if (x == Car(Car(y))) return Cdr(Car(y));
 ;;   return Assoc(x, Cdr(y));
 ;; }
-(defun (assoc :int) ((x :int) (y :int))
+(defun (assoc- :int) ((x :int) (y :int))
   (cond ((not y)
          (return 0))
-        ((== x (@car (@car y)))
-         (return (@cdr (@car y)))))
-  (return (@assoc x (@cdr y))))
+        ((== x (@car- (@car- y)))
+         (return (@cdr- (@car- y)))))
+  (return (@assoc- x (@cdr- y))))
 
 ;; int Evcon(c, a) {
 ;;   if (Eval(Car(Car(c)), a)) {
@@ -377,11 +377,11 @@
 ;;     return Evcon(Cdr(c), a);
 ;;   }
 ;; }
-(defun (evcon :int) ((c :int) (a :int))
-  (cond ((@eval (@car (@car c)) a)
-         (return (@eval (@car (@cdr (@car c))) a)))
+(defun (evcon- :int) ((c :int) (a :int))
+  (cond ((@eval- (@car- (@car- c)) a)
+         (return (@eval- (@car- (@cdr- (@car- c))) a)))
         (t
-         (return (@evcon (@cdr c) a)))))
+         (return (@evcon- (@cdr- c) a)))))
 
 ;; int Apply(f, x, a) {
 ;;   if (f < 0)       return Eval(Car(Cdr(Cdr(f))), Pairlis(Car(Cdr(f)), x, a));
@@ -394,33 +394,33 @@
 ;;   if (f == kRead)  return Read();
 ;;   if (f == kPrint) return (x ? Print(Car(x)) : PrintNewLine()), 0;
 ;; }
-(defun (apply :int) ((f :int) (x :int) (a :int))
+(defun (apply- :int) ((f :int) (x :int) (a :int))
   (cond ((< f 0)
-         (return (@eval (@car (@cdr (@cdr f)))
-                        (@pairlis (@car (@cdr f)) x a))))
+         (return (@eval- (@car- (@cdr- (@cdr- f)))
+                        (@pairlis- (@car- (@cdr- f)) x a))))
         ((> f |kEq|)
-         (return (@apply (@eval f a) x a)))
+         (return (@apply- (@eval- f a) x a)))
         ((== f |kEq|)
-         (return (? (== (@car x) (@car (@cdr x)))
+         (return (? (== (@car- x) (@car- (@cdr- x)))
                     |kT|
                     0)))
         ((== f |kCons|)
-         (return (@cons (@car x) (@car (@cdr x)))))
+         (return (@cons- (@car- x) (@car- (@cdr- x)))))
         ((== f |kAtom|)
-         (return (? (< (@car x) 0)
+         (return (? (< (@car- x) 0)
                     0
                     |kT|)))
         ((== f |kCar|)
-         (return (@car (@car x))))
+         (return (@car- (@car- x))))
         ((== f |kCdr|)
-         (return (@cdr (@car x))))
+         (return (@cdr- (@car- x))))
         ((== f |kRead|)
-         (return (@read)))
+         (return (@read-)))
         ((== f |kPrint|)
-         (cond ((not x)
-                (@printnewline)))
-         (return (@print (@car x)))))
-  (return 0))
+         (if x
+             (@print- (@car- x))
+             (@printnewline-))
+         (return 0))))
 
 ;; int Eval(int e, int a) {
 ;;   int A, B, C;
@@ -442,26 +442,26 @@
 ;;   cx = A;
 ;;   return e;
 ;; }
-(defun (eval :int) ((e :int) (a :int))
+(defun (eval- :int) ((e :int) (a :int))
   (declare () (|a| :int))
   (declare () (|b| :int))
   (declare () (|c| :int))
   (cond ((>= e 0)
-         (return (@assoc e a))))
-  (cond ((== (@car e) |kQuote|)
-         (return (@car (@cdr e)))))
+         (return (@assoc- e a))))
+  (cond ((== (@car- e) |kQuote|)
+         (return (@car- (@cdr- e)))))
   (set |a| cx)
-  (cond ((== (@car e) |kCond|)
-         (set e (@evcon (@cdr e) a)))
+  (cond ((== (@car- e) |kCond|)
+         (set e (@evcon- (@cdr- e) a)))
         (t
-         (set e (@apply (@car e)
-                        (@evlis (@cdr e) a)
-                        a))))
+         (set e (@apply- (@car- e)
+                         (@evlis- (@cdr- e) a)
+                         a))))
   (set |b| cx)
-  (set e (@gc e |a| (- |a| |b|)))
+  (set e (@gc- e |a| (- |a| |b|)))
   (set |c| cx)
   (while (< |c| |b|)
-         (set (@ |m| (-- |a|)) (@ |m| (-- |b|))))
+         (set (@ |m| (-- |a| :pre)) (@ |m| (-- |b| :pre))))
   (set cx |a|)
   (return e))
 
@@ -483,9 +483,9 @@
 (defun (main :int) ()
   (declare () (i :int))
   (@setlocale "LC_ALL" (str ""))
-  (for ((set i 0) (< i (@sizeof |s|)) (++ i))
+  (for ((set i 0) (< i (@sizeof |s|)) (++ i :pre))
        (set (@ |m| i) (@ |s| i)))
   (for (() () ())
        (set cx 0)
-       (@print (@eval (@read) 0))
-       (@printnewline)))
+       (@print- (@eval- (@read-) 0))
+       (@printnewline-)))

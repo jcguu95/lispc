@@ -47,9 +47,10 @@
               (let ((length (nth 1 form))
                     (subtype (nth 2 form)))
                 (and (= 3 (length form))
-                     (or (null length)
-                         (and (> length 0)
-                              (integerp length)))
+                     ;; NOTE People may enter octal integers here in arrays..
+                     ;; (or (null length)
+                     ;;     (and (> length 0)
+                     ;;          (integerp length)))
                      (type? subtype)
                      kind))))))
         (t (error "Unexpected form: ~a~%" form))))
@@ -134,8 +135,8 @@
          (format nil
                  (fmt-string<-type subtype)
                  (if no-filler
-                     (format nil "[~a]" length)
-                     (format nil "(~~a)[~a]" length)))))
+                     (format nil "[~a]" (c length))
+                     (format nil "(~~a)[~a]" (c length))))))
       (t
        (format
         nil

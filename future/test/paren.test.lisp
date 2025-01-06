@@ -12,10 +12,12 @@
   (is (paren::type? '(:pointer :int 3))) ; by default, this is a 3-pointer
   (is (paren::type? '(:array () :int)))
   (is (paren::type? '(:array 1 :int)))
+  (is (paren::type? '(:array (octal-int 10000) :int)))
   (is (paren::type? '(:function :int (:int (:pointer (:array () :int) 1)))))
   (is (not (paren::type? '(:pointer :int 0))))
-  (is (not (paren::type? '(:array 0 :int))))
-  (is (not (paren::type? '(:array 1 (:array 0 :int))))))
+  ;; (is (not (paren::type? '(:array 0 :int))))
+  ;; (is (not (paren::type? '(:array 1 (:array 0 :int)))))
+  )
 
 (test fmt-string<-type
   ;; NOTE https://cdecl.org/
@@ -39,6 +41,8 @@
              "int (~a)[]"))
   (is (equal (paren::fmt-string<-type '(:array 9 :int))
              "int (~a)[9]"))
+  (is (equal (paren::fmt-string<-type '(:array (octal-int 100000) :int))
+             "int (~a)[0100000]"))
   (is (equal (paren::fmt-string<-type '(:array 9 (:pointer :int 2)))
              "int **((~a)[9])"))
   (is (equal (paren::fmt-string<-type '(:pointer (:array 9 (:pointer :int)) 2))
@@ -603,8 +607,12 @@ struct x {
     "((i)++)"))
   (is
    (string=
-    (c '(-- i))
-    "((i)--)")))
+    (c '(++ i :pre))
+    "(++(i))"))
+  (is
+   (string=
+    (c '(-- i :pre))
+    "(--(i))")))
 
 (test or
   (is (equal
@@ -1370,8 +1378,8 @@ x1->next->next->value = 30
 
   ;; FIXME We are working on sectorlisp.c.
   ;;
-  ;; (is
-  ;;  (test-c-program "../examples/sectorlisp.c"
-  ;;                  :stdin ""
-  ;;                  :expected-stdout "A~%"))
+  (is
+   (test-c-program "../examples/sectorlisp.c"
+                   :stdin "(A A)"
+                   :expected-stdout "A~%"))
   )

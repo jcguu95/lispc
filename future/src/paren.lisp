@@ -26,7 +26,7 @@
                ;; funcall
                (let ((function-name (subseq op-name 1)))
                  (format nil "~a(~{~a~^, ~})"
-                         (invert-case function-name)
+                         (resolve-symbol (intern function-name))
                          (mapcar #'c (cdr form))))
                ;; operator call
                (let ((function (gethash op-name *functions*)))

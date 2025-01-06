@@ -88,16 +88,24 @@ union ~a {~%~{  ~a;~%~}};"
   (format nil "(~{(~a)~^ - ~})" (mapcar #'c form)))
 
 (def-cop *   (form) :expression
+  (when (= 1 (length form))
+    (warn "Are you sure you mean * (multiply) instead of deref?"))
   (format nil "(~{(~a)~^ * ~})" (mapcar #'c form)))
 
 (def-cop /   (form) :expression
   (format nil "(~{(~a)~^ / ~})" (mapcar #'c form)))
 
 (def-cop ++  (form) :expression
-  (format nil "((~a)++)"        (c (nth 0 form))))
+  (if (and (= 2 (length form))
+           (eq :pre (nth 1 form)))
+      (format nil "(++(~a))"        (c (nth 0 form)))
+      (format nil "((~a)++)"        (c (nth 0 form)))))
 
 (def-cop --  (form) :expression
-  (format nil "((~a)--)"        (c (nth 0 form))))
+  (if (and (= 2 (length form))
+           (eq :pre (nth 1 form)))
+      (format nil "(--(~a))"        (c (nth 0 form)))
+      (format nil "((~a)--)"        (c (nth 0 form)))))
 
 (def-cop or  (form) :expression
   (format nil "((~a) || (~a))"  (c (nth 0 form)) (c (nth 1 form))))
@@ -164,11 +172,15 @@ union ~a {~%~{  ~a;~%~}};"
 
 (def-cop str (form)
   (assert (= 1 (length form)))
-  (format nil "\"~a\"" (car form)))
+  (format nil "\"~a\"" (nth 0 form)))
 
 (def-cop char (form)
   (assert (= 1 (length form)))
-  (format nil "'~a'" (car form)))
+  (format nil "'~a'" (nth 0 form)))
+
+(def-cop octal-int (form)
+  (assert (= 1 (length form)))
+  (format nil "0~a" (nth 0 form)))
 
 ;; NOTE Are there any other variations like this that I missed?
 ;; + char8_t, char16_t, char32_t (C11 and later)
