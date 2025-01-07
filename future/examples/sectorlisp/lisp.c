@@ -49,13 +49,13 @@ int cx; /* stores negative memory use */
 int dx; /* stores lookahead character */
 int RAM[0100000]; /* your own ibm7090 */
 
-int AddList(int x);
-int GetObject(int c);
-int Cons(int car, int cdr);
-int Car(int x);
-int Cdr(int x);
-int PrintObject(int x);
-int Eval(int e, int a);
+int AddList(int);
+int GetObject(int);
+int Cons(int, int);
+int Car(int);
+int Cdr(int);
+int PrintObject(int);
+int Eval(int, int);
 
 int Intern() {
   int i, j, x;
@@ -127,12 +127,12 @@ int GetList() {
   return AddList(GetObject(c));
 }
 
-int GetObject(c) {
+int GetObject(int c) {
   if (c == '(') return GetList();
   return Intern();
 }
 
-int AddList(x) {
+int AddList(int x) {
   return Cons(x, GetList());
 }
 
@@ -140,7 +140,7 @@ int Read() {
   return GetObject(GetToken());
 }
 
-int PrintAtom(x) {
+int PrintAtom(int x) {
   int c;
   for (;;) {
     if (!(c = M[x++])) break;
@@ -148,7 +148,7 @@ int PrintAtom(x) {
   }
 }
 
-int PrintList(x) {
+int PrintList(int x) {
   PrintChar('(');
   PrintObject(Car(x));
   while ((x = Cdr(x))) {
@@ -172,7 +172,7 @@ int PrintObject(int x) {
   }
 }
 
-int Print(e) {
+int Print(int e) {
   PrintObject(e);
 }
 
@@ -192,18 +192,18 @@ int Cdr(int x) {
   return M[x + 1];
 }
 
-int Cons(car, cdr) {
+int Cons(int car, int cdr) {
   M[--cx] = cdr;
   M[--cx] = car;
   return cx;
 }
 
-int Gc(x, m, k) {
+int Gc(int x, int m, int k) {
   return x < m ? Cons(Gc(Car(x), m, k),
                       Gc(Cdr(x), m, k)) + k : x;
 }
 
-int Evlis(m, a) {
+int Evlis(int m, int a) {
   if (m) {
     int x = Eval(Car(m), a);
     return Cons(x, Evlis(Cdr(m), a));
@@ -212,18 +212,18 @@ int Evlis(m, a) {
   }
 }
 
-int Pairlis(x, y, a) {
+int Pairlis(int x, int y, int a) {
   return x ? Cons(Cons(Car(x), Car(y)),
                   Pairlis(Cdr(x), Cdr(y), a)) : a;
 }
 
-int Assoc(x, y) {
+int Assoc(int x, int y) {
   if (!y) return 0;
   if (x == Car(Car(y))) return Cdr(Car(y));
   return Assoc(x, Cdr(y));
 }
 
-int Evcon(c, a) {
+int Evcon(int c, int a) {
   if (Eval(Car(Car(c)), a)) {
     return Eval(Car(Cdr(Car(c))), a);
   } else {
@@ -231,7 +231,7 @@ int Evcon(c, a) {
   }
 }
 
-int Apply(f, x, a) {
+int Apply(int f, int x, int a) {
   if (f < 0)       return Eval(Car(Cdr(Cdr(f))), Pairlis(Car(Cdr(f)), x, a));
   if (f > kEq)     return Apply(Eval(f, a), x, a);
   if (f == kEq)    return Car(x) == Car(Cdr(x)) ? kT : 0;
