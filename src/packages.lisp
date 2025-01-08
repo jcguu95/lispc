@@ -1,7 +1,5 @@
 (in-package :cl-user)
 
-(defpackage #:lispc
+(defpackage #:paren
   (:use :common-lisp)
-  (:export #:c
-           #:c-file<-cl-file
-           #:compile-and-run-cl-file))
+  (:export #:c))

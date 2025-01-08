@@ -1069,7 +1069,8 @@ int main () {
   (is (not (compilation-diff? "../examples/type-struct-example.lsp")))
   (is (not (compilation-diff? "../examples/higher-order-function.lsp")))
   (is (not (compilation-diff? "../examples/nested-loops.lsp")))
-  (is (not (compilation-diff? "../examples/c-macro.lsp"))))
+  (is (not (compilation-diff? "../examples/c-macro.lsp")))
+  (is (not (compilation-diff? "../examples/sectorlisp.lsp"))))
 
 ;;;
 

@@ -1,13 +1,33 @@
-# TODO
+``` common-lisp
+(asdf:load-system "paren" :force t)
+(asdf:test-system "paren" :force t)
+```
 
-1. Build Tests
+### TODOs
 
-   + [X] Use the old version to generate c code, and use that as the standard test.
-   + [X] Write asd file with automatic tests.
-   + [X] Build github CI/CD. 
-   + Add more tests (e.g. by translating C codes I have, learning how c/macro works).
++ Basic Functionalities
 
-2. Mold the Language
+  + [X] Type System
+  + [X] Implement control flow: block, label, goto.
+  + [X] Lisp Interopts: The c-operator `lisp`.
+  + [ ] Preprocessor Directives
+    + [X] Newlines need to be separated by `\`.
+    + [X] `#define`: Defines macros.
+    + [X] `#undef`: Undefines macros.
+    + [X] `#include`: Includes external files.
+    + [ ] `#if, #ifdef, #ifndef`: Conditional compilation.
+    + [ ] `#else, #elif, #endif`: Provides alternatives in conditional compilation.
+    + [ ] `#pragma`: Compiler-specific instructions.
+    + [ ] `#error`: Causes a compilation error with a message.
+    + [ ] `#line`: Sets line numbers and filenames for error messages.
 
-   + Resolve as many unnecessary macros as possible, while preserving the tests.
-   + Tweak parts I dislike, and move to `v2`.
++ Documentations and Examples (as Programmatic Tests)
+
+  + [ ] Transpile the C-implementation of MAL.
+  + [ ] Transpile examples from Learn C the Hard Way.
+  + [ ] Transpile examples from selected parts of [Emacs's source code](https://github.com/emacs-mirror/emacs/blob/master/src/bytecode.c).
+  + [ ] Transpile [sectorlisp/lisp.c](https://github.com/jart/sectorlisp/blob/main/lisp.c).
+  + [ ] Give persuading example showing superiority of lisp macro.
+  + [ ] After `Paren` is stable, use it to implement `BOCL`.
+  + [ ] Package as docker container.
+  + [ ] Find whether there's a c linter that can get rid of unnecessary parentheses.
