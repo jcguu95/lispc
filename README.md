@@ -1,33 +1,91 @@
+# PAREN/C
+
+`PAREN/C` is a customizable lispy language that compiles to `C`.
+
 ``` common-lisp
-(asdf:load-system "paren" :force t)
-(asdf:test-system "paren" :force t)
+(include :system ("stdio.h"))
+
+(defun (main :int) ((argc :int) (argv :char**))
+  (@printf (str "Hello, world!"))
+  (return 0))
+  
+;; #include <stdio.h>
+;;
+;; int main(int argc,char **argv)
+;; {
+;;    printf("Hello, world!");
+;;    return 0;
+;; }
+```
+The `./examples` directory contains several nontrivial examples. A standout is
+the full [SectorLisp](https://justine.lol/sectorlisp/) clone
+(`./examples/sectorlisp.lsp` and `./examples/sectorlisp.c`), a turing-complete
+lisp programming language designed to fit within the master boot sector. All
+examples in the `./examples` directory are unit tested in
+`./test/paren.test.lisp`. For instance, a test suite demonstrates how
+`sectorlisp.lsp` evaluates the metacircular evaluator. Additional examples
+will be added in the future.
+
+## Usage
+
+The main function `c` compiles lisp forms into `c` code. 
+
+``` common-lisp
+CL-USER> (asdf:test-system "paren" :force t) ; loads and tests the system
+CL-USER> (in-package :paren)
+PAREN> (c '(defun (main :int) ((argc :int) (argv :char**))
+             (@printf (str "Hello, world!"))
+             (return 0))) ;=>
+"int main(int argc,char **argv)
+{
+    printf("Hello, world!");
+    return 0;
+}"
 ```
 
-### TODOs
+Interoperability through the `LISP` operator enables you to write `paren/c`
+code within `lisp`.
 
-+ Basic Functionalities
+``` common-lisp
+;; ./examples/nested-loops.lsp
+(include :system ("stdio.h"))
 
-  + [X] Type System
-  + [X] Implement control flow: block, label, goto.
-  + [X] Lisp Interopts: The c-operator `lisp`.
-  + [ ] Preprocessor Directives
-    + [X] Newlines need to be separated by `\`.
-    + [X] `#define`: Defines macros.
-    + [X] `#undef`: Undefines macros.
-    + [X] `#include`: Includes external files.
-    + [ ] `#if, #ifdef, #ifndef`: Conditional compilation.
-    + [ ] `#else, #elif, #endif`: Provides alternatives in conditional compilation.
-    + [ ] `#pragma`: Compiler-specific instructions.
-    + [ ] `#error`: Causes a compilation error with a message.
-    + [ ] `#line`: Sets line numbers and filenames for error messages.
+(defun (main :int) ()
+  ;; Stage 0 of compilation
+  (LISP
+   ;; A Common Lisp function that generates LSP code as LISP lists.
+     (defun multi-for (bindings body)
+       (loop :for binding :in (reverse bindings)
+             :do (setf body `((for ((declare () (,(nth 0 binding) :int) 0)
+                                    (< ,(nth 0 binding) ,(nth 1 binding))
+                                    (++ ,(nth 0 binding)))
+                               ,@body))))
+       (car body))
+     (multi-for '((i 3) (j 2) (k 2))
+                '((@printf (str "%d ") (+ i j k))
+                  (@printf (str "%d\\n") i))))
+  (return 0))
 
-+ Documentations and Examples (as Programmatic Tests)
+;;; Stage 1 of compilation (LSP->LSP)
+;; (FOR ((DECLARE () (I :INT) 0) (< I 3) (++ I))
+;;  (FOR ((DECLARE () (J :INT) 0) (< J 2) (++ J))
+;;   (FOR ((DECLARE () (K :INT) 0) (< K 2) (++ K))
+;;        (@PRINTF (STR "%d ") (+ I J K))
+;;        (@PRINTF (STR "%d\\n") I))))
 
-  + [ ] Transpile the C-implementation of MAL.
-  + [ ] Transpile examples from Learn C the Hard Way.
-  + [ ] Transpile examples from selected parts of [Emacs's source code](https://github.com/emacs-mirror/emacs/blob/master/src/bytecode.c).
-  + [ ] Transpile [sectorlisp/lisp.c](https://github.com/jart/sectorlisp/blob/main/lisp.c).
-  + [ ] Give persuading example showing superiority of lisp macro.
-  + [ ] After `Paren` is stable, use it to implement `BOCL`.
-  + [ ] Package as docker container.
-  + [ ] Find whether there's a c linter that can get rid of unnecessary parentheses.
+;;; Stage 2 of compilation (LSP -> C)
+;; for (int i = 0; ((i) < (3)); ((i)++)) {
+;;   for (int j = 0; ((j) < (2)); ((j)++)) {
+;;     for (int k = 0; ((k) < (2)); ((k)++)) {
+;;       printf("%d ", ((i) + (j) + (k)));
+;;       printf("%d\n", i);
+;;     }
+;;   }
+;; }
+```
+
+## State of the Project
+
+We are currently refining the language by porting additional `C` code into
+`PAREN/C`. It is not ready for use yet. Contributions are welcome (see
+`TODO.md` for details).
