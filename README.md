@@ -1,6 +1,7 @@
 # PAREN/C
 
-`PAREN/C` is a customizable lispy language that compiles to `C`.
+`PAREN/C` is a customizable lispy language that compiles to `C`, with
+interoperability with `Common Lisp`.
 
 ``` common-lisp
 (include :system ("stdio.h"))
@@ -20,8 +21,9 @@
 The `./examples` directory contains several nontrivial examples. A standout is
 the full [SectorLisp](https://justine.lol/sectorlisp/) clone
 (`./examples/sectorlisp.lsp` and `./examples/sectorlisp.c`), a turing-complete
-lisp programming language designed to fit within the master boot sector. All
-examples in the `./examples` directory are unit tested in
+lisp programming language designed to fit within the master boot sector. 
+
+All examples in the `./examples` directory are unit tested in
 `./test/paren.test.lisp`. For instance, a test suite demonstrates how
 `sectorlisp.lsp` evaluates the metacircular evaluator. Additional examples
 will be added in the future.
