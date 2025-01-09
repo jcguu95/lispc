@@ -20,12 +20,12 @@ interoperability with `Common Lisp`.
 ```
 The `./examples` directory contains several nontrivial examples. A standout is
 the full [SectorLisp](https://justine.lol/sectorlisp/) clone
-(`./examples/sectorlisp.lsp` and `./examples/sectorlisp.c`), a turing-complete
+(`./examples/sectorlisp.parenc` and `./examples/sectorlisp.c`), a turing-complete
 lisp programming language designed to fit within the master boot sector. 
 
 All examples in the `./examples` directory are unit tested in
 `./test/paren.test.lisp`. For instance, a test suite demonstrates how
-`sectorlisp.lsp` evaluates the metacircular evaluator. Additional examples
+`sectorlisp.parenc` evaluates the metacircular evaluator. Additional examples
 will be added in the future.
 
 ## Usage
@@ -49,13 +49,13 @@ Interoperability through the `LISP` operator enables you to write `paren/c`
 code within `lisp`.
 
 ``` common-lisp
-;; ./examples/nested-loops.lsp
+;; ./examples/nested-loops.parenc
 (include :system ("stdio.h"))
 
 (defun (main :int) ()
   ;; Stage 0 of compilation
   (LISP
-   ;; A Common Lisp function that generates LSP code as LISP lists.
+   ;; A Common Lisp function that generates PARENC code as LISP lists.
      (defun multi-for (bindings body)
        (loop :for binding :in (reverse bindings)
              :do (setf body `((for ((declare () (,(nth 0 binding) :int) 0)
@@ -68,14 +68,14 @@ code within `lisp`.
                   (@printf (str "%d\\n") i))))
   (return 0))
 
-;;; Stage 1 of compilation (LSP->LSP)
+;;; Stage 1 of compilation (PARENC->PARENC)
 ;; (FOR ((DECLARE () (I :INT) 0) (< I 3) (++ I))
 ;;  (FOR ((DECLARE () (J :INT) 0) (< J 2) (++ J))
 ;;   (FOR ((DECLARE () (K :INT) 0) (< K 2) (++ K))
 ;;        (@PRINTF (STR "%d ") (+ I J K))
 ;;        (@PRINTF (STR "%d\\n") I))))
 
-;;; Stage 2 of compilation (LSP -> C)
+;;; Stage 2 of compilation (PARENC -> C)
 ;; for (int i = 0; ((i) < (3)); ((i)++)) {
 ;;   for (int j = 0; ((j) < (2)); ((j)++)) {
 ;;     for (int k = 0; ((k) < (2)); ((k)++)) {

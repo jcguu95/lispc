@@ -15,27 +15,27 @@
                                       :defaults pathname)))
     (namestring new-pathname)))
 
-(defun compile-lsp-forms (lsp-forms &key (stream *standard-output*))
+(defun compile-parenc-forms (parenc-forms &key (stream *standard-output*))
   (write-line
    (with-output-to-string (s)
-     (loop :for form :in lsp-forms
+     (loop :for form :in parenc-forms
            :for k :from 1
            :do (format s "~a" (c form))
-           :do (when (< k (length lsp-forms))
+           :do (when (< k (length parenc-forms))
                  (format s "~%~%"))))
    stream))
 
-(defun c-path (lsp-file-path)
+(defun c-path (parenc-file-path)
   "Return the path of the corresponding `.c` file."
-  (replace-file-extension lsp-file-path "c"))
+  (replace-file-extension parenc-file-path "c"))
 
-(defun compile-lsp-file (lsp-file-path)
+(defun compile-parenc-file (parenc-file-path)
   (with-open-file
-      (stream (c-path lsp-file-path)
+      (stream (c-path parenc-file-path)
               :direction :output
               :if-exists :supersede)
-    (let ((forms (read-file-into-list lsp-file-path)))
-      (compile-lsp-forms forms :stream stream))))
+    (let ((forms (read-file-into-list parenc-file-path)))
+      (compile-parenc-forms forms :stream stream))))
 
 (defun read-file-to-string (filename)
   "Reads the entire contents of a file into a string."
@@ -45,15 +45,15 @@
       contents)))
 
 ;; (progn
-;;   (compile-lsp-file "../examples/hello-world.lsp")
-;;   (compile-lsp-file "../examples/switch.lsp")
-;;   (compile-lsp-file "../examples/cond.lsp")
-;;   (compile-lsp-file "../examples/control-flow.lsp")
-;;   (compile-lsp-file "../examples/macro-example.lsp")
-;;   (compile-lsp-file "../examples/type-struct-example.lsp")
-;;   (compile-lsp-file "../examples/higher-order-function.lsp")
-;;   (compile-lsp-file "../examples/c-macro.lsp")
-;;   (compile-lsp-file "../examples/nested-loops.lsp")
-;;   (compile-lsp-file "../examples/macro-example.lsp")
-;;   (compile-lsp-file "../examples/sectorlisp.lsp")
+;;   (compile-parenc-file "../examples/hello-world.parenc")
+;;   (compile-parenc-file "../examples/switch.parenc")
+;;   (compile-parenc-file "../examples/cond.parenc")
+;;   (compile-parenc-file "../examples/control-flow.parenc")
+;;   (compile-parenc-file "../examples/macro-example.parenc")
+;;   (compile-parenc-file "../examples/type-struct-example.parenc")
+;;   (compile-parenc-file "../examples/higher-order-function.parenc")
+;;   (compile-parenc-file "../examples/c-macro.parenc")
+;;   (compile-parenc-file "../examples/nested-loops.parenc")
+;;   (compile-parenc-file "../examples/macro-example.parenc")
+;;   (compile-parenc-file "../examples/sectorlisp.parenc")
 ;;   )

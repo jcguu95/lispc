@@ -24,10 +24,12 @@
 
 + Documentations
 
-  + [ ] Mention =parenscript= and =lispc= in readme.
-  + [ ] Document how c works incrementally in read me.
+  + [ ] Mention `parenscript` and `lispc` in readme.
+  + [ ] Document how C works incrementally in readme.
+  + [ ] Document how to use `c-expand-1` to walk through each step of compilation.
   + [ ] Document difference between expressions and statements.
-  + [ ] Document how to use indent to define a cop.
+  + [ ] Document how to use `#'indent` to define a C operator.
+  + [ ] Document how symbols are translated into C.
 
 + More
 
