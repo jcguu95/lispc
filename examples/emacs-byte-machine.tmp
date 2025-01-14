@@ -12,7 +12,8 @@
 
 #+begin_src lisp
 (def-cop defsubr (form)
-  ;; TODO bind list FORM with (lname fnname sname minargs maxargs intspec doc body)
+  ;; TODO bind list FORM with (lname minargs maxargs intspec doc body)
+  ;; TODO fname and sname should be auto generated
   |subr-section-attribute|
   (declare :static
            (sname (:union |Aligned-Lisp-Subr|))
@@ -26,6 +27,47 @@
              (struct intspec)
              |lisp-h-Qnil|
              )))
-  (defun (fnname |:lisp-object|)
+  (defun (fnname :|lisp-object|)
     body))
+#+end_src
+
+#+begin_src c
+DEFUN ("byte-code", Fbyte_code, Sbyte_code, 3, 3, 0,
+       doc: /* Function used internally in byte-compiled code.
+The first argument, BYTESTR, is a string of byte code;
+the second, VECTOR, a vector of constants;
+the third, MAXDEPTH, the maximum stack depth used in this function.
+If the third argument is incorrect, Emacs may crash.  */)
+  (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth)
+{
+  if (! (STRINGP (bytestr) && VECTORP (vector) && FIXNATP (maxdepth)))
+    error ("Invalid byte-code");
+
+  if (STRING_MULTIBYTE (bytestr))
+    {
+      /* BYTESTR must have been produced by Emacs 20.2 or earlier
+	 because it produced a raw 8-bit string for byte-code and now
+	 such a byte-code string is loaded as multibyte with raw 8-bit
+	 characters converted to multibyte form.  Convert them back to
+	 the original unibyte form.  */
+      bytestr = Fstring_as_unibyte (bytestr);
+    }
+  Lisp_Object fun = CALLN (Fmake_byte_code, Qnil, bytestr, vector, maxdepth);
+  return exec_byte_code (fun, 0, 0, NULL);
+}
+#+end_src
+
+#+begin_src lisp
+(defsubr byte-code 3 3 0 "DOC.."
+  ((bytestr :|lisp-object|)
+   (vector :|lisp-object|)
+   (maxdepth :|lisp-object|))
+  (unless (and (|@stringp| bytestr)
+                (|@vectorp| vector)
+                (|@fixnatp| maxdepth))
+    (@error (str "Invalid byte-code")))
+  (when (|@string-multibyte| bytestr)
+    (set bytestr (|@Fstring-as-unibyte| bytestr)))
+  (declare (fun :|lisp-object|) (|@calln| |Fmake-byte-code| |Qnil| bytestr vector maxdepth))
+  (return (@exec-byte-code fun 0 0 "NULL")))
 #+end_src
